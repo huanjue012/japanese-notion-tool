@@ -427,16 +427,24 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid }) => {
 // ─── FLASHCARDS ───────────────────────────────────────────────────────────────
 const INTERVALS = { 1: 1, 2: 3, 3: 7, 4: 14 };
 
-const Flashcards = ({ cards, setCards, allTags }) => {
+const Flashcards = ({ cards, setCards, allTags, onNav }) => {
   const [view, setView] = useState('list'); // list | review | form
   const [editId, setEditId] = useState(null);
   const [form, setForm] = useState({ front: '', back: '', tags: [] });
   const [filterMode, setFilterMode] = useState('due');
+  const [activeTag, setActiveTag] = useState(null);
   const [idx, setIdx] = useState(0);
   const [flipped, setFlipped] = useState(false);
 
   const dueCards = useMemo(() => cards.filter(c => !c.nextReview || new Date(c.nextReview) <= new Date()), [cards]);
   const reviewList = filterMode === 'due' ? dueCards : cards;
+
+  useEffect(() => {
+    if (view !== 'review' || !onNav) return;
+    const onKey = e => { if (e.key === 'n' || e.key === 'N') onNav('knowledge'); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [view, onNav]);
 
   const startReview = () => { setIdx(0); setFlipped(false); setView('review'); };
   const openNew = () => { setForm({ front: '', back: '', tags: [] }); setEditId(null); setView('form'); };
@@ -486,6 +494,7 @@ const Flashcards = ({ cards, setCards, allTags }) => {
           </div>
         )}
         <p className="text-center text-xs text-gray-300 mt-4">再来=1天 · 困难=3天 · 良好=7天 · 简单=14天</p>
+        {onNav && <p className="text-center text-xs text-gray-300 mt-2">按 <kbd className="bg-gray-100 px-1 rounded text-gray-400">N</kbd> 查看相关知识库笔记</p>}
       </div>
     );
   }
@@ -518,21 +527,35 @@ const Flashcards = ({ cards, setCards, allTags }) => {
         </div>
       </div>
 
-      <div className="flex gap-1 mb-5 bg-gray-100 rounded-xl p-1 w-fit">
+      <div className="flex gap-1 mb-4 bg-gray-100 rounded-xl p-1 w-fit">
         {[['due',`今日待复习 (${dueCards.length})`],['all',`全部 (${cards.length})`]].map(([k,l]) => (
-          <button key={k} onClick={() => setFilterMode(k)} className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${filterMode===k?'bg-white shadow text-gray-800':'text-gray-400 hover:text-gray-600'}`}>{l}</button>
+          <button key={k} onClick={() => { setFilterMode(k); setActiveTag(null); }} className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${filterMode===k?'bg-white shadow text-gray-800':'text-gray-400 hover:text-gray-600'}`}>{l}</button>
         ))}
       </div>
 
-      {(filterMode==='due'?dueCards:cards).length === 0 ? (
-        <Card className="text-center py-16">
-          <p className="text-4xl mb-3">{filterMode==='due'?'🎉':'🃏'}</p>
-          <p className="text-gray-400">{filterMode==='due'?'今天没有需要复习的闪卡！':'还没有闪卡'}</p>
-          <Btn onClick={openNew} className="mt-4">创建第一张闪卡</Btn>
-        </Card>
-      ) : (
-        <div className="grid md:grid-cols-3 gap-3">
-          {(filterMode==='due'?dueCards:cards).map(c => (
+      {(() => {
+        const baseList = filterMode === 'due' ? dueCards : cards;
+        const tagCounts = {};
+        baseList.forEach(c => c.tags?.forEach(t => tagCounts[t] = (tagCounts[t]||0)+1));
+        const displayList = activeTag ? baseList.filter(c => c.tags?.includes(activeTag)) : baseList;
+        return <>
+          {Object.keys(tagCounts).length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mb-4">
+              <Badge onClick={() => setActiveTag(null)} color={!activeTag ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600'}>全部 ({baseList.length})</Badge>
+              {Object.entries(tagCounts).sort((a,b)=>b[1]-a[1]).map(([tag,cnt]) => (
+                <Badge key={tag} onClick={() => setActiveTag(activeTag===tag?null:tag)} color={activeTag===tag?'bg-indigo-600 text-white':'bg-gray-100 text-gray-600'}>{tag} ({cnt})</Badge>
+              ))}
+            </div>
+          )}
+          {displayList.length === 0 ? (
+            <Card className="text-center py-16">
+              <p className="text-4xl mb-3">{filterMode==='due'?'🎉':'🃏'}</p>
+              <p className="text-gray-400">{activeTag ? `没有含「${activeTag}」标签的闪卡` : filterMode==='due'?'今天没有需要复习的闪卡！':'还没有闪卡'}</p>
+              <Btn onClick={openNew} className="mt-4">创建第一张闪卡</Btn>
+            </Card>
+          ) : (
+            <div className="grid md:grid-cols-3 gap-3">
+              {displayList.map(c => (
             <Card key={c.id}>
               <div className="flex justify-between items-start mb-1">
                 <p className="text-sm font-semibold text-gray-800 flex-1 pr-2">{c.front}</p>
@@ -546,8 +569,10 @@ const Flashcards = ({ cards, setCards, allTags }) => {
               {c.nextReview && <p className="text-xs text-gray-300 mt-2">下次复习：{fmt(c.nextReview)}</p>}
             </Card>
           ))}
-        </div>
-      )}
+            </div>
+          )}
+        </>;
+      })()}
     </div>
   );
 };
@@ -825,23 +850,52 @@ const PDF_COMMANDS = [
   },
 ];
 
-const PDFImport = ({ setNotes, setFlashcards, setVocab }) => {
+const PDFImport = ({ setNotes, setFlashcards, setVocab, uid }) => {
   const [tab, setTab] = useState('pdf');
   const [json, setJson] = useState('');
   const [err, setErr] = useState('');
   const [ok, setOk] = useState('');
+  const [imgFiles, setImgFiles] = useState([]);
+  const [uploading, setUploading] = useState(false);
 
-  const importJSON = () => {
+  const addImgFiles = e => {
+    const files = Array.from(e.target.files || []);
+    setImgFiles(p => [...p, ...files]);
+    e.target.value = '';
+  };
+  const removeImg = idx => setImgFiles(p => p.filter((_, i) => i !== idx));
+
+  const importJSON = async () => {
     setErr(''); setOk('');
-    try {
-      const d = JSON.parse(json);
-      let cnt = {n:0,f:0,v:0};
-      if (d.notes?.length) { setNotes(p => [...p, ...d.notes.map(x=>({...x,id:genId(),createdAt:new Date().toISOString()}))]); cnt.n = d.notes.length; }
-      if (d.flashcards?.length) { setFlashcards(p => [...p, ...d.flashcards.map(x=>({...x,id:genId(),createdAt:new Date().toISOString()}))]); cnt.f = d.flashcards.length; }
-      if (d.vocabulary?.length) { setVocab(p => [...p, ...d.vocabulary.map(x=>({...x,id:genId(),createdAt:new Date().toISOString()}))]); cnt.v = d.vocabulary.length; }
-      setOk(`✅ 导入成功！笔记 ${cnt.n} 条 · 闪卡 ${cnt.f} 张 · 词汇 ${cnt.v} 个`);
-      setJson('');
-    } catch(e) { setErr('JSON 格式有误：' + e.message); }
+    let d;
+    try { d = JSON.parse(json); } catch(e) { setErr('JSON 格式有误：' + e.message); return; }
+
+    let uploadedImages = [];
+    if (imgFiles.length > 0 && d.notes?.length && uid) {
+      setUploading(true);
+      try {
+        for (const file of imgFiles) {
+          const path = `users/${uid}/images/${genId()}_${file.name}`;
+          const ref = fbStorage.ref(path);
+          await ref.put(file);
+          const url = await ref.getDownloadURL();
+          uploadedImages.push({ url, path, name: file.name });
+        }
+      } catch(e) { setErr('图片上传失败：' + e.message); setUploading(false); return; }
+      setUploading(false);
+    }
+
+    let cnt = {n:0,f:0,v:0};
+    if (d.notes?.length) {
+      setNotes(p => [...p, ...d.notes.map(x=>({ ...x, id:genId(), createdAt:new Date().toISOString(), images:[...(x.images||[]),...uploadedImages] }))]);
+      cnt.n = d.notes.length;
+    }
+    if (d.flashcards?.length) { setFlashcards(p => [...p, ...d.flashcards.map(x=>({...x,id:genId(),createdAt:new Date().toISOString()}))]); cnt.f = d.flashcards.length; }
+    if (d.vocabulary?.length) { setVocab(p => [...p, ...d.vocabulary.map(x=>({...x,id:genId(),createdAt:new Date().toISOString()}))]); cnt.v = d.vocabulary.length; }
+    const imgMsg = uploadedImages.length > 0 ? ` · 图片 ${uploadedImages.length} 张` : '';
+    setOk(`✅ 导入成功！笔记 ${cnt.n} 条 · 闪卡 ${cnt.f} 张 · 词汇 ${cnt.v} 个${imgMsg}`);
+    setJson('');
+    setImgFiles([]);
   };
 
   const EXAMPLE = `{
@@ -891,9 +945,26 @@ const PDFImport = ({ setNotes, setFlashcards, setVocab }) => {
           </Card>
           <Card>
             <Textarea label="粘贴 Claude 整理好的 JSON" value={json} onChange={e => setJson(e.target.value)} placeholder='{"notes":[...],"flashcards":[...],"vocabulary":[...]}' rows={10} />
+            <div className="mb-4">
+              <p className="text-xs text-gray-400 mb-2">可附加图片到导入的笔记（可选）</p>
+              <label className="inline-flex items-center gap-2 cursor-pointer bg-gray-100 hover:bg-gray-200 text-gray-600 text-sm font-medium px-4 py-2 rounded-xl transition-colors">
+                <span>🖼 选择图片</span>
+                <input type="file" accept="image/*" multiple className="hidden" onChange={addImgFiles} />
+              </label>
+              {imgFiles.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-3">
+                  {imgFiles.map((file, idx) => (
+                    <div key={idx} className="relative group">
+                      <img src={URL.createObjectURL(file)} alt={file.name} className="w-16 h-16 object-cover rounded-lg border border-gray-200" />
+                      <button onClick={() => removeImg(idx)} className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">×</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
             {err && <p className="text-red-500 text-sm mb-3">⚠️ {err}</p>}
             {ok && <p className="text-green-600 text-sm mb-3">{ok}</p>}
-            <Btn onClick={importJSON} disabled={!json.trim()}>保存</Btn>
+            <Btn onClick={importJSON} disabled={!json.trim() || uploading}>{uploading ? '上传中…' : '保存'}</Btn>
           </Card>
         </div>
       )}
@@ -1159,10 +1230,10 @@ const App = ({ user }) => {
         <main className="flex-1 overflow-y-auto p-4 md:p-8">
           {page==='dashboard'  && <Dashboard notes={notes} homework={homework} flashcards={flashcards} vocab={vocab} onNav={nav} />}
           {page==='knowledge'  && <KnowledgeBase notes={notes} setNotes={setNotes} allTags={allTags} uid={user.uid} />}
-          {page==='flashcards' && <Flashcards cards={flashcards} setCards={setFlash} allTags={allTags} />}
+          {page==='flashcards' && <Flashcards cards={flashcards} setCards={setFlash} allTags={allTags} onNav={nav} />}
           {page==='homework'   && <HomeworkTracker homework={homework} setHomework={setHomework} />}
           {page==='vocab'      && <VocabularyBook vocab={vocab} setVocab={setVocab} allTags={allTags} />}
-          {page==='pdf'        && <PDFImport setNotes={setNotes} setFlashcards={setFlash} setVocab={setVocab} />}
+          {page==='pdf'        && <PDFImport setNotes={setNotes} setFlashcards={setFlash} setVocab={setVocab} uid={user.uid} />}
           {page==='feedback'   && <FeedbackBoard feedback={feedback} setFeedback={setFeedback} />}
         </main>
       </div>
