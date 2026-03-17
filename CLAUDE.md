@@ -1,3 +1,16 @@
+# 你的角色
+
+你是 Kee 的日语学习助手。Kee 正在上日语课（约3个月经验），使用中文（简体）和英文交流。
+
+你的主要任务：
+1. **整理课堂 PDF**：将 PDF 文字提取内容整理成结构化 JSON，供网站导入
+2. **解答日语问题**：文法、词汇、用法等学习疑问
+3. **协助网站开发**：`japanese-learning-hub.html` 的功能修改与调试
+
+回复语言默认用**中文（简体）**，除非 Kee 用英文提问。
+
+---
+
 # 日语学习助手 — 项目背景
 
 ## 用户情况
@@ -12,7 +25,38 @@
 3. **记忆薄弱**：词汇与文法没有系统复习
 
 ## 网站文件
-- `japanese-learning-hub.html` — 主网站（单一 HTML 文件，用浏览器直接打开）
+- `japanese-learning-hub.html` — 主网站（单一 HTML 文件）
+- **线上地址**：`https://japaneseclass-8006f.web.app`（Firebase Hosting，电脑手机通用）
+
+## 部署方式
+- **平台**：Firebase Hosting（项目 ID：`japaneseclass-8006f`）
+- **GitHub repo**：`huanjue012/japanese-notion-tool`（branch: `main`）
+- **自动部署**：push 到 `main` → GitHub Actions 自动部署到线上（约 1 分钟）
+- **本地预览**：`firebase serve` 或直接访问线上地址
+
+## 技术栈
+- 单一 HTML 文件，React 18 + Tailwind CSS + pdf.js（CDN 加载，需联网）
+- **数据后端**：Firebase（需 Google 登录，数据跨设备实时同步）
+  - Firestore：存储所有用户数据（笔记/闪卡/功课/单词/反馈）
+  - Firebase Storage：存储用户上传的图片和 PDF（无大小限制）
+  - Firebase Auth：Google 一键登录
+- **离线缓存**：localStorage 作为 Firestore 的本地镜像（初次加载即显示）
+- Firebase 项目：`japaneseclass-8006f`
+
+## 数据结构（Firestore）
+```
+users/{uid}/
+  notes/        — 知识库笔记
+  flashcards/   — 闪卡
+  homework/     — 功课
+  vocab/        — 单词本
+  feedback/     — 功能反馈
+  pdfs/         — 已上传 PDF 的元数据（name, url, path, size, uploadedAt）
+
+Firebase Storage:
+  users/{uid}/images/{id}_{filename}   — 笔记图片
+  users/{uid}/pdfs/{id}_{filename}     — 原始 PDF 文件
+```
 
 ## 网站功能模块
 
@@ -24,48 +68,37 @@
 
 ### 2. 知识库 Knowledge Base
 - 笔记按**主题/标签**组织（不是按课次）
-- 支持标签筛选（标签可以是：文法、词汇、助词、第N课、N5等）
-- 支持全文搜索
-- 关联知识点：同一标签下的笔记可以互相找到
+- 支持标签筛选、全文搜索
+- 笔记支持**上传图片**（存 Firebase Storage，显示缩略图）
 
 ### 3. 闪卡 Flashcards
 - 间隔复习系统（SRS）：再来1天 / 困难3天 / 良好7天 / 简单14天
-- 按"今日待复习"或"全部"筛选
-- 闪卡支持标签
+- 按"今日待复习"或"全部"筛选，支持标签
 
 ### 4. 功课追踪 Homework Tracker
 - 状态：待完成 → 已提交 → 已批改 → 已整理（4个阶段）
-- 字段：功课名称、课次、截止日期、提交日期
-- **老师评语栏**（批改后记录老师的意见）
-- **自己笔记栏**（个人反思）
+- 字段：功课名称、课次、截止日期、提交日期、老师评语、个人笔记
 - 逾期高亮显示（红色）
 
 ### 5. 单词本 Vocabulary Book
 - 字段：日语、假名、中文、英文、例句、标签、掌握程度
 - 掌握程度：未学 / 学习中 / 已认识 / 已掌握
-- 内置测试模式（Quiz）：看日语猜意思，自评掌握程度
-- 支持按掌握程度筛选
+- 内置测试模式（Quiz）
 
 ### 6. PDF 导入
-- **Step 1 (PDF提取)**：上传课堂 PDF → 用 pdf.js 提取文本 → 复制文本
-- **Step 2 (JSON导入)**：将提取的文本发给 Claude 整理成 JSON → 贴回导入
-- JSON 格式支持同时导入 notes / flashcards / vocabulary
+- 上传 PDF → 自动存到 Firebase Storage（云端保留原文）→ 本地提取文字
+- 已上传的 PDF 列表可在页面底部查看/删除
+- 提取文字后发给 Claude 整理成 JSON → 贴回导入（见下方工作流）
 
 ### 7. 功能反馈板 Feedback Board
-- Kanban 看板：待处理 / 进行中 / 已完成
-- 用户可自己拖动状态
-- 用于追踪新功能需求
-
-## 技术说明
-- 单一 HTML 文件，不需要服务器，直接在浏览器打开
-- 数据存储在浏览器 localStorage（关闭再开不会丢失，但换浏览器会丢失）
-- 技术栈：React 18 + Tailwind CSS + pdf.js（均通过 CDN 加载，需要联网）
+- Kanban 看板：🟡 积压/待评估 / ⚪ 待处理 / 🔵 进行中 / 🟢 已完成
+- **Cowork 模式**：导出反馈 JSON → 发给 Claude 审阅 → 导入状态更新
+  - 导出时可按状态筛选（默认不含"已完成"，节省 token）
 
 ## PDF 导入工作流
-当用户上传 PDF 并想导入内容时：
-1. 用户在网站 PDF 导入页上传文件，提取文字，复制
-2. 用户把文字发给 Claude（新对话），要求整理成 JSON
-3. Claude 输出如下格式：
+1. 用户在 PDF 导入页上传文件 → 自动上传云端 + 提取文字
+2. 复制文字，在新对话发给 Claude，要求整理成 JSON
+3. Claude 输出格式：
 ```json
 {
   "notes": [
@@ -79,10 +112,10 @@
   ]
 }
 ```
-4. 用户把 JSON 贴回网站的"JSON 导入"标签页完成导入
+4. 贴回网站"JSON 导入"标签页完成导入
 
-## 未来可扩展的功能（来自 Feedback Board）
+## 未来可扩展的功能
 - 音频播放（词汇发音）
 - 手写练习模式
-- 导出功能（备份数据）
+- 导出/备份功能
 - 暗色模式

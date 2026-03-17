@@ -51,8 +51,6 @@ firebase.initializeApp(FIREBASE_CONFIG);
 const fbAuth    = firebase.auth();
 const fbDb      = firebase.firestore();
 const fbStorage = firebase.storage();
-const IMAGE_MAX_BYTES = 5  * 1024 * 1024; //  5 MB
-const PDF_MAX_BYTES   = 10 * 1024 * 1024; // 10 MB
 
 // ─── FIRESTORE COLLECTION HOOK ────────────────────────────────────────────────
 // Drop-in replacement for useLocalStorage — syncs to Firestore in real time.
@@ -306,7 +304,6 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid }) => {
   const openEdit = n => { setForm({ ...n, images: n.images || [] }); setModal(n.id); };
 
   const uploadImage = async (file) => {
-    if (file.size > IMAGE_MAX_BYTES) { alert('图片不能超过 5 MB'); return; }
     if (!file.type.startsWith('image/')) { alert('请选择图片文件'); return; }
     setUploadingImg(true);
     try {
@@ -793,7 +790,6 @@ const PDFImport = ({ setNotes, setFlashcards, setVocab, uid }) => {
     const f = e.target.files?.[0];
     if (!f) return;
     if (f.type !== 'application/pdf') { alert('请选择 PDF 文件'); return; }
-    if (f.size > PDF_MAX_BYTES) { alert('PDF 不能超过 10 MB'); return; }
     setFileName(f.name); setLoading(true); setUploading(true); setText(''); setErr(''); setOk(''); setPdfUrl('');
     try {
       // Upload to Firebase Storage
