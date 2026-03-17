@@ -329,7 +329,10 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid }) => {
     <div className="max-w-4xl mx-auto">
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-xl font-bold text-gray-800">📝 知识库</h1>
-        <Btn onClick={openNew}>+ 新建笔记</Btn>
+        <div className="flex gap-2">
+          {notes.length > 0 && <Btn variant="danger" onClick={() => { if (confirm(`删除全部 ${notes.length} 条笔记？此操作不可恢复。`)) setNotes([]); }}>🗑 全部删除</Btn>}
+          <Btn onClick={openNew}>+ 新建笔记</Btn>
+        </div>
       </div>
 
       <input value={search} onChange={e => setSearch(e.target.value)} placeholder="搜索笔记标题或内容..."
@@ -489,6 +492,7 @@ const Flashcards = ({ cards, setCards, allTags }) => {
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-xl font-bold text-gray-800">🃏 闪卡复习</h1>
         <div className="flex gap-2">
+          {cards.length > 0 && <Btn variant="danger" onClick={() => { if (confirm(`删除全部 ${cards.length} 张闪卡？此操作不可恢复。`)) setCards([]); }}>🗑 全部删除</Btn>}
           <Btn variant="secondary" onClick={openNew}>+ 新建</Btn>
           {cards.length > 0 && <Btn onClick={startReview}>开始复习 {dueCards.length > 0 && `(${dueCards.length} 到期)`}</Btn>}
         </div>
@@ -563,7 +567,10 @@ const HomeworkTracker = ({ homework, setHomework }) => {
     <div className="max-w-3xl mx-auto">
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-xl font-bold text-gray-800">📋 功课追踪</h1>
-        <Btn onClick={openNew}>+ 添加功课</Btn>
+        <div className="flex gap-2">
+          {homework.length > 0 && <Btn variant="danger" onClick={() => { if (confirm(`删除全部 ${homework.length} 条功课记录？此操作不可恢复。`)) setHomework([]); }}>🗑 全部删除</Btn>}
+          <Btn onClick={openNew}>+ 添加功课</Btn>
+        </div>
       </div>
 
       <div className="flex flex-wrap gap-2 mb-5">
@@ -705,6 +712,7 @@ const VocabularyBook = ({ vocab, setVocab, allTags }) => {
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-xl font-bold text-gray-800">📖 单词本</h1>
         <div className="flex gap-2">
+          {vocab.length > 0 && <Btn variant="danger" onClick={() => { if (confirm(`删除全部 ${vocab.length} 个词汇？此操作不可恢复。`)) setVocab([]); }}>🗑 全部删除</Btn>}
           {vocab.length > 0 && <Btn variant="secondary" onClick={() => { setView('quiz'); setQuizIdx(0); setShowAns(false); }}>🎯 测试</Btn>}
           <Btn onClick={openNew}>+ 添加</Btn>
         </div>
