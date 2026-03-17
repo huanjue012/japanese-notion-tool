@@ -1,0 +1,1220 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>日语学习助手 | Japanese Learning Hub</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
+    .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .line-clamp-3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+    .card-flip { perspective: 1000px; }
+    .card-flip-inner { transition: transform 0.5s; transform-style: preserve-3d; }
+    .card-flip-inner.flipped { transform: rotateY(180deg); }
+    .card-face { backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+    .card-back { transform: rotateY(180deg); }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .animate-spin { animation: spin 1s linear infinite; }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useCallback, useMemo, useRef } = React;
+
+// ─── UTILITIES ────────────────────────────────────────────────────────────────
+const genId = () => Date.now().toString(36) + Math.random().toString(36).substr(2);
+
+// ─── FIREBASE SETUP ───────────────────────────────────────────────────────────
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyA3lZwqbGQKLyaxR5ws4XZ8LfRDcvVTLhI",
+  authDomain: "japaneseclass-8006f.firebaseapp.com",
+  projectId: "japaneseclass-8006f",
+  storageBucket: "japaneseclass-8006f.firebasestorage.app",
+  messagingSenderId: "1078077570587",
+  appId: "1:1078077570587:web:b7dc0e96fb8bf55a7b82be"
+};
+firebase.initializeApp(FIREBASE_CONFIG);
+const fbAuth    = firebase.auth();
+const fbDb      = firebase.firestore();
+const fbStorage = firebase.storage();
+const IMAGE_MAX_BYTES = 5  * 1024 * 1024; //  5 MB
+const PDF_MAX_BYTES   = 10 * 1024 * 1024; // 10 MB
+
+// ─── FIRESTORE COLLECTION HOOK ────────────────────────────────────────────────
+// Drop-in replacement for useLocalStorage — syncs to Firestore in real time.
+// Uses localStorage as initial cache so the UI loads instantly.
+const useFirestoreCollection = (collectionName, uid) => {
+  const lsKey = `jp_${collectionName}`;
+  const [data, setDataLocal] = useState(() => {
+    try { const s = localStorage.getItem(lsKey); return s ? JSON.parse(s) : []; }
+    catch { return []; }
+  });
+
+  useEffect(() => {
+    if (!uid) return;
+    const colRef = fbDb.collection('users').doc(uid).collection(collectionName);
+    const unsub = colRef.onSnapshot(snap => {
+      const items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      setDataLocal(items);
+      try { localStorage.setItem(lsKey, JSON.stringify(items)); } catch {}
+    });
+    return unsub;
+  }, [uid, collectionName]);
+
+  const setData = useCallback((updater) => {
+    if (!uid) return;
+    setDataLocal(prev => {
+      const next = typeof updater === 'function' ? updater(prev) : updater;
+      const colRef = fbDb.collection('users').doc(uid).collection(collectionName);
+      const prevMap = new Map(prev.map(i => [i.id, i]));
+      const nextMap = new Map(next.map(i => [i.id, i]));
+      for (const [id] of prevMap)
+        if (!nextMap.has(id)) colRef.doc(id).delete().catch(console.error);
+      for (const [id, item] of nextMap) {
+        const old = prevMap.get(id);
+        if (!old || JSON.stringify(item) !== JSON.stringify(old)) {
+          const { id: _, ...data } = item;
+          colRef.doc(id).set(data).catch(console.error);
+        }
+      }
+      try { localStorage.setItem(lsKey, JSON.stringify(next)); } catch {}
+      return next;
+    });
+  }, [uid, collectionName]);
+
+  return [data, setData];
+};
+
+const useLocalStorage = (key, init) => {
+  const [val, setVal] = useState(() => {
+    try { const s = localStorage.getItem(key); return s ? JSON.parse(s) : init; }
+    catch { return init; }
+  });
+  const set = useCallback(v => {
+    setVal(prev => {
+      const next = typeof v === 'function' ? v(prev) : v;
+      try { localStorage.setItem(key, JSON.stringify(next)); } catch {}
+      return next;
+    });
+  }, [key]);
+  return [val, set];
+};
+
+const fmt = (iso) => iso ? new Date(iso).toLocaleDateString('zh-CN') : '—';
+const isOverdue = (hw) => hw.status !== 'done' && hw.dueDate && new Date(hw.dueDate) < new Date();
+
+// ─── UI PRIMITIVES ─────────────────────────────────────────────────────────────
+const Badge = ({ children, color = 'bg-indigo-100 text-indigo-700', onClick, onRemove, className = '' }) => (
+  <span onClick={onClick} className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${color} ${onClick ? 'cursor-pointer hover:opacity-75' : ''} ${className}`}>
+    {children}
+    {onRemove && <button onClick={e => { e.stopPropagation(); onRemove(); }} className="hover:opacity-60 font-bold">×</button>}
+  </span>
+);
+
+const Btn = ({ children, onClick, variant = 'primary', size = 'md', disabled, className = '' }) => {
+  const vs = { primary: 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm', secondary: 'bg-gray-100 hover:bg-gray-200 text-gray-700', danger: 'bg-red-500 hover:bg-red-600 text-white', ghost: 'hover:bg-gray-100 text-gray-600', success: 'bg-emerald-500 hover:bg-emerald-600 text-white' };
+  const ss = { sm: 'px-2.5 py-1 text-xs', md: 'px-4 py-2 text-sm', lg: 'px-5 py-2.5' };
+  return <button onClick={onClick} disabled={disabled} className={`rounded-lg font-medium transition-colors ${vs[variant]} ${ss[size]} ${disabled ? 'opacity-40 cursor-not-allowed' : ''} ${className}`}>{children}</button>;
+};
+
+const Card = ({ children, className = '', onClick }) => (
+  <div onClick={onClick} className={`bg-white rounded-xl border border-gray-100 shadow-sm p-4 ${onClick ? 'cursor-pointer hover:shadow-md transition-shadow' : ''} ${className}`}>{children}</div>
+);
+
+const Modal = ({ open, onClose, title, children, wide }) => {
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={onClose}>
+      <div onClick={e => e.stopPropagation()} className={`bg-white rounded-2xl shadow-2xl w-full ${wide ? 'max-w-2xl' : 'max-w-lg'} max-h-[90vh] overflow-y-auto`}>
+        <div className="flex items-center justify-between px-5 py-4 border-b sticky top-0 bg-white rounded-t-2xl">
+          <h3 className="font-semibold text-gray-800">{title}</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl leading-none w-7 h-7 flex items-center justify-center">×</button>
+        </div>
+        <div className="p-5">{children}</div>
+      </div>
+    </div>
+  );
+};
+
+const Field = ({ label, children }) => (
+  <div className="mb-3">
+    {label && <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wide">{label}</label>}
+    {children}
+  </div>
+);
+
+const Input = ({ label, ...p }) => (
+  <Field label={label}>
+    <input className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-transparent" {...p} />
+  </Field>
+);
+
+const Textarea = ({ label, rows = 4, ...p }) => (
+  <Field label={label}>
+    <textarea rows={rows} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-transparent resize-none" {...p} />
+  </Field>
+);
+
+const Select = ({ label, options, ...p }) => (
+  <Field label={label}>
+    <select className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 bg-white" {...p}>
+      {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+    </select>
+  </Field>
+);
+
+const TagSelector = ({ selected = [], onChange, pool = [] }) => {
+  const [inp, setInp] = useState('');
+  const add = t => { if (t && !selected.includes(t)) onChange([...selected, t]); setInp(''); };
+  const suggestions = pool.filter(t => !selected.includes(t) && t.toLowerCase().includes(inp.toLowerCase())).slice(0, 6);
+  return (
+    <Field label="标签">
+      <div className="flex flex-wrap gap-1 mb-2">
+        {selected.map(t => <Badge key={t} color="bg-indigo-100 text-indigo-700" onRemove={() => onChange(selected.filter(x => x !== t))}>{t}</Badge>)}
+      </div>
+      <div className="relative">
+        <input value={inp} onChange={e => setInp(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); add(inp); } }}
+          placeholder="输入标签后按 Enter 添加..." className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+        {inp && suggestions.length > 0 && (
+          <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg mt-1 z-10 overflow-hidden">
+            {suggestions.map(t => <div key={t} onClick={() => add(t)} className="px-3 py-2 text-sm hover:bg-indigo-50 cursor-pointer">{t}</div>)}
+          </div>
+        )}
+      </div>
+    </Field>
+  );
+};
+
+// ─── INITIAL DATA ────────────────────────────────────────────────────────────
+const DEFAULT_TAGS = ['文法','词汇','助词','动词','形容词','打招呼','数字','时间','N5','第1课','第2课','第3课'];
+
+// ─── DASHBOARD ────────────────────────────────────────────────────────────────
+const Dashboard = ({ notes, homework, flashcards, vocab, onNav }) => {
+  const pending = homework.filter(h => h.status !== 'done');
+  const overdue = homework.filter(isOverdue);
+  const thisWeek = homework.filter(h => {
+    if (h.status === 'done' || !h.dueDate) return false;
+    const d = (new Date(h.dueDate) - new Date()) / 86400000;
+    return d >= 0 && d <= 7;
+  });
+  const mastered = vocab.filter(v => v.mastery === 'mastered').length;
+  const dueCards = flashcards.filter(c => !c.nextReview || new Date(c.nextReview) <= new Date()).length;
+
+  const stats = [
+    { label: '笔记', value: notes.length, icon: '📝', grad: 'from-violet-500 to-indigo-600', page: 'knowledge' },
+    { label: '闪卡', value: flashcards.length, icon: '🃏', grad: 'from-cyan-500 to-blue-600', page: 'flashcards' },
+    { label: '词汇掌握', value: `${mastered}/${vocab.length}`, icon: '✅', grad: 'from-emerald-500 to-teal-600', page: 'vocab' },
+    { label: '待交功课', value: pending.length, icon: '📋', grad: 'from-orange-500 to-red-500', page: 'homework' },
+  ];
+
+  return (
+    <div className="max-w-3xl mx-auto">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-800">おはようございます！👋</h1>
+        <p className="text-gray-400 text-sm mt-1">继续加油，你的日语学习旅程还在进行中。</p>
+      </div>
+
+      {overdue.length > 0 && (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-4 flex gap-3 cursor-pointer" onClick={() => onNav('homework')}>
+          <span className="text-xl">⚠️</span>
+          <div><p className="font-semibold text-red-700 text-sm">逾期功课提醒</p><p className="text-red-500 text-xs mt-0.5">你有 {overdue.length} 份功课已过截止日期，记得尽快处理！</p></div>
+        </div>
+      )}
+      {dueCards > 0 && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4 flex gap-3 cursor-pointer" onClick={() => onNav('flashcards')}>
+          <span className="text-xl">🃏</span>
+          <div><p className="font-semibold text-amber-700 text-sm">今日复习提醒</p><p className="text-amber-600 text-xs mt-0.5">有 {dueCards} 张闪卡等待复习！</p></div>
+        </div>
+      )}
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+        {stats.map(s => (
+          <div key={s.label} onClick={() => onNav(s.page)} className={`bg-gradient-to-br ${s.grad} rounded-xl p-4 text-white cursor-pointer hover:opacity-90 transition-opacity`}>
+            <div className="text-2xl mb-1">{s.icon}</div>
+            <div className="text-2xl font-bold">{s.value}</div>
+            <div className="text-xs opacity-80 mt-0.5">{s.label}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-4">
+        <Card>
+          <h2 className="font-semibold text-gray-700 mb-3 text-sm">📋 本周功课</h2>
+          {thisWeek.length === 0
+            ? <p className="text-gray-300 text-sm text-center py-4">本周没有截止的功课 🎉</p>
+            : thisWeek.map(h => (
+              <div key={h.id} className="flex items-center justify-between py-2 border-b last:border-0">
+                <span className="text-sm text-gray-700 truncate flex-1 mr-2">{h.title}</span>
+                <span className="text-xs text-gray-400 shrink-0">{h.dueDate}</span>
+              </div>
+            ))
+          }
+        </Card>
+        <Card>
+          <h2 className="font-semibold text-gray-700 mb-3 text-sm">📚 最近笔记</h2>
+          {notes.length === 0
+            ? <p className="text-gray-300 text-sm text-center py-4">还没有笔记，快去添加吧！</p>
+            : [...notes].reverse().slice(0, 5).map(n => (
+              <div key={n.id} className="py-2 border-b last:border-0">
+                <p className="text-sm font-medium text-gray-700 truncate">{n.title}</p>
+                <div className="flex flex-wrap gap-1 mt-1">{n.tags?.slice(0,3).map(t => <Badge key={t}>{t}</Badge>)}</div>
+              </div>
+            ))
+          }
+        </Card>
+      </div>
+    </div>
+  );
+};
+
+// ─── KNOWLEDGE BASE ────────────────────────────────────────────────────────────
+const KnowledgeBase = ({ notes, setNotes, allTags, uid }) => {
+  const [search, setSearch] = useState('');
+  const [activeTag, setActiveTag] = useState(null);
+  const [modal, setModal] = useState(null);
+  const [form, setForm] = useState({ title: '', content: '', tags: [], images: [] });
+  const [uploadingImg, setUploadingImg] = useState(false);
+
+  const tagCounts = useMemo(() => {
+    const c = {};
+    notes.forEach(n => n.tags?.forEach(t => c[t] = (c[t] || 0) + 1));
+    return c;
+  }, [notes]);
+
+  const filtered = useMemo(() => notes.filter(n => {
+    const q = search.toLowerCase();
+    const ms = !q || n.title.toLowerCase().includes(q) || n.content.toLowerCase().includes(q);
+    const mt = !activeTag || n.tags?.includes(activeTag);
+    return ms && mt;
+  }), [notes, search, activeTag]);
+
+  const openNew = () => { setForm({ title: '', content: '', tags: activeTag ? [activeTag] : [], images: [] }); setModal('new'); };
+  const openEdit = n => { setForm({ ...n, images: n.images || [] }); setModal(n.id); };
+
+  const uploadImage = async (file) => {
+    if (file.size > IMAGE_MAX_BYTES) { alert('图片不能超过 5 MB'); return; }
+    if (!file.type.startsWith('image/')) { alert('请选择图片文件'); return; }
+    setUploadingImg(true);
+    try {
+      const path = `users/${uid}/images/${genId()}_${file.name}`;
+      const ref = fbStorage.ref(path);
+      await ref.put(file);
+      const url = await ref.getDownloadURL();
+      setForm(p => ({ ...p, images: [...(p.images || []), { url, path, name: file.name }] }));
+    } catch (e) { alert('上传失败：' + e.message); }
+    finally { setUploadingImg(false); }
+  };
+
+  const removeImage = (path) => setForm(p => ({ ...p, images: p.images.filter(i => i.path !== path) }));
+  const save = () => {
+    if (!form.title.trim()) return;
+    if (modal === 'new') setNotes(p => [...p, { ...form, id: genId(), createdAt: new Date().toISOString() }]);
+    else setNotes(p => p.map(n => n.id === modal ? { ...n, ...form, updatedAt: new Date().toISOString() } : n));
+    setModal(null);
+  };
+  const del = id => { if (confirm('确定删除此笔记？')) setNotes(p => p.filter(n => n.id !== id)); };
+
+  return (
+    <div className="max-w-4xl mx-auto">
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-xl font-bold text-gray-800">📝 知识库</h1>
+        <Btn onClick={openNew}>+ 新建笔记</Btn>
+      </div>
+
+      <input value={search} onChange={e => setSearch(e.target.value)} placeholder="搜索笔记标题或内容..."
+        className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+
+      <div className="flex flex-wrap gap-1.5 mb-4">
+        <Badge onClick={() => setActiveTag(null)} color={!activeTag ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600'}>全部 ({notes.length})</Badge>
+        {Object.entries(tagCounts).sort((a,b) => b[1]-a[1]).map(([tag, cnt]) => (
+          <Badge key={tag} onClick={() => setActiveTag(activeTag === tag ? null : tag)} color={activeTag === tag ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600'}>{tag} ({cnt})</Badge>
+        ))}
+      </div>
+
+      {filtered.length === 0 ? (
+        <Card className="text-center py-16">
+          <p className="text-4xl mb-3">📭</p>
+          <p className="text-gray-400 mb-4">{search || activeTag ? '没有符合条件的笔记' : '还没有笔记'}</p>
+          <Btn onClick={openNew}>创建第一篇笔记</Btn>
+        </Card>
+      ) : (
+        <div className="grid md:grid-cols-2 gap-3">
+          {filtered.map(n => (
+            <Card key={n.id} onClick={() => openEdit(n)}>
+              <div className="flex items-start justify-between mb-1">
+                <h3 className="font-semibold text-gray-800 text-sm leading-snug flex-1 pr-2">{n.title}</h3>
+                <button onClick={e => { e.stopPropagation(); del(n.id); }} className="text-gray-200 hover:text-red-400 shrink-0 text-base">🗑</button>
+              </div>
+              <p className="text-xs text-gray-400 line-clamp-3 mb-3">{n.content}</p>
+              {n.images?.length > 0 && (
+                <div className="flex flex-wrap gap-1 mb-2">
+                  {n.images.map((img, i) => <img key={i} src={img.url} className="w-14 h-14 object-cover rounded-lg border border-gray-100" />)}
+                </div>
+              )}
+              <div className="flex flex-wrap gap-1">
+                {n.tags?.map(t => <Badge key={t}>{t}</Badge>)}
+              </div>
+              <p className="text-xs text-gray-300 mt-2">{fmt(n.updatedAt || n.createdAt)}</p>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      <Modal open={!!modal} onClose={() => setModal(null)} title={modal === 'new' ? '新建笔记' : '编辑笔记'} wide>
+        <Input label="标题" value={form.title} onChange={e => setForm(p => ({...p, title: e.target.value}))} placeholder="笔记标题…" />
+        <Textarea label="内容" value={form.content} onChange={e => setForm(p => ({...p, content: e.target.value}))} placeholder="记录知识点、例句、文法解释…" rows={10} />
+        <TagSelector selected={form.tags} onChange={tags => setForm(p => ({...p, tags}))} pool={allTags} />
+        <div className="mt-3">
+          <p className="text-xs font-semibold text-gray-500 mb-1.5">图片</p>
+          <div className="flex flex-wrap gap-2 mb-2">
+            {(form.images || []).map((img, i) => (
+              <div key={i} className="relative group">
+                <img src={img.url} className="w-16 h-16 object-cover rounded-lg border border-gray-200" />
+                <button onClick={() => removeImage(img.path)}
+                  className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">×</button>
+              </div>
+            ))}
+            <label className="w-16 h-16 border-2 border-dashed border-gray-200 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/30 transition-all">
+              <input type="file" accept="image/*" onChange={e => e.target.files?.[0] && uploadImage(e.target.files[0])} className="hidden" />
+              {uploadingImg ? <div className="w-4 h-4 border-2 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" /> : <span className="text-gray-300 text-xl">+</span>}
+            </label>
+          </div>
+          <p className="text-xs text-gray-300">每张图片最大 5 MB</p>
+        </div>
+        <div className="flex justify-end gap-2 pt-2">
+          <Btn variant="secondary" onClick={() => setModal(null)}>取消</Btn>
+          <Btn onClick={save}>保存</Btn>
+        </div>
+      </Modal>
+    </div>
+  );
+};
+
+// ─── FLASHCARDS ───────────────────────────────────────────────────────────────
+const INTERVALS = { 1: 1, 2: 3, 3: 7, 4: 14 };
+
+const Flashcards = ({ cards, setCards, allTags }) => {
+  const [view, setView] = useState('list'); // list | review | form
+  const [editId, setEditId] = useState(null);
+  const [form, setForm] = useState({ front: '', back: '', tags: [] });
+  const [filterMode, setFilterMode] = useState('due');
+  const [idx, setIdx] = useState(0);
+  const [flipped, setFlipped] = useState(false);
+
+  const dueCards = useMemo(() => cards.filter(c => !c.nextReview || new Date(c.nextReview) <= new Date()), [cards]);
+  const reviewList = filterMode === 'due' ? dueCards : cards;
+
+  const startReview = () => { setIdx(0); setFlipped(false); setView('review'); };
+  const openNew = () => { setForm({ front: '', back: '', tags: [] }); setEditId(null); setView('form'); };
+  const openEdit = c => { setForm({...c}); setEditId(c.id); setView('form'); };
+
+  const save = () => {
+    if (!form.front.trim() || !form.back.trim()) return;
+    if (editId) setCards(p => p.map(c => c.id === editId ? {...c, ...form} : c));
+    else setCards(p => [...p, { ...form, id: genId(), createdAt: new Date().toISOString() }]);
+    setView('list');
+  };
+
+  const rate = q => {
+    const next = new Date(); next.setDate(next.getDate() + INTERVALS[q]);
+    setCards(p => p.map(c => c.id === reviewList[idx].id ? { ...c, nextReview: next.toISOString(), lastReviewed: new Date().toISOString(), reviewCount: (c.reviewCount||0)+1, difficulty: q } : c));
+    if (idx < reviewList.length - 1) { setIdx(i => i+1); setFlipped(false); }
+    else setView('list');
+  };
+
+  const del = id => { if (confirm('删除此闪卡？')) setCards(p => p.filter(c => c.id !== id)); };
+
+  if (view === 'review' && reviewList.length > 0) {
+    const card = reviewList[idx] || reviewList[0];
+    return (
+      <div className="max-w-lg mx-auto">
+        <div className="flex justify-between items-center mb-3">
+          <Btn variant="ghost" onClick={() => setView('list')}>← 返回</Btn>
+          <span className="text-sm text-gray-400">{idx + 1} / {reviewList.length}</span>
+        </div>
+        <div className="w-full bg-gray-100 rounded-full h-1.5 mb-6">
+          <div className="bg-indigo-500 h-1.5 rounded-full transition-all duration-500" style={{ width: `${(idx / reviewList.length) * 100}%` }} />
+        </div>
+        <div className="card-flip mb-6" style={{minHeight: '200px'}}>
+          <div className={`card-flip-inner relative w-full`} style={{minHeight: '200px'}}>
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 text-center flex flex-col items-center justify-center cursor-pointer min-h-52 hover:shadow-xl transition-shadow" onClick={() => setFlipped(f => !f)} style={{minHeight: '200px'}}>
+              <p className="text-xs text-gray-300 mb-4 uppercase tracking-widest">{flipped ? '答案' : '点击翻转查看答案'}</p>
+              <p className="text-2xl font-medium text-gray-800 leading-relaxed">{flipped ? card.back : card.front}</p>
+              {card.tags?.length > 0 && <div className="flex flex-wrap gap-1 mt-4 justify-center">{card.tags.map(t => <Badge key={t}>{t}</Badge>)}</div>}
+            </div>
+          </div>
+        </div>
+        {flipped && (
+          <div className="grid grid-cols-4 gap-2">
+            {[{q:1,l:'再来',c:'bg-red-100 text-red-700 hover:bg-red-200 border border-red-200'},{q:2,l:'困难',c:'bg-orange-100 text-orange-700 hover:bg-orange-200 border border-orange-200'},{q:3,l:'良好',c:'bg-blue-100 text-blue-700 hover:bg-blue-200 border border-blue-200'},{q:4,l:'简单',c:'bg-green-100 text-green-700 hover:bg-green-200 border border-green-200'}].map(({q,l,c}) => (
+              <button key={q} onClick={() => rate(q)} className={`rounded-xl py-3 font-semibold text-sm transition-colors ${c}`}>{l}</button>
+            ))}
+          </div>
+        )}
+        <p className="text-center text-xs text-gray-300 mt-4">再来=1天 · 困难=3天 · 良好=7天 · 简单=14天</p>
+      </div>
+    );
+  }
+
+  if (view === 'form') {
+    return (
+      <div className="max-w-lg mx-auto">
+        <div className="flex items-center gap-3 mb-5">
+          <Btn variant="ghost" onClick={() => setView('list')}>← 返回</Btn>
+          <h1 className="text-lg font-bold">{editId ? '编辑闪卡' : '新建闪卡'}</h1>
+        </div>
+        <Card>
+          <Textarea label="正面（日语 / 问题）" value={form.front} onChange={e => setForm(p => ({...p, front: e.target.value}))} placeholder="例：おはようございます" rows={3} />
+          <Textarea label="背面（答案 / 解释）" value={form.back} onChange={e => setForm(p => ({...p, back: e.target.value}))} placeholder="例：早上好（正式用语）" rows={3} />
+          <TagSelector selected={form.tags} onChange={tags => setForm(p => ({...p, tags}))} pool={allTags} />
+          <div className="flex justify-end gap-2"><Btn variant="secondary" onClick={() => setView('list')}>取消</Btn><Btn onClick={save}>保存</Btn></div>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-4xl mx-auto">
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-xl font-bold text-gray-800">🃏 闪卡复习</h1>
+        <div className="flex gap-2">
+          <Btn variant="secondary" onClick={openNew}>+ 新建</Btn>
+          {cards.length > 0 && <Btn onClick={startReview}>开始复习 {dueCards.length > 0 && `(${dueCards.length} 到期)`}</Btn>}
+        </div>
+      </div>
+
+      <div className="flex gap-1 mb-5 bg-gray-100 rounded-xl p-1 w-fit">
+        {[['due',`今日待复习 (${dueCards.length})`],['all',`全部 (${cards.length})`]].map(([k,l]) => (
+          <button key={k} onClick={() => setFilterMode(k)} className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${filterMode===k?'bg-white shadow text-gray-800':'text-gray-400 hover:text-gray-600'}`}>{l}</button>
+        ))}
+      </div>
+
+      {(filterMode==='due'?dueCards:cards).length === 0 ? (
+        <Card className="text-center py-16">
+          <p className="text-4xl mb-3">{filterMode==='due'?'🎉':'🃏'}</p>
+          <p className="text-gray-400">{filterMode==='due'?'今天没有需要复习的闪卡！':'还没有闪卡'}</p>
+          <Btn onClick={openNew} className="mt-4">创建第一张闪卡</Btn>
+        </Card>
+      ) : (
+        <div className="grid md:grid-cols-3 gap-3">
+          {(filterMode==='due'?dueCards:cards).map(c => (
+            <Card key={c.id}>
+              <div className="flex justify-between items-start mb-1">
+                <p className="text-sm font-semibold text-gray-800 flex-1 pr-2">{c.front}</p>
+                <div className="flex gap-1 shrink-0">
+                  <button onClick={() => openEdit(c)} className="text-gray-200 hover:text-blue-400 text-sm">✏️</button>
+                  <button onClick={() => del(c.id)} className="text-gray-200 hover:text-red-400 text-sm">🗑</button>
+                </div>
+              </div>
+              <p className="text-xs text-gray-400 border-t pt-2">{c.back}</p>
+              <div className="flex flex-wrap gap-1 mt-2">{c.tags?.map(t => <Badge key={t}>{t}</Badge>)}</div>
+              {c.nextReview && <p className="text-xs text-gray-300 mt-2">下次复习：{fmt(c.nextReview)}</p>}
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ─── HOMEWORK TRACKER ─────────────────────────────────────────────────────────
+const HW_STATUS = {
+  pending:   { label: '待完成', color: 'bg-red-100 text-red-700', dot: '🔴' },
+  submitted: { label: '已提交', color: 'bg-yellow-100 text-yellow-700', dot: '🟡' },
+  feedback:  { label: '已批改', color: 'bg-blue-100 text-blue-700', dot: '🔵' },
+  done:      { label: '已整理', color: 'bg-green-100 text-green-700', dot: '🟢' },
+};
+
+const HomeworkTracker = ({ homework, setHomework }) => {
+  const [filter, setFilter] = useState('all');
+  const [modal, setModal] = useState(null);
+  const [form, setForm] = useState({ title: '', lessonNumber: '', dueDate: '', submittedDate: '', status: 'pending', teacherFeedback: '', notes: '' });
+
+  const counts = useMemo(() => {
+    const c = { all: homework.length };
+    Object.keys(HW_STATUS).forEach(s => c[s] = homework.filter(h => h.status === s).length);
+    return c;
+  }, [homework]);
+
+  const displayed = filter === 'all' ? homework : homework.filter(h => h.status === filter);
+
+  const openNew = () => { setForm({ title:'', lessonNumber:'', dueDate:'', submittedDate:'', status:'pending', teacherFeedback:'', notes:'' }); setModal('new'); };
+  const openEdit = h => { setForm({...h}); setModal(h.id); };
+  const save = () => {
+    if (!form.title.trim()) return;
+    if (modal === 'new') setHomework(p => [...p, { ...form, id: genId(), createdAt: new Date().toISOString() }]);
+    else setHomework(p => p.map(h => h.id === modal ? {...h, ...form} : h));
+    setModal(null);
+  };
+  const del = id => { if (confirm('删除此功课记录？')) setHomework(p => p.filter(h => h.id !== id)); };
+
+  return (
+    <div className="max-w-3xl mx-auto">
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-xl font-bold text-gray-800">📋 功课追踪</h1>
+        <Btn onClick={openNew}>+ 添加功课</Btn>
+      </div>
+
+      <div className="flex flex-wrap gap-2 mb-5">
+        {[['all','全部'],...Object.entries(HW_STATUS).map(([k,v])=>[k,v.label])].map(([k,l]) => (
+          <button key={k} onClick={() => setFilter(k)}
+            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${filter===k?'bg-indigo-600 text-white shadow':'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
+            {l} ({counts[k] || 0})
+          </button>
+        ))}
+      </div>
+
+      {displayed.length === 0 ? (
+        <Card className="text-center py-16"><p className="text-gray-300 text-4xl mb-3">📭</p><p className="text-gray-400">暂无功课记录</p><Btn onClick={openNew} className="mt-4">添加第一份功课</Btn></Card>
+      ) : (
+        <div className="space-y-3">
+          {[...displayed].sort((a,b) => {
+            if (isOverdue(a) && !isOverdue(b)) return -1;
+            if (!isOverdue(a) && isOverdue(b)) return 1;
+            return new Date(a.dueDate||0) - new Date(b.dueDate||0);
+          }).map(h => (
+            <Card key={h.id} onClick={() => openEdit(h)} className={isOverdue(h) ? 'border-red-200 bg-red-50/50' : ''}>
+              <div className="flex items-start gap-3">
+                <span className="text-lg shrink-0 mt-0.5">{HW_STATUS[h.status]?.dot}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap mb-1">
+                    <h3 className="font-semibold text-gray-800 text-sm">{h.title}</h3>
+                    {isOverdue(h) && <Badge color="bg-red-100 text-red-600">⚠ 逾期</Badge>}
+                    <Badge color={HW_STATUS[h.status]?.color}>{HW_STATUS[h.status]?.label}</Badge>
+                  </div>
+                  <div className="flex gap-3 text-xs text-gray-400 flex-wrap">
+                    {h.lessonNumber && <span>第 {h.lessonNumber} 课</span>}
+                    {h.dueDate && <span>截止：{h.dueDate}</span>}
+                    {h.submittedDate && <span>提交：{h.submittedDate}</span>}
+                  </div>
+                  {h.teacherFeedback && (
+                    <div className="mt-2 text-xs bg-blue-50 text-blue-600 rounded-lg px-3 py-1.5 line-clamp-2">💬 {h.teacherFeedback}</div>
+                  )}
+                </div>
+                <button onClick={e => { e.stopPropagation(); del(h.id); }} className="text-gray-200 hover:text-red-400 shrink-0">🗑</button>
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      <Modal open={!!modal} onClose={() => setModal(null)} title={modal === 'new' ? '添加功课' : '编辑功课'}>
+        <Input label="功课名称" value={form.title} onChange={e => setForm(p=>({...p,title:e.target.value}))} placeholder="例：第3课写作练习" />
+        <Input label="课次" value={form.lessonNumber} onChange={e => setForm(p=>({...p,lessonNumber:e.target.value}))} placeholder="例：3" />
+        <div className="grid grid-cols-2 gap-3">
+          <Input label="截止日期" value={form.dueDate} onChange={e => setForm(p=>({...p,dueDate:e.target.value}))} type="date" />
+          <Input label="提交日期" value={form.submittedDate||''} onChange={e => setForm(p=>({...p,submittedDate:e.target.value}))} type="date" />
+        </div>
+        <Select label="状态" value={form.status} onChange={e => setForm(p=>({...p,status:e.target.value}))} options={Object.entries(HW_STATUS).map(([v,{label}])=>({value:v,label}))} />
+        <Textarea label="老师评语" value={form.teacherFeedback||''} onChange={e => setForm(p=>({...p,teacherFeedback:e.target.value}))} placeholder="记录老师的批改意见、扣分原因…" rows={4} />
+        <Textarea label="自己的笔记" value={form.notes||''} onChange={e => setForm(p=>({...p,notes:e.target.value}))} placeholder="自己的反思，下次要注意的地方…" rows={3} />
+        <div className="flex justify-end gap-2 pt-2"><Btn variant="secondary" onClick={() => setModal(null)}>取消</Btn><Btn onClick={save}>保存</Btn></div>
+      </Modal>
+    </div>
+  );
+};
+
+// ─── VOCABULARY BOOK ──────────────────────────────────────────────────────────
+const MASTERY = {
+  new:      { label: '未学', color: 'bg-gray-100 text-gray-500' },
+  learning: { label: '学习中', color: 'bg-orange-100 text-orange-600' },
+  familiar: { label: '已认识', color: 'bg-blue-100 text-blue-600' },
+  mastered: { label: '已掌握', color: 'bg-green-100 text-green-600' },
+};
+
+const VocabularyBook = ({ vocab, setVocab, allTags }) => {
+  const [view, setView] = useState('list'); // list | quiz
+  const [search, setSearch] = useState('');
+  const [filter, setFilter] = useState('all');
+  const [modal, setModal] = useState(null);
+  const [form, setForm] = useState({ japanese:'', hiragana:'', english:'', chinese:'', example:'', tags:[], mastery:'new' });
+  const [quizIdx, setQuizIdx] = useState(0);
+  const [showAns, setShowAns] = useState(false);
+
+  const filtered = useMemo(() => vocab.filter(v => {
+    const q = search.toLowerCase();
+    const ms = !q || v.japanese?.includes(q) || v.hiragana?.includes(q) || v.english?.toLowerCase().includes(q) || v.chinese?.includes(q);
+    const mf = filter === 'all' || v.mastery === filter;
+    return ms && mf;
+  }), [vocab, search, filter]);
+
+  const openNew = () => { setForm({japanese:'',hiragana:'',english:'',chinese:'',example:'',tags:[],mastery:'new'}); setModal('new'); };
+  const openEdit = v => { setForm({...v}); setModal(v.id); };
+  const save = () => {
+    if (!form.japanese.trim()) return;
+    if (modal==='new') setVocab(p => [...p, {...form, id:genId(), createdAt:new Date().toISOString()}]);
+    else setVocab(p => p.map(v => v.id===modal?{...v,...form}:v));
+    setModal(null);
+  };
+  const del = id => { if (confirm('删除？')) setVocab(p => p.filter(v => v.id!==id)); };
+  const setM = (id, mastery, e) => { e?.stopPropagation(); setVocab(p => p.map(v => v.id===id?{...v,mastery}:v)); };
+
+  if (view === 'quiz' && filtered.length > 0) {
+    const word = filtered[quizIdx % filtered.length];
+    return (
+      <div className="max-w-md mx-auto">
+        <div className="flex justify-between items-center mb-5">
+          <Btn variant="ghost" onClick={() => setView('list')}>← 返回</Btn>
+          <span className="text-sm text-gray-400">{(quizIdx % filtered.length) + 1} / {filtered.length}</span>
+        </div>
+        <div onClick={() => setShowAns(a => !a)} className="bg-white rounded-2xl shadow-lg border border-gray-100 p-10 text-center cursor-pointer hover:shadow-xl transition-shadow min-h-52 flex flex-col items-center justify-center mb-4">
+          {!showAns ? (
+            <div>
+              <p className="text-4xl font-bold text-gray-800 mb-1">{word.japanese}</p>
+              {word.hiragana && word.hiragana !== word.japanese && <p className="text-lg text-gray-400">{word.hiragana}</p>}
+              <p className="text-xs text-gray-300 mt-4">点击查看意思</p>
+            </div>
+          ) : (
+            <div>
+              <p className="text-2xl font-semibold text-gray-800">{word.chinese || word.english}</p>
+              {word.example && <p className="text-sm text-gray-400 mt-3 italic">{word.example}</p>}
+            </div>
+          )}
+        </div>
+        {showAns && (
+          <div className="grid grid-cols-4 gap-2">
+            {Object.entries(MASTERY).map(([k,{label,color}]) => (
+              <button key={k} onClick={() => { setM(word.id, k, null); setQuizIdx(i => i+1); setShowAns(false); }}
+                className={`rounded-xl py-2.5 text-xs font-semibold ${color} hover:opacity-80 transition-opacity`}>{label}</button>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  const counts = useMemo(() => {
+    const c = {all: vocab.length};
+    Object.keys(MASTERY).forEach(k => c[k] = vocab.filter(v => v.mastery === k).length);
+    return c;
+  }, [vocab]);
+
+  return (
+    <div className="max-w-4xl mx-auto">
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-xl font-bold text-gray-800">📖 单词本</h1>
+        <div className="flex gap-2">
+          {vocab.length > 0 && <Btn variant="secondary" onClick={() => { setView('quiz'); setQuizIdx(0); setShowAns(false); }}>🎯 测试</Btn>}
+          <Btn onClick={openNew}>+ 添加</Btn>
+        </div>
+      </div>
+
+      <input value={search} onChange={e => setSearch(e.target.value)} placeholder="搜索日语、中文、英文…"
+        className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+
+      <div className="flex flex-wrap gap-2 mb-5">
+        {[['all','全部'],...Object.entries(MASTERY).map(([k,{label}])=>[k,label])].map(([k,l]) => (
+          <button key={k} onClick={() => setFilter(k)} className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${filter===k?'bg-indigo-600 text-white':'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>{l} ({counts[k]||0})</button>
+        ))}
+      </div>
+
+      {filtered.length === 0 ? (
+        <Card className="text-center py-16"><p className="text-4xl mb-3">📖</p><p className="text-gray-400 mb-4">还没有单词</p><Btn onClick={openNew}>添加第一个单词</Btn></Card>
+      ) : (
+        <div className="grid md:grid-cols-3 gap-3">
+          {filtered.map(v => (
+            <Card key={v.id} onClick={() => openEdit(v)}>
+              <div className="flex justify-between items-start mb-1">
+                <div>
+                  <p className="text-xl font-bold text-gray-800">{v.japanese}</p>
+                  {v.hiragana && v.hiragana !== v.japanese && <p className="text-xs text-gray-400">{v.hiragana}</p>}
+                </div>
+                <button onClick={e => { e.stopPropagation(); del(v.id); }} className="text-gray-200 hover:text-red-400">🗑</button>
+              </div>
+              <p className="text-sm text-gray-600">{v.chinese}{v.chinese && v.english ? ' / ' : ''}{v.english}</p>
+              {v.example && <p className="text-xs text-gray-400 mt-1 italic line-clamp-2">{v.example}</p>}
+              <div className="flex items-center justify-between mt-3">
+                <Badge color={MASTERY[v.mastery||'new']?.color}>{MASTERY[v.mastery||'new']?.label}</Badge>
+                <div className="flex gap-1">
+                  {Object.entries(MASTERY).map(([k]) => (
+                    <button key={k} onClick={e => setM(v.id, k, e)} className={`w-5 h-5 rounded-full text-xs transition-opacity ${v.mastery===k?'opacity-100':'opacity-20 hover:opacity-50'}`} title={MASTERY[k].label}>
+                      {k==='new'?'○':k==='learning'?'◐':k==='familiar'?'◕':'●'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      <Modal open={!!modal} onClose={() => setModal(null)} title={modal==='new'?'添加单词':'编辑单词'}>
+        <div className="grid grid-cols-2 gap-3">
+          <Input label="日语" value={form.japanese} onChange={e => setForm(p=>({...p,japanese:e.target.value}))} placeholder="例：先生" />
+          <Input label="假名读音" value={form.hiragana} onChange={e => setForm(p=>({...p,hiragana:e.target.value}))} placeholder="例：せんせい" />
+          <Input label="中文意思" value={form.chinese} onChange={e => setForm(p=>({...p,chinese:e.target.value}))} placeholder="例：老师" />
+          <Input label="英文意思" value={form.english} onChange={e => setForm(p=>({...p,english:e.target.value}))} placeholder="例：Teacher" />
+        </div>
+        <Input label="例句" value={form.example||''} onChange={e => setForm(p=>({...p,example:e.target.value}))} placeholder="例：先生はやさしいです。" />
+        <Select label="掌握程度" value={form.mastery||'new'} onChange={e => setForm(p=>({...p,mastery:e.target.value}))} options={Object.entries(MASTERY).map(([v,{label}])=>({value:v,label}))} />
+        <TagSelector selected={form.tags} onChange={tags => setForm(p=>({...p,tags}))} pool={allTags} />
+        <div className="flex justify-end gap-2 pt-2"><Btn variant="secondary" onClick={() => setModal(null)}>取消</Btn><Btn onClick={save}>保存</Btn></div>
+      </Modal>
+    </div>
+  );
+};
+
+// ─── PDF IMPORT ───────────────────────────────────────────────────────────────
+const PDFImport = ({ setNotes, setFlashcards, setVocab, uid }) => {
+  const [tab, setTab] = useState('pdf');
+  const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [text, setText] = useState('');
+  const [fileName, setFileName] = useState('');
+  const [pdfUrl, setPdfUrl] = useState('');
+  const [storedPdfs, setStoredPdfs] = useState([]);
+  const [json, setJson] = useState('');
+  const [err, setErr] = useState('');
+  const [ok, setOk] = useState('');
+
+  // Load stored PDFs from Firestore
+  useEffect(() => {
+    if (!uid) return;
+    return fbDb.collection('users').doc(uid).collection('pdfs')
+      .orderBy('uploadedAt', 'desc')
+      .onSnapshot(snap => setStoredPdfs(snap.docs.map(d => ({ id: d.id, ...d.data() }))));
+  }, [uid]);
+
+  const handleFile = async e => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    if (f.type !== 'application/pdf') { alert('请选择 PDF 文件'); return; }
+    if (f.size > PDF_MAX_BYTES) { alert('PDF 不能超过 10 MB'); return; }
+    setFileName(f.name); setLoading(true); setUploading(true); setText(''); setErr(''); setOk(''); setPdfUrl('');
+    try {
+      // Upload to Firebase Storage
+      const path = `users/${uid}/pdfs/${genId()}_${f.name}`;
+      const ref = fbStorage.ref(path);
+      await ref.put(f);
+      const url = await ref.getDownloadURL();
+      setPdfUrl(url);
+      // Save metadata to Firestore
+      await fbDb.collection('users').doc(uid).collection('pdfs').add({
+        name: f.name, url, path, size: f.size, uploadedAt: new Date().toISOString(),
+      });
+      setUploading(false);
+      // Extract text locally
+      if (!window.pdfjsLib) throw new Error('PDF.js 未加载，请检查网络连接');
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      const buf = await f.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+      let out = `【文件：${f.name}，共 ${pdf.numPages} 页】\n\n`;
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const pg = await pdf.getPage(i);
+        const ct = await pg.getTextContent();
+        out += `--- 第 ${i} 页 ---\n${ct.items.map(x => x.str).join(' ')}\n\n`;
+      }
+      setText(out.trim());
+    } catch (e) { setErr('处理失败：' + e.message); }
+    finally { setLoading(false); setUploading(false); }
+  };
+
+  const deletePdf = async (pdf) => {
+    if (!confirm(`删除「${pdf.name}」？云端文件也会一并删除。`)) return;
+    try {
+      await fbStorage.ref(pdf.path).delete();
+      await fbDb.collection('users').doc(uid).collection('pdfs').doc(pdf.id).delete();
+    } catch (e) { alert('删除失败：' + e.message); }
+  };
+
+  const importJSON = () => {
+    setErr(''); setOk('');
+    try {
+      const d = JSON.parse(json);
+      let cnt = {n:0,f:0,v:0};
+      if (d.notes?.length) { setNotes(p => [...p, ...d.notes.map(x=>({...x,id:genId(),createdAt:new Date().toISOString()}))]); cnt.n = d.notes.length; }
+      if (d.flashcards?.length) { setFlashcards(p => [...p, ...d.flashcards.map(x=>({...x,id:genId(),createdAt:new Date().toISOString()}))]); cnt.f = d.flashcards.length; }
+      if (d.vocabulary?.length) { setVocab(p => [...p, ...d.vocabulary.map(x=>({...x,id:genId(),createdAt:new Date().toISOString()}))]); cnt.v = d.vocabulary.length; }
+      setOk(`✅ 导入成功！笔记 ${cnt.n} 条 · 闪卡 ${cnt.f} 张 · 词汇 ${cnt.v} 个`);
+      setJson('');
+    } catch(e) { setErr('JSON 格式有误：' + e.message); }
+  };
+
+  const EXAMPLE = `{
+  "notes": [
+    {"title": "第1课文法：です・ます", "content": "礼貌体结尾，表示肯定。\\nです = 是\\nます = 动词礼貌形", "tags": ["文法", "第1课"]}
+  ],
+  "flashcards": [
+    {"front": "おはようございます", "back": "早上好（正式）", "tags": ["打招呼"]},
+    {"front": "ありがとうございます", "back": "谢谢（正式）", "tags": ["打招呼"]}
+  ],
+  "vocabulary": [
+    {"japanese": "先生", "hiragana": "せんせい", "chinese": "老师", "mastery": "learning"},
+    {"japanese": "学生", "hiragana": "がくせい", "chinese": "学生", "mastery": "new"}
+  ]
+}`;
+
+  return (
+    <div className="max-w-3xl mx-auto">
+      <h1 className="text-xl font-bold text-gray-800 mb-1">📄 PDF 导入</h1>
+      <p className="text-gray-400 text-sm mb-5">上传课堂 PDF → 提取文本 → 发给 Claude 整理 → 贴回 JSON 导入</p>
+
+      <div className="flex gap-1 mb-5 bg-gray-100 rounded-xl p-1 w-fit">
+        {[['pdf','📄 PDF 提取'],['json','📥 JSON 导入']].map(([k,l]) => (
+          <button key={k} onClick={() => setTab(k)} className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${tab===k?'bg-white shadow text-gray-800':'text-gray-400 hover:text-gray-600'}`}>{l}</button>
+        ))}
+      </div>
+
+      {tab === 'pdf' && (
+        <div>
+          <Card className="mb-4">
+            <label className="block border-2 border-dashed border-gray-200 rounded-xl p-10 text-center cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/30 transition-all">
+              <input type="file" accept=".pdf" onChange={handleFile} className="hidden" />
+              <p className="text-4xl mb-2">📄</p>
+              <p className="font-medium text-gray-600">点击选择 PDF 文件</p>
+              <p className="text-xs text-gray-400 mt-1">支持日语课堂讲义、教材扫描件</p>
+              {fileName && <p className="text-indigo-500 text-sm mt-2 font-medium">📎 {fileName}</p>}
+            </label>
+          </Card>
+
+          {(loading || uploading) && (
+            <div className="text-center py-8">
+              <div className="inline-block w-8 h-8 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mb-2"></div>
+              <p className="text-gray-400 text-sm">{uploading ? '正在上传到云端…' : '正在提取文本…'}</p>
+            </div>
+          )}
+
+          {err && <div className="bg-red-50 text-red-600 rounded-xl p-4 text-sm mb-4">⚠️ {err}</div>}
+
+          {text && !loading && (
+            <Card>
+              <div className="flex justify-between items-center mb-3">
+                <span className="font-medium text-sm text-gray-700">提取结果</span>
+                <div className="flex items-center gap-2">
+                  {pdfUrl && <a href={pdfUrl} target="_blank" rel="noopener" className="text-xs text-indigo-500 hover:underline">☁️ 查看云端原文</a>}
+                  <Btn size="sm" variant="secondary" onClick={() => { navigator.clipboard.writeText(text); alert('已复制！'); }}>📋 复制全文</Btn>
+                </div>
+              </div>
+              <pre className="text-xs text-gray-500 bg-gray-50 rounded-xl p-4 max-h-72 overflow-y-auto whitespace-pre-wrap leading-relaxed">{text}</pre>
+              <div className="mt-4 bg-indigo-50 rounded-xl p-4">
+                <p className="text-sm font-semibold text-indigo-700 mb-1">📌 下一步</p>
+                <p className="text-xs text-indigo-600 leading-relaxed">复制上方文本，在新的对话中发给 Claude，说：<br/><span className="font-mono bg-white px-2 py-0.5 rounded">"帮我把这份日语课堂资料整理成 JSON 格式，包含 notes（笔记）、flashcards（闪卡）、vocabulary（词汇）"</span><br/>然后将 Claude 返回的 JSON 贴到「JSON 导入」标签页。</p>
+              </div>
+            </Card>
+          )}
+
+          {storedPdfs.length > 0 && (
+            <Card className="mt-4">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">☁️ 已存云端的 PDF</p>
+              <div className="space-y-2">
+                {storedPdfs.map(pdf => (
+                  <div key={pdf.id} className="flex items-center gap-2 text-sm">
+                    <span className="text-gray-400 shrink-0">📄</span>
+                    <a href={pdf.url} target="_blank" rel="noopener" className="flex-1 text-indigo-500 hover:underline truncate">{pdf.name}</a>
+                    <span className="text-xs text-gray-300 shrink-0">{(pdf.size / 1024 / 1024).toFixed(1)} MB</span>
+                    <button onClick={() => deletePdf(pdf)} className="text-gray-200 hover:text-red-400 text-xs shrink-0">🗑</button>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
+        </div>
+      )}
+
+      {tab === 'json' && (
+        <div>
+          <Card className="mb-4">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">JSON 格式参考</p>
+            <pre className="text-xs text-gray-500 bg-gray-50 rounded-xl p-4 overflow-x-auto">{EXAMPLE}</pre>
+          </Card>
+          <Card>
+            <Textarea label="粘贴 Claude 整理好的 JSON" value={json} onChange={e => setJson(e.target.value)} placeholder='{"notes":[...],"flashcards":[...],"vocabulary":[...]}' rows={10} />
+            {err && <p className="text-red-500 text-sm mb-3">⚠️ {err}</p>}
+            {ok && <p className="text-green-600 text-sm mb-3">{ok}</p>}
+            <Btn onClick={importJSON} disabled={!json.trim()}>导入数据</Btn>
+          </Card>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ─── FEEDBACK BOARD ───────────────────────────────────────────────────────────
+const FB_STATUS = {
+  backlog:       { label: '积压/待评估', bg: 'bg-amber-50',  header: 'bg-amber-100 text-amber-700', dot: '🟡' },
+  pending:       { label: '待处理',      bg: 'bg-gray-50',   header: 'bg-gray-100 text-gray-600',   dot: '⚪' },
+  'in-progress': { label: '进行中',      bg: 'bg-blue-50',   header: 'bg-blue-100 text-blue-700',   dot: '🔵' },
+  done:          { label: '已完成',      bg: 'bg-green-50',  header: 'bg-green-100 text-green-700', dot: '🟢' },
+};
+
+const FeedbackBoard = ({ feedback, setFeedback }) => {
+  const [modal, setModal] = useState(false);
+  const [form, setForm] = useState({ title:'', description:'', status:'backlog' });
+  const [editId, setEditId] = useState(null);
+  const [exportModal, setExportModal] = useState(false);
+  const [exportStatuses, setExportStatuses] = useState(['backlog', 'pending', 'in-progress']);
+  const [importModal, setImportModal] = useState(false);
+  const [importJson, setImportJson] = useState('');
+  const [importErr, setImportErr] = useState('');
+  const [importOk,  setImportOk]  = useState('');
+
+  const byStatus = s => feedback.filter(f => f.status === s);
+  const openNew = () => { setForm({title:'',description:'',status:'backlog'}); setEditId(null); setModal(true); };
+  const openEdit = item => { setForm({...item}); setEditId(item.id); setModal(true); };
+  const save = () => {
+    if (!form.title.trim()) return;
+    if (editId) setFeedback(p => p.map(f => f.id===editId ? {...f,...form,updatedAt:new Date().toISOString()} : f));
+    else setFeedback(p => [...p, {...form, id:genId(), createdAt:new Date().toISOString()}]);
+    setModal(false);
+  };
+  const setStatus = (id, status) => setFeedback(p => p.map(f => f.id===id?{...f,status}:f));
+  const del = id => { if (confirm('删除？')) setFeedback(p => p.filter(f => f.id!==id)); };
+
+  const exportData = () => JSON.stringify(
+    feedback.filter(f => exportStatuses.includes(f.status)).map(({ id, title, description, status }) => ({ id, title, description, status })),
+    null, 2
+  );
+  const toggleExportStatus = s => setExportStatuses(p => p.includes(s) ? p.filter(x => x !== s) : [...p, s]);
+
+  const importStatuses = () => {
+    setImportErr(''); setImportOk('');
+    let parsed;
+    try { parsed = JSON.parse(importJson); }
+    catch (e) { setImportErr('JSON 格式有误：' + e.message); return; }
+    if (!Array.isArray(parsed) || parsed.length === 0) {
+      setImportErr('格式错误：需要一个非空数组'); return;
+    }
+    const validStatuses = Object.keys(FB_STATUS);
+    const invalid = parsed.filter(item => typeof item.id !== 'string' || !validStatuses.includes(item.status));
+    if (invalid.length > 0) { setImportErr(`有 ${invalid.length} 条记录的 id 或 status 无效`); return; }
+
+    const changedCount = parsed.filter(item =>
+      feedback.some(f => f.id === item.id && f.status !== item.status)
+    ).length;
+    const updates = new Map(parsed.map(item => [item.id, item.status]));
+    setFeedback(p => p.map(f =>
+      updates.has(f.id) ? { ...f, status: updates.get(f.id), updatedAt: new Date().toISOString() } : f
+    ));
+    setImportOk(`✅ 已更新 ${changedCount} 条记录的状态`);
+    setImportJson('');
+  };
+
+  return (
+    <div className="max-w-4xl mx-auto">
+      <div className="flex items-center justify-between mb-1">
+        <h1 className="text-xl font-bold text-gray-800">💬 功能反馈板</h1>
+        <div className="flex gap-2">
+          <Btn variant="secondary" onClick={() => setExportModal(true)}>导出反馈</Btn>
+          <Btn variant="secondary" onClick={() => { setImportModal(true); setImportJson(''); setImportErr(''); setImportOk(''); }}>导入状态更新</Btn>
+          <Btn onClick={openNew}>+ 提交反馈</Btn>
+        </div>
+      </div>
+      <p className="text-gray-400 text-sm mb-6">记录你希望改善或新增的功能，自己追踪进度。</p>
+
+      <div className="grid md:grid-cols-4 gap-4">
+        {Object.entries(FB_STATUS).map(([status, cfg]) => (
+          <div key={status}>
+            <div className={`${cfg.header} rounded-xl px-3 py-2 mb-3 text-sm font-semibold flex items-center gap-2`}>
+              {cfg.dot} {cfg.label} <span className="ml-auto text-xs opacity-60">{byStatus(status).length}</span>
+            </div>
+            <div className="space-y-2">
+              {byStatus(status).map(item => (
+                <div key={item.id} className={`${cfg.bg} rounded-xl p-3 border border-gray-100 hover:shadow-sm transition-shadow cursor-pointer`} onClick={() => openEdit(item)}>
+                  <div className="flex justify-between items-start mb-1">
+                    <p className="text-sm font-semibold text-gray-800 flex-1 pr-1">{item.title}</p>
+                    <button onClick={e => { e.stopPropagation(); del(item.id); }} className="text-gray-200 hover:text-red-400 text-xs shrink-0">×</button>
+                  </div>
+                  {item.description && <p className="text-xs text-gray-500 mb-2">{item.description}</p>}
+                  <p className="text-xs text-gray-300 mb-2">{fmt(item.createdAt)}</p>
+                  <div className="flex flex-wrap gap-1">
+                    {Object.entries(FB_STATUS).filter(([s]) => s !== status).map(([s, c]) => (
+                      <button key={s} onClick={e => { e.stopPropagation(); setStatus(item.id, s); }}
+                        className="text-xs px-2 py-0.5 rounded-md bg-white border border-gray-200 text-gray-400 hover:border-indigo-300 hover:text-indigo-600 transition-colors">
+                        → {c.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+              {byStatus(status).length === 0 && <p className="text-gray-300 text-xs text-center py-6">暂无</p>}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <Modal open={modal} onClose={() => setModal(false)} title={editId ? '编辑反馈' : '提交新反馈'}>
+        <Input label="功能请求 / 问题" value={form.title} onChange={e => setForm(p=>({...p,title:e.target.value}))} placeholder="例：希望能有音频播放功能" />
+        <Textarea label="详细描述" value={form.description||''} onChange={e => setForm(p=>({...p,description:e.target.value}))} placeholder="描述你希望改善的地方，或遇到的问题…" rows={4} />
+        <Select label="状态" value={form.status} onChange={e => setForm(p=>({...p,status:e.target.value}))} options={Object.entries(FB_STATUS).map(([v,{label}])=>({value:v,label}))} />
+        <div className="flex justify-end gap-2 pt-2"><Btn variant="secondary" onClick={() => setModal(false)}>取消</Btn><Btn onClick={save}>保存</Btn></div>
+      </Modal>
+
+      <Modal open={exportModal} onClose={() => setExportModal(false)} title="导出反馈 JSON" wide>
+        <p className="text-xs text-gray-500 mb-1">选择要导出的状态：</p>
+        <div className="flex flex-wrap gap-3 mb-3">
+          {Object.entries(FB_STATUS).map(([s, cfg]) => (
+            <label key={s} className="flex items-center gap-1.5 cursor-pointer text-xs text-gray-600">
+              <input type="checkbox" checked={exportStatuses.includes(s)} onChange={() => toggleExportStatus(s)} className="accent-indigo-500" />
+              {cfg.dot} {cfg.label} <span className="text-gray-400">({byStatus(s).length})</span>
+            </label>
+          ))}
+        </div>
+        <p className="text-xs text-gray-400 mb-2">将下方 JSON 发给 Claude，请 Claude 审阅并更新每条记录的 <code>status</code>，然后将返回的 JSON 通过"导入状态更新"粘贴回来。</p>
+        <pre className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-xs overflow-auto max-h-60 whitespace-pre-wrap break-all">{exportData()}</pre>
+        <div className="flex justify-end gap-2 pt-3">
+          <Btn variant="secondary" onClick={() => setExportModal(false)}>关闭</Btn>
+          <Btn onClick={() => navigator.clipboard.writeText(exportData())}>📋 复制 JSON</Btn>
+        </div>
+      </Modal>
+
+      <Modal open={importModal} onClose={() => setImportModal(false)} title="导入状态更新" wide>
+        <p className="text-xs text-gray-500 mb-2">将 Claude 返回的 JSON 粘贴到下方，点击"导入"即可更新对应卡片的状态。</p>
+        <Textarea label="粘贴 JSON" value={importJson} onChange={e => setImportJson(e.target.value)} placeholder={'[\n  { "id": "...", "status": "in-progress" },\n  ...\n]'} rows={8} />
+        {importErr && <p className="text-xs text-red-500 mt-1">{importErr}</p>}
+        {importOk  && <p className="text-xs text-green-600 mt-1">{importOk}</p>}
+        <div className="flex justify-end gap-2 pt-3">
+          <Btn variant="secondary" onClick={() => setImportModal(false)}>关闭</Btn>
+          <Btn onClick={importStatuses} disabled={!importJson.trim()}>导入</Btn>
+        </div>
+      </Modal>
+    </div>
+  );
+};
+
+// ─── AUTH GATE ────────────────────────────────────────────────────────────────
+const AuthGate = ({ children }) => {
+  const [user, setUser] = useState(undefined); // undefined = loading
+
+  useEffect(() => fbAuth.onAuthStateChanged(u => setUser(u ?? null)), []);
+
+  const signIn = async () => {
+    try { await fbAuth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
+    catch (e) { alert('登录失败：' + e.message); }
+  };
+
+  if (user === undefined) return (
+    <div className="flex items-center justify-center min-h-screen bg-gray-50">
+      <div className="w-8 h-8 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
+    </div>
+  );
+
+  if (!user) return (
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 gap-5">
+      <span className="text-5xl">🇯🇵</span>
+      <div className="text-center">
+        <h1 className="text-2xl font-bold text-gray-800 mb-1">日语学习助手</h1>
+        <p className="text-gray-400 text-sm">登录后，数据将在所有设备实时同步</p>
+      </div>
+      <button onClick={signIn}
+        className="flex items-center gap-3 bg-white border border-gray-200 rounded-xl px-6 py-3 shadow-sm hover:shadow-md transition-shadow text-gray-700 font-medium">
+        <img src="https://www.google.com/favicon.ico" className="w-4 h-4" />
+        使用 Google 账号登录
+      </button>
+    </div>
+  );
+
+  return children(user);
+};
+
+// ─── APP SHELL ────────────────────────────────────────────────────────────────
+const PAGES = [
+  { id: 'dashboard',  label: '总览',     icon: '🏠' },
+  { id: 'knowledge',  label: '知识库',   icon: '📝' },
+  { id: 'flashcards', label: '闪卡',     icon: '🃏' },
+  { id: 'homework',   label: '功课',     icon: '📋' },
+  { id: 'vocab',      label: '单词本',   icon: '📖' },
+  { id: 'pdf',        label: 'PDF 导入', icon: '📄' },
+  { id: 'feedback',   label: '功能反馈', icon: '💬' },
+];
+
+const App = ({ user }) => {
+  const [page, setPage] = useState('dashboard');
+  const [sideOpen, setSideOpen] = useState(false);
+  const [notes, setNotes]         = useFirestoreCollection('notes',      user.uid);
+  const [flashcards, setFlash]    = useFirestoreCollection('flashcards', user.uid);
+  const [homework, setHomework]   = useFirestoreCollection('homework',   user.uid);
+  const [vocab, setVocab]         = useFirestoreCollection('vocab',      user.uid);
+  const [feedback, setFeedback]   = useFirestoreCollection('feedback',   user.uid);
+
+  const allTags = useMemo(() => {
+    const s = new Set(DEFAULT_TAGS);
+    [...notes, ...flashcards, ...vocab].forEach(x => x.tags?.forEach(t => s.add(t)));
+    return Array.from(s);
+  }, [notes, flashcards, vocab]);
+
+  const pendingHw = homework.filter(h => h.status !== 'done').length;
+  const dueCards  = flashcards.filter(c => !c.nextReview || new Date(c.nextReview) <= new Date()).length;
+
+  const nav = (id) => { setPage(id); setSideOpen(false); };
+
+  const SideNav = () => (
+    <div className="flex flex-col h-full">
+      <div className="px-5 py-5 border-b border-gray-100">
+        <div className="flex items-center gap-2">
+          <span className="text-2xl">🇯🇵</span>
+          <div>
+            <p className="font-bold text-gray-800 text-sm leading-tight">日语学习助手</p>
+            <p className="text-xs text-gray-400">Japanese Learning Hub</p>
+          </div>
+        </div>
+      </div>
+      <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
+        {PAGES.map(p => (
+          <button key={p.id} onClick={() => nav(p.id)} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${page===p.id ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200' : 'text-gray-500 hover:bg-gray-100 hover:text-gray-800'}`}>
+            <span>{p.icon}</span>
+            <span className="flex-1 text-left">{p.label}</span>
+            {p.id==='homework' && pendingHw > 0 && <span className={`text-xs px-1.5 py-0.5 rounded-full font-bold ${page===p.id?'bg-white text-indigo-600':'bg-red-500 text-white'}`}>{pendingHw}</span>}
+            {p.id==='flashcards' && dueCards > 0 && <span className={`text-xs px-1.5 py-0.5 rounded-full font-bold ${page===p.id?'bg-white text-indigo-600':'bg-amber-500 text-white'}`}>{dueCards}</span>}
+          </button>
+        ))}
+      </nav>
+      <div className="px-4 py-3 border-t border-gray-100 space-y-1">
+        <p className="text-xs text-gray-400 truncate text-center">{user.email}</p>
+        <button onClick={() => fbAuth.signOut()} className="w-full text-xs text-gray-300 hover:text-red-400 transition-colors text-center">退出登录</button>
+      </div>
+    </div>
+  );
+
+  const curPage = PAGES.find(p => p.id === page);
+
+  return (
+    <div className="flex h-screen bg-gray-50 overflow-hidden">
+      {sideOpen && <div className="fixed inset-0 bg-black/30 z-20 md:hidden" onClick={() => setSideOpen(false)} />}
+
+      {/* Sidebar */}
+      <div className={`fixed md:static z-30 h-full w-60 bg-white border-r border-gray-100 transition-transform duration-300 ${sideOpen?'translate-x-0':'-translate-x-full md:translate-x-0'} shrink-0`}>
+        <SideNav />
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        {/* Mobile header */}
+        <div className="md:hidden flex items-center gap-3 px-4 py-3 bg-white border-b border-gray-100 shrink-0">
+          <button onClick={() => setSideOpen(true)} className="text-gray-500 text-lg">☰</button>
+          <span className="font-semibold text-gray-700 text-sm">{curPage?.icon} {curPage?.label}</span>
+        </div>
+
+        <main className="flex-1 overflow-y-auto p-4 md:p-8">
+          {page==='dashboard'  && <Dashboard notes={notes} homework={homework} flashcards={flashcards} vocab={vocab} onNav={nav} />}
+          {page==='knowledge'  && <KnowledgeBase notes={notes} setNotes={setNotes} allTags={allTags} uid={user.uid} />}
+          {page==='flashcards' && <Flashcards cards={flashcards} setCards={setFlash} allTags={allTags} />}
+          {page==='homework'   && <HomeworkTracker homework={homework} setHomework={setHomework} />}
+          {page==='vocab'      && <VocabularyBook vocab={vocab} setVocab={setVocab} allTags={allTags} />}
+          {page==='pdf'        && <PDFImport setNotes={setNotes} setFlashcards={setFlash} setVocab={setVocab} uid={user.uid} />}
+          {page==='feedback'   && <FeedbackBoard feedback={feedback} setFeedback={setFeedback} />}
+        </main>
+      </div>
+    </div>
+  );
+};
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <AuthGate>{user => <App user={user} />}</AuthGate>
+);
+</script>
+</body>
+</html>
