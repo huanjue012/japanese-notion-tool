@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Notion Uploader Tool</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f7f6f3;
+      color: #37352f;
+      min-height: 100vh;
+    }
+
+    header {
+      background: #fff;
+      border-bottom: 1px solid #e5e5e5;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    header .logo { font-size: 22px; }
+    header h1 { font-size: 18px; font-weight: 600; }
+
+    .container { max-width: 900px; margin: 0 auto; padding: 24px 20px; }
+
+    /* Settings Card */
+    .card {
+      background: #fff;
+      border: 1px solid #e5e5e5;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .card h2 {
+      font-size: 14px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      color: #888;
+      margin-bottom: 14px;
+    }
+
+    .field-row { display: flex; gap: 10px; align-items: flex-end; margin-bottom: 10px; }
+    .field-row:last-child { margin-bottom: 0; }
+
+    .field { flex: 1; }
+    label { display: block; font-size: 12px; font-weight: 500; color: #555; margin-bottom: 4px; }
+    input[type="text"], input[type="password"], textarea, select {
+      width: 100%;
+      border: 1px solid #d0d0d0;
+      border-radius: 5px;
+      padding: 8px 10px;
+      font-size: 13px;
+      color: #37352f;
+      background: #fafafa;
+      transition: border .15s;
+      outline: none;
+    }
+    input:focus, textarea:focus, select:focus { border-color: #6366f1; background: #fff; }
+
+    button {
+      cursor: pointer;
+      border: none;
+      border-radius: 5px;
+      padding: 9px 16px;
+      font-size: 13px;
+      font-weight: 500;
+      transition: opacity .15s, background .15s;
+    }
+    button:hover { opacity: .85; }
+    button:active { opacity: .7; }
+
+    .btn-primary { background: #6366f1; color: #fff; }
+    .btn-secondary { background: #f0f0f0; color: #555; }
+    .btn-danger { background: #ef4444; color: #fff; }
+    .btn-sm { padding: 6px 12px; font-size: 12px; }
+
+    /* Tabs */
+    .tabs { display: flex; gap: 6px; margin-bottom: 18px; flex-wrap: wrap; }
+    .tab {
+      padding: 8px 18px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1px solid #d0d0d0;
+      background: #fff;
+      color: #555;
+    }
+    .tab.active { background: #6366f1; color: #fff; border-color: #6366f1; }
+
+    /* JSON editor area */
+    .editor-wrap { position: relative; }
+    textarea.json-input {
+      font-family: "SF Mono", "Fira Code", Consolas, monospace;
+      font-size: 12.5px;
+      min-height: 200px;
+      resize: vertical;
+      line-height: 1.55;
+    }
+    .hint {
+      font-size: 11.5px;
+      color: #888;
+      margin-top: 5px;
+      line-height: 1.5;
+    }
+
+    /* Action buttons row */
+    .actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 14px; }
+
+    /* Response / log area */
+    #log {
+      background: #1e1e2e;
+      color: #cdd6f4;
+      font-family: "SF Mono", "Fira Code", Consolas, monospace;
+      font-size: 12px;
+      border-radius: 7px;
+      padding: 14px 16px;
+      min-height: 100px;
+      max-height: 320px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+      line-height: 1.6;
+    }
+    .log-ok   { color: #a6e3a1; }
+    .log-err  { color: #f38ba8; }
+    .log-info { color: #89dceb; }
+    .log-warn { color: #f9e2af; }
+
+    /* Progress */
+    .progress-bar-wrap {
+      background: #e5e5e5;
+      border-radius: 4px;
+      height: 6px;
+      margin-top: 10px;
+      overflow: hidden;
+      display: none;
+    }
+    .progress-bar {
+      height: 100%;
+      background: #6366f1;
+      width: 0%;
+      transition: width .2s;
+    }
+
+    /* Saved templates */
+    .template-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      padding: 6px 0;
+      border-bottom: 1px solid #f0f0f0;
+      font-size: 13px;
+    }
+    .template-row:last-child { border-bottom: none; }
+    .template-name { flex: 1; font-weight: 500; }
+    .template-db { color: #888; font-size: 11.5px; }
+
+    /* Badges */
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 500;
+    }
+    .badge-blue { background: #e0e7ff; color: #4338ca; }
+    .badge-green { background: #d1fae5; color: #065f46; }
+    .badge-yellow { background: #fef9c3; color: #92400e; }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      .field-row { flex-direction: column; }
+      header h1 { font-size: 15px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <span class="logo">📤</span>
+  <h1>Notion Uploader Tool</h1>
+</header>
+
+<div class="container">
+
+  <!-- Settings -->
+  <div class="card">
+    <h2>⚙️ 设置 / Settings</h2>
+
+    <div class="field-row">
+      <div class="field">
+        <label>Notion Integration Token</label>
+        <input type="password" id="notionToken" placeholder="secret_xxxxxxxxxxxx" />
+      </div>
+      <button class="btn-secondary btn-sm" onclick="saveSettings()">保存</button>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label>课堂笔记 Database ID</label>
+        <input type="text" id="dbClassNotes" placeholder="32位 UUID（不含连字符）" />
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>知识库 Database ID</label>
+        <input type="text" id="dbKnowledge" placeholder="32位 UUID（不含连字符）" />
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>复习卡片 Database ID</label>
+        <input type="text" id="dbFlashcards" placeholder="32位 UUID（不含连字符）" />
+      </div>
+    </div>
+
+    <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
+      <button class="btn-primary btn-sm" onclick="saveSettings()">💾 保存设置</button>
+      <button class="btn-secondary btn-sm" onclick="testConnection()">🔗 测试连接</button>
+      <button class="btn-secondary btn-sm" onclick="clearSettings()">🗑 清除</button>
+    </div>
+    <p class="hint">设置自动存储到 localStorage，刷新页面不会丢失。Token 不会发送到任何第三方服务器，仅用于调用 Notion API。</p>
+  </div>
+
+  <!-- Upload Area -->
+  <div class="card">
+    <h2>📥 上传数据</h2>
+
+    <!-- DB selector tabs -->
+    <div style="margin-bottom:12px;">
+      <label>目标数据库</label>
+      <div class="tabs" id="dbTabs">
+        <div class="tab active" data-db="classNotes" onclick="selectDb(this)">📝 课堂笔记</div>
+        <div class="tab" data-db="knowledge" onclick="selectDb(this)">📚 知识库</div>
+        <div class="tab" data-db="flashcards" onclick="selectDb(this)">🃏 复习卡片</div>
+      </div>
+    </div>
+
+    <!-- JSON input -->
+    <div class="editor-wrap">
+      <label>JSON 数据（数组 或 单个对象）</label>
+      <textarea class="json-input" id="jsonInput" placeholder='[
+  {
+    "title": "第一课",
+    "content": "日语五十音图",
+    "tags": ["初级", "发音"]
+  },
+  {
+    "title": "第二课",
+    "content": "名词句型",
+    "tags": ["初级", "语法"]
+  }
+]'></textarea>
+      <p class="hint">
+        • 支持 JSON 数组（批量）或单个 JSON 对象。<br>
+        • 字段名将自动映射为 Notion 属性。title / 标题 → Title 属性；content / 内容 → 富文本；tags / 标签 → 多选。<br>
+        • 其余字段作为富文本属性写入。
+      </p>
+    </div>
+
+    <!-- Template helpers -->
+    <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">
+      <button class="btn-secondary btn-sm" onclick="loadTemplate('classNotes')">课堂笔记模板</button>
+      <button class="btn-secondary btn-sm" onclick="loadTemplate('knowledge')">知识库模板</button>
+      <button class="btn-secondary btn-sm" onclick="loadTemplate('flashcards')">复习卡片模板</button>
+      <button class="btn-secondary btn-sm" onclick="formatJson()">✨ 格式化 JSON</button>
+      <button class="btn-secondary btn-sm" onclick="clearJson()">🗑 清空</button>
+    </div>
+
+    <div class="actions">
+      <button class="btn-primary" id="uploadBtn" onclick="startUpload()">🚀 开始上传</button>
+      <span id="statusBadge"></span>
+    </div>
+
+    <div class="progress-bar-wrap" id="progressWrap">
+      <div class="progress-bar" id="progressBar"></div>
+    </div>
+  </div>
+
+  <!-- Log -->
+  <div class="card">
+    <h2>📋 日志 / Log</h2>
+    <pre id="log"><span class="log-info">等待操作...</span></pre>
+    <div style="margin-top:8px; display:flex; gap:8px;">
+      <button class="btn-secondary btn-sm" onclick="clearLog()">清空日志</button>
+    </div>
+  </div>
+
+  <!-- Saved Templates Manager -->
+  <div class="card" id="templateManager" style="display:none;">
+    <h2>📂 已保存模板</h2>
+    <div id="templateList"></div>
+  </div>
+
+</div>
+
+<script>
+// ─── Constants ───────────────────────────────────────────────────────────────
+const NOTION_BASE = 'https://api.notion.com/v1';
+const NOTION_VERSION = '2022-06-28';
+let selectedDb = 'classNotes';
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  loadSettings();
+  log('info', 'Notion Uploader 已就绪。请先填写 Settings 并保存。');
+});
+
+// ─── Settings ────────────────────────────────────────────────────────────────
+function saveSettings() {
+  const s = getSettingsFromForm();
+  localStorage.setItem('notion_settings', JSON.stringify(s));
+  log('ok', '✅ 设置已保存到 localStorage');
+}
+
+function loadSettings() {
+  const raw = localStorage.getItem('notion_settings');
+  if (!raw) return;
+  try {
+    const s = JSON.parse(raw);
+    document.getElementById('notionToken').value = s.token || '';
+    document.getElementById('dbClassNotes').value = s.dbClassNotes || '';
+    document.getElementById('dbKnowledge').value  = s.dbKnowledge  || '';
+    document.getElementById('dbFlashcards').value = s.dbFlashcards || '';
+    log('info', '⚡ 已从 localStorage 加载设置');
+  } catch(e) { log('err', '加载设置失败: ' + e.message); }
+}
+
+function getSettingsFromForm() {
+  return {
+    token:        document.getElementById('notionToken').value.trim(),
+    dbClassNotes: document.getElementById('dbClassNotes').value.trim(),
+    dbKnowledge:  document.getElementById('dbKnowledge').value.trim(),
+    dbFlashcards: document.getElementById('dbFlashcards').value.trim(),
+  };
+}
+
+function clearSettings() {
+  if (!confirm('确定清除所有保存的设置吗？')) return;
+  localStorage.removeItem('notion_settings');
+  ['notionToken','dbClassNotes','dbKnowledge','dbFlashcards'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  log('warn', '⚠️ 设置已清除');
+}
+
+// ─── Test Connection ──────────────────────────────────────────────────────────
+async function testConnection() {
+  const { token, dbClassNotes, dbKnowledge, dbFlashcards } = getSettingsFromForm();
+  if (!token) { log('err', '请先填写 Notion Token'); return; }
+
+  log('info', '🔗 测试连接中...');
+  try {
+    const r = await notionFetch('/users/me', 'GET', null, token);
+    log('ok', `✅ Token 有效！Bot 用户: ${r.name || r.id}`);
+  } catch(e) {
+    log('err', `❌ Token 验证失败: ${e.message}`);
+    return;
+  }
+
+  const dbs = [
+    ['课堂笔记', dbClassNotes],
+    ['知识库',   dbKnowledge],
+    ['复习卡片', dbFlashcards],
+  ];
+  for (const [name, dbId] of dbs) {
+    if (!dbId) { log('warn', `⚠️ ${name} DB ID 未填写，跳过`); continue; }
+    try {
+      const r = await notionFetch(`/databases/${formatDbId(dbId)}`, 'GET', null, token);
+      log('ok', `✅ ${name} 连接成功：${r.title?.[0]?.plain_text || dbId}`);
+    } catch(e) {
+      log('err', `❌ ${name} 连接失败: ${e.message}`);
+    }
+  }
+}
+
+// ─── DB Tab ───────────────────────────────────────────────────────────────────
+function selectDb(el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  selectedDb = el.dataset.db;
+}
+
+// ─── Templates ────────────────────────────────────────────────────────────────
+const TEMPLATES = {
+  classNotes: JSON.stringify([
+    {
+      "title": "第一课：日语五十音图",
+      "content": "本节学习平假名 あいうえお 行，掌握基本发音规则。",
+      "tags": ["初级", "发音", "五十音"],
+      "lesson_number": "1",
+      "difficulty": "入门"
+    },
+    {
+      "title": "第二课：名词句型 AはBです",
+      "content": "介绍「は」作主语助词，「です」作谓语的基本句型。",
+      "tags": ["初级", "语法", "名词句"],
+      "lesson_number": "2",
+      "difficulty": "入门"
+    }
+  ], null, 2),
+
+  knowledge: JSON.stringify([
+    {
+      "title": "て形（て形动词）",
+      "content": "用于连接动作、表示请求（～てください）等多种用法。变形规则：Ⅰ类动词词尾变て；Ⅱ类动词去る加て；Ⅲ类：します→して，きます→きて。",
+      "tags": ["语法", "动词", "て形"],
+      "category": "语法规则",
+      "source": "Minna no Nihongo L14"
+    }
+  ], null, 2),
+
+  flashcards: JSON.stringify([
+    {
+      "title": "食べる（たべる）",
+      "front": "食べる",
+      "back": "吃（Ⅱ类动词）",
+      "tags": ["动词", "饮食", "N5"],
+      "reading": "たべる",
+      "example": "ご飯を食べる"
+    },
+    {
+      "title": "飲む（のむ）",
+      "front": "飲む",
+      "back": "喝（Ⅰ类动词）",
+      "tags": ["动词", "饮食", "N5"],
+      "reading": "のむ",
+      "example": "水を飲む"
+    }
+  ], null, 2)
+};
+
+function loadTemplate(db) {
+  document.getElementById('jsonInput').value = TEMPLATES[db] || '';
+  // Also switch tab
+  const tab = document.querySelector(`.tab[data-db="${db}"]`);
+  if (tab) selectDb(tab);
+  log('info', `📋 已加载 ${db} 模板`);
+}
+
+function formatJson() {
+  const ta = document.getElementById('jsonInput');
+  try {
+    const parsed = JSON.parse(ta.value);
+    ta.value = JSON.stringify(parsed, null, 2);
+    log('ok', '✨ JSON 格式化成功');
+  } catch(e) {
+    log('err', '❌ JSON 格式错误: ' + e.message);
+  }
+}
+
+function clearJson() {
+  document.getElementById('jsonInput').value = '';
+}
+
+// ─── Upload ───────────────────────────────────────────────────────────────────
+async function startUpload() {
+  saveSettings(); // auto-save first
+  const { token, dbClassNotes, dbKnowledge, dbFlashcards } = getSettingsFromForm();
+
+  if (!token) { log('err', '❌ 请先填写 Notion Token'); return; }
+
+  const dbMap = { classNotes: dbClassNotes, knowledge: dbKnowledge, flashcards: dbFlashcards };
+  const rawDbId = dbMap[selectedDb];
+  if (!rawDbId) {
+    const names = { classNotes: '课堂笔记', knowledge: '知识库', flashcards: '复习卡片' };
+    log('err', `❌ ${names[selectedDb]} 的 Database ID 未填写`);
+    return;
+  }
+  const dbId = formatDbId(rawDbId);
+
+  let data;
+  try {
+    const raw = document.getElementById('jsonInput').value.trim();
+    if (!raw) { log('err', '❌ JSON 输入为空'); return; }
+    const parsed = JSON.parse(raw);
+    data = Array.isArray(parsed) ? parsed : [parsed];
+  } catch(e) {
+    log('err', '❌ JSON 解析失败: ' + e.message);
+    return;
+  }
+
+  const btn = document.getElementById('uploadBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ 上传中...';
+
+  // Show progress
+  const pw = document.getElementById('progressWrap');
+  const pb = document.getElementById('progressBar');
+  pw.style.display = 'block';
+  pb.style.width = '0%';
+
+  log('info', `🚀 开始上传 ${data.length} 条记录 → DB: ${dbId}`);
+
+  let ok = 0, fail = 0;
+  for (let i = 0; i < data.length; i++) {
+    const item = data[i];
+    const pct = Math.round(((i) / data.length) * 100);
+    pb.style.width = pct + '%';
+
+    try {
+      const payload = buildNotionPayload(dbId, item, selectedDb);
+      const res = await notionFetch('/pages', 'POST', payload, token);
+      ok++;
+      const title = item.title || item['标题'] || `Item ${i+1}`;
+      log('ok', `  ✅ [${i+1}/${data.length}] 「${title}」→ ${res.id}`);
+    } catch(e) {
+      fail++;
+      log('err', `  ❌ [${i+1}/${data.length}] 失败: ${e.message}`);
+    }
+
+    // Small delay to avoid rate limiting
+    if (i < data.length - 1) await sleep(300);
+  }
+
+  pb.style.width = '100%';
+  log('info', `\n🏁 完成！成功 ${ok} 条，失败 ${fail} 条`);
+
+  btn.disabled = false;
+  btn.textContent = '🚀 开始上传';
+  setTimeout(() => { pw.style.display = 'none'; pb.style.width = '0%'; }, 3000);
+}
+
+// ─── Notion Payload Builder ───────────────────────────────────────────────────
+function buildNotionPayload(databaseId, item, dbType) {
+  const properties = {};
+
+  // --- Title ---
+  const titleVal = item.title || item['标题'] || item.front || item.name || '（无标题）';
+  properties['Name'] = {
+    title: [{ text: { content: String(titleVal) } }]
+  };
+
+  // --- Content / body ---
+  const contentVal = item.content || item['内容'] || item.back || item.body || '';
+  if (contentVal) {
+    properties['Content'] = {
+      rich_text: [{ text: { content: String(contentVal).substring(0, 2000) } }]
+    };
+  }
+
+  // --- Tags ---
+  const tagsVal = item.tags || item['标签'] || item.tag || [];
+  if (tagsVal && (Array.isArray(tagsVal) ? tagsVal.length > 0 : tagsVal)) {
+    const tagArr = Array.isArray(tagsVal)
+      ? tagsVal
+      : String(tagsVal).split(/[,，、]/).map(t => t.trim());
+    properties['Tags'] = {
+      multi_select: tagArr.map(t => ({ name: String(t).trim() }))
+    };
+  }
+
+  // --- DB-specific fields ---
+  if (dbType === 'classNotes') {
+    if (item.lesson_number || item['课次']) {
+      properties['Lesson'] = {
+        rich_text: [{ text: { content: String(item.lesson_number || item['课次']) } }]
+      };
+    }
+    if (item.difficulty || item['难度']) {
+      properties['Difficulty'] = {
+        select: { name: String(item.difficulty || item['难度']) }
+      };
+    }
+  }
+
+  if (dbType === 'knowledge') {
+    if (item.category || item['分类']) {
+      properties['Category'] = {
+        select: { name: String(item.category || item['分类']) }
+      };
+    }
+    if (item.source || item['来源']) {
+      properties['Source'] = {
+        rich_text: [{ text: { content: String(item.source || item['来源']) } }]
+      };
+    }
+  }
+
+  if (dbType === 'flashcards') {
+    if (item.front || item['正面']) {
+      properties['Front'] = {
+        rich_text: [{ text: { content: String(item.front || item['正面']).substring(0, 2000) } }]
+      };
+    }
+    if (item.back || item['背面']) {
+      properties['Back'] = {
+        rich_text: [{ text: { content: String(item.back || item['背面']).substring(0, 2000) } }]
+      };
+    }
+    if (item.reading || item['读音']) {
+      properties['Reading'] = {
+        rich_text: [{ text: { content: String(item.reading || item['读音']) } }]
+      };
+    }
+    if (item.example || item['例句']) {
+      properties['Example'] = {
+        rich_text: [{ text: { content: String(item.example || item['例句']).substring(0, 2000) } }]
+      };
+    }
+  }
+
+  // --- Extra fields (generic rich_text) ---
+  const skipKeys = new Set([
+    'title','标题','content','内容','tags','标签','tag',
+    'front','正面','back','背面','lesson_number','课次',
+    'difficulty','难度','category','分类','source','来源',
+    'reading','读音','example','例句','name','body'
+  ]);
+  for (const [k, v] of Object.entries(item)) {
+    if (skipKeys.has(k) || v === null || v === undefined) continue;
+    const propName = k.charAt(0).toUpperCase() + k.slice(1);
+    if (!properties[propName]) {
+      properties[propName] = {
+        rich_text: [{ text: { content: String(v).substring(0, 2000) } }]
+      };
+    }
+  }
+
+  return {
+    parent: { database_id: databaseId },
+    properties
+  };
+}
+
+// ─── Notion API fetch ─────────────────────────────────────────────────────────
+async function notionFetch(path, method, body, token) {
+  const url = 'https://api.notion.com/v1' + path;
+  const headers = {
+    'Authorization': 'Bearer ' + token,
+    'Notion-Version': NOTION_VERSION,
+    'Content-Type': 'application/json',
+  };
+
+  const opts = { method, headers };
+  if (body) opts.body = JSON.stringify(body);
+
+  const resp = await fetch(url, opts);
+  const json = await resp.json();
+
+  if (!resp.ok) {
+    const msg = json.message || json.code || resp.statusText;
+    throw new Error(`HTTP ${resp.status}: ${msg}`);
+  }
+  return json;
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+function formatDbId(id) {
+  // Notion accepts with or without dashes, but normalize
+  const clean = id.replace(/-/g, '');
+  if (clean.length === 32) {
+    return [clean.slice(0,8), clean.slice(8,12), clean.slice(12,16), clean.slice(16,20), clean.slice(20)].join('-');
+  }
+  return id; // return as-is if unusual format
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ─── Log ──────────────────────────────────────────────────────────────────────
+function log(type, msg) {
+  const el = document.getElementById('log');
+  const span = document.createElement('span');
+  span.className = 'log-' + type;
+  const ts = new Date().toLocaleTimeString('zh-CN', { hour12: false });
+  span.textContent = `[${ts}] ${msg}\n`;
+  el.appendChild(span);
+  el.scrollTop = el.scrollHeight;
+}
+
+function clearLog() {
+  document.getElementById('log').innerHTML = '<span class="log-info">日志已清空\n</span>';
+}
+</script>
+</body>
+</html>
