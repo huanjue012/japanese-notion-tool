@@ -799,41 +799,9 @@ const PDF_COMMANDS = [
 
 const PDFImport = ({ setNotes, setFlashcards, setVocab }) => {
   const [tab, setTab] = useState('pdf');
-  const [loading, setLoading] = useState(false);
-  const [text, setText] = useState('');
-  const [fileName, setFileName] = useState('');
   const [json, setJson] = useState('');
   const [err, setErr] = useState('');
   const [ok, setOk] = useState('');
-  const [copied, setCopied] = useState('');
-
-  const handleFile = async e => {
-    const f = e.target.files?.[0];
-    if (!f) return;
-    if (f.type !== 'application/pdf') { alert('请选择 PDF 文件'); return; }
-    setFileName(f.name); setLoading(true); setText(''); setErr('');
-    try {
-      if (!window.pdfjsLib) throw new Error('PDF.js 未加载，请检查网络连接');
-      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-      const buf = await f.arrayBuffer();
-      const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
-      let out = `【文件：${f.name}，共 ${pdf.numPages} 页】\n\n`;
-      for (let i = 1; i <= pdf.numPages; i++) {
-        const pg = await pdf.getPage(i);
-        const ct = await pg.getTextContent();
-        out += `--- 第 ${i} 页 ---\n${ct.items.map(x => x.str).join(' ')}\n\n`;
-      }
-      setText(out.trim());
-    } catch (e) { setErr('处理失败：' + e.message); }
-    finally { setLoading(false); }
-  };
-
-  const openClaude = (cmd) => {
-    navigator.clipboard.writeText(cmd.prompt(text));
-    setCopied(cmd.id);
-    setTimeout(() => setCopied(''), 2000);
-    window.open('https://claude.ai/new', '_blank');
-  };
 
   const importJSON = () => {
     setErr(''); setOk('');
@@ -865,7 +833,7 @@ const PDFImport = ({ setNotes, setFlashcards, setVocab }) => {
   return (
     <div className="max-w-3xl mx-auto">
       <h1 className="text-xl font-bold text-gray-800 mb-1">📄 PDF 导入</h1>
-      <p className="text-gray-400 text-sm mb-5">选择 PDF → 提取文本 → 选命令发给 Claude → 贴回 JSON 导入</p>
+      <p className="text-gray-400 text-sm mb-5">在 Claude「日语课」项目中处理 PDF → 复制 JSON → 贴回导入</p>
 
       <div className="flex gap-1 mb-5 bg-gray-100 rounded-xl p-1 w-fit">
         {[['pdf','📄 PDF 提取'],['json','📥 JSON 导入']].map(([k,l]) => (
@@ -874,52 +842,17 @@ const PDFImport = ({ setNotes, setFlashcards, setVocab }) => {
       </div>
 
       {tab === 'pdf' && (
-        <div>
-          <Card className="mb-4">
-            <label className="block border-2 border-dashed border-gray-200 rounded-xl p-10 text-center cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/30 transition-all">
-              <input type="file" accept=".pdf" onChange={handleFile} className="hidden" />
-              <p className="text-4xl mb-2">📄</p>
-              <p className="font-medium text-gray-600">点击选择 PDF 文件</p>
-              <p className="text-xs text-gray-400 mt-1">支持日语课堂讲义、教材扫描件</p>
-              {fileName && <p className="text-indigo-500 text-sm mt-2 font-medium">📎 {fileName}</p>}
-            </label>
-          </Card>
-
-          {loading && (
-            <div className="text-center py-8">
-              <div className="inline-block w-8 h-8 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mb-2"></div>
-              <p className="text-gray-400 text-sm">正在提取文本…</p>
-            </div>
-          )}
-
-          {err && <div className="bg-red-50 text-red-600 rounded-xl p-4 text-sm mb-4">⚠️ {err}</div>}
-
-          {text && !loading && (
-            <Card>
-              <div className="flex justify-between items-center mb-3">
-                <span className="font-medium text-sm text-gray-700">提取结果</span>
-                <Btn size="sm" variant="secondary" onClick={() => navigator.clipboard.writeText(text)}>📋 复制原文</Btn>
-              </div>
-              <pre className="text-xs text-gray-500 bg-gray-50 rounded-xl p-4 max-h-48 overflow-y-auto whitespace-pre-wrap leading-relaxed">{text}</pre>
-              <div className="mt-4">
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">选择整理方式 → 自动复制提示词并打开 Claude</p>
-                <div className="grid grid-cols-2 gap-2">
-                  {PDF_COMMANDS.map(cmd => (
-                    <button
-                      key={cmd.id}
-                      onClick={() => openClaude(cmd)}
-                      className={`${cmd.color} text-white rounded-xl px-4 py-3 text-left transition-colors shadow-sm`}
-                    >
-                      <p className="font-semibold text-sm">{copied === cmd.id ? '✅ 已复制！' : cmd.label}</p>
-                      <p className="text-xs opacity-80 mt-0.5">{cmd.desc}</p>
-                    </button>
-                  ))}
-                </div>
-                <p className="text-xs text-gray-400 mt-3 text-center">点击后 → Claude 打开 → 粘贴发送 → 复制 JSON → 回来贴到「JSON 导入」</p>
-              </div>
-            </Card>
-          )}
-        </div>
+        <Card className="text-center py-10">
+          <p className="text-4xl mb-3">🤖</p>
+          <p className="font-semibold text-gray-700 mb-1">在 Claude「日语课」项目中处理 PDF</p>
+          <p className="text-xs text-gray-400 mb-6">直接在 Claude 上传 PDF，由项目上下文辅助整理</p>
+          <button
+            onClick={() => window.open('https://claude.ai/project/019cf9e9-9f1d-7066-9a04-29908e81ebbf', '_blank')}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-8 py-3 rounded-xl transition-colors shadow-sm text-sm"
+          >
+            打开 Claude AI
+          </button>
+        </Card>
       )}
 
       {tab === 'json' && (
