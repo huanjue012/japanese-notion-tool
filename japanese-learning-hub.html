@@ -766,44 +766,53 @@ const VocabularyBook = ({ vocab, setVocab, allTags }) => {
 };
 
 // ─── PDF IMPORT ───────────────────────────────────────────────────────────────
-const PDFImport = ({ setNotes, setFlashcards, setVocab, uid }) => {
+const PDF_COMMANDS = [
+  {
+    id: 'notes',
+    label: '📝 整理笔记',
+    desc: '只提取知识点笔记',
+    color: 'bg-blue-600 hover:bg-blue-700',
+    prompt: (text) => `你是一个日语学习助手。请将以下课堂PDF内容整理成JSON格式，只提取知识点笔记，只返回合法JSON，不要加任何说明文字。格式如下：\n{"notes": [{"title": "笔记标题", "content": "内容", "tags": ["标签"]}]}\n\nPDF内容：\n\n${text}`,
+  },
+  {
+    id: 'flashcards',
+    label: '🃏 整理闪卡',
+    desc: '只提取问答闪卡',
+    color: 'bg-purple-600 hover:bg-purple-700',
+    prompt: (text) => `你是一个日语学习助手。请将以下课堂PDF内容整理成JSON格式，只提取闪卡（问答卡），只返回合法JSON，不要加任何说明文字。格式如下：\n{"flashcards": [{"front": "日语/问题", "back": "中文/答案", "tags": ["标签"]}]}\n\nPDF内容：\n\n${text}`,
+  },
+  {
+    id: 'vocab',
+    label: '📖 整理词汇',
+    desc: '只提取词汇列表',
+    color: 'bg-green-600 hover:bg-green-700',
+    prompt: (text) => `你是一个日语学习助手。请将以下课堂PDF内容整理成JSON格式，只提取词汇，只返回合法JSON，不要加任何说明文字。格式如下：\n{"vocabulary": [{"japanese": "日文", "hiragana": "假名", "chinese": "中文", "mastery": "new", "tags": ["标签"]}]}\n\nPDF内容：\n\n${text}`,
+  },
+  {
+    id: 'all',
+    label: '✨ 整理全部',
+    desc: '笔记 + 闪卡 + 词汇',
+    color: 'bg-indigo-600 hover:bg-indigo-700',
+    prompt: (text) => `你是一个日语学习助手。请将以下课堂PDF内容整理成JSON格式，只返回合法JSON，不要加任何说明文字。格式如下：\n{\n  "notes": [{"title": "笔记标题", "content": "内容", "tags": ["标签"]}],\n  "flashcards": [{"front": "日语/问题", "back": "中文/答案", "tags": ["标签"]}],\n  "vocabulary": [{"japanese": "日文", "hiragana": "假名", "chinese": "中文", "mastery": "new", "tags": ["标签"]}]\n}\n\nPDF内容：\n\n${text}`,
+  },
+];
+
+const PDFImport = ({ setNotes, setFlashcards, setVocab }) => {
   const [tab, setTab] = useState('pdf');
   const [loading, setLoading] = useState(false);
-  const [uploading, setUploading] = useState(false);
   const [text, setText] = useState('');
   const [fileName, setFileName] = useState('');
-  const [pdfUrl, setPdfUrl] = useState('');
-  const [storedPdfs, setStoredPdfs] = useState([]);
   const [json, setJson] = useState('');
   const [err, setErr] = useState('');
   const [ok, setOk] = useState('');
-
-  // Load stored PDFs from Firestore
-  useEffect(() => {
-    if (!uid) return;
-    return fbDb.collection('users').doc(uid).collection('pdfs')
-      .orderBy('uploadedAt', 'desc')
-      .onSnapshot(snap => setStoredPdfs(snap.docs.map(d => ({ id: d.id, ...d.data() }))));
-  }, [uid]);
+  const [copied, setCopied] = useState('');
 
   const handleFile = async e => {
     const f = e.target.files?.[0];
     if (!f) return;
     if (f.type !== 'application/pdf') { alert('请选择 PDF 文件'); return; }
-    setFileName(f.name); setLoading(true); setUploading(true); setText(''); setErr(''); setOk(''); setPdfUrl('');
+    setFileName(f.name); setLoading(true); setText(''); setErr('');
     try {
-      // Upload to Firebase Storage
-      const path = `users/${uid}/pdfs/${genId()}_${f.name}`;
-      const ref = fbStorage.ref(path);
-      await ref.put(f);
-      const url = await ref.getDownloadURL();
-      setPdfUrl(url);
-      // Save metadata to Firestore
-      await fbDb.collection('users').doc(uid).collection('pdfs').add({
-        name: f.name, url, path, size: f.size, uploadedAt: new Date().toISOString(),
-      });
-      setUploading(false);
-      // Extract text locally
       if (!window.pdfjsLib) throw new Error('PDF.js 未加载，请检查网络连接');
       pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
       const buf = await f.arrayBuffer();
@@ -816,15 +825,14 @@ const PDFImport = ({ setNotes, setFlashcards, setVocab, uid }) => {
       }
       setText(out.trim());
     } catch (e) { setErr('处理失败：' + e.message); }
-    finally { setLoading(false); setUploading(false); }
+    finally { setLoading(false); }
   };
 
-  const deletePdf = async (pdf) => {
-    if (!confirm(`删除「${pdf.name}」？云端文件也会一并删除。`)) return;
-    try {
-      await fbStorage.ref(pdf.path).delete();
-      await fbDb.collection('users').doc(uid).collection('pdfs').doc(pdf.id).delete();
-    } catch (e) { alert('删除失败：' + e.message); }
+  const openClaude = (cmd) => {
+    navigator.clipboard.writeText(cmd.prompt(text));
+    setCopied(cmd.id);
+    setTimeout(() => setCopied(''), 2000);
+    window.open('https://claude.ai/new', '_blank');
   };
 
   const importJSON = () => {
@@ -857,7 +865,7 @@ const PDFImport = ({ setNotes, setFlashcards, setVocab, uid }) => {
   return (
     <div className="max-w-3xl mx-auto">
       <h1 className="text-xl font-bold text-gray-800 mb-1">📄 PDF 导入</h1>
-      <p className="text-gray-400 text-sm mb-5">上传课堂 PDF → 提取文本 → 发给 Claude 整理 → 贴回 JSON 导入</p>
+      <p className="text-gray-400 text-sm mb-5">选择 PDF → 提取文本 → 选命令发给 Claude → 贴回 JSON 导入</p>
 
       <div className="flex gap-1 mb-5 bg-gray-100 rounded-xl p-1 w-fit">
         {[['pdf','📄 PDF 提取'],['json','📥 JSON 导入']].map(([k,l]) => (
@@ -877,10 +885,10 @@ const PDFImport = ({ setNotes, setFlashcards, setVocab, uid }) => {
             </label>
           </Card>
 
-          {(loading || uploading) && (
+          {loading && (
             <div className="text-center py-8">
               <div className="inline-block w-8 h-8 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mb-2"></div>
-              <p className="text-gray-400 text-sm">{uploading ? '正在上传到云端…' : '正在提取文本…'}</p>
+              <p className="text-gray-400 text-sm">正在提取文本…</p>
             </div>
           )}
 
@@ -890,43 +898,24 @@ const PDFImport = ({ setNotes, setFlashcards, setVocab, uid }) => {
             <Card>
               <div className="flex justify-between items-center mb-3">
                 <span className="font-medium text-sm text-gray-700">提取结果</span>
-                <div className="flex items-center gap-2">
-                  {pdfUrl && <a href={pdfUrl} target="_blank" rel="noopener" className="text-xs text-indigo-500 hover:underline">☁️ 查看云端原文</a>}
-                  <Btn size="sm" variant="secondary" onClick={() => navigator.clipboard.writeText(text)}>📋 复制原文</Btn>
-                </div>
+                <Btn size="sm" variant="secondary" onClick={() => navigator.clipboard.writeText(text)}>📋 复制原文</Btn>
               </div>
               <pre className="text-xs text-gray-500 bg-gray-50 rounded-xl p-4 max-h-48 overflow-y-auto whitespace-pre-wrap leading-relaxed">{text}</pre>
-              <div className="mt-4 flex items-center justify-between bg-indigo-50 rounded-xl p-4 gap-4">
-                <div>
-                  <p className="text-sm font-semibold text-indigo-700 mb-0.5">📌 下一步</p>
-                  <p className="text-xs text-indigo-500">点击按钮 → 提示词自动复制 → Claude 打开后粘贴发送 → 复制 JSON → 回来贴到「JSON 导入」</p>
+              <div className="mt-4">
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">选择整理方式 → 自动复制提示词并打开 Claude</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {PDF_COMMANDS.map(cmd => (
+                    <button
+                      key={cmd.id}
+                      onClick={() => openClaude(cmd)}
+                      className={`${cmd.color} text-white rounded-xl px-4 py-3 text-left transition-colors shadow-sm`}
+                    >
+                      <p className="font-semibold text-sm">{copied === cmd.id ? '✅ 已复制！' : cmd.label}</p>
+                      <p className="text-xs opacity-80 mt-0.5">{cmd.desc}</p>
+                    </button>
+                  ))}
                 </div>
-                <button
-                  onClick={() => {
-                    const prompt = `你是一个日语学习助手。请将以下课堂PDF内容整理成JSON格式，只返回合法JSON，不要加任何说明文字。格式如下：\n{\n  "notes": [{"title": "笔记标题", "content": "内容", "tags": ["标签"]}],\n  "flashcards": [{"front": "日语/问题", "back": "中文/答案", "tags": ["标签"]}],\n  "vocabulary": [{"japanese": "日文", "hiragana": "假名", "chinese": "中文", "mastery": "new", "tags": ["标签"]}]\n}\n\nPDF内容：\n\n${text}`;
-                    navigator.clipboard.writeText(prompt);
-                    window.open('https://claude.ai/new', '_blank');
-                  }}
-                  className="shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors whitespace-nowrap shadow-sm"
-                >
-                  ✨ 在 Claude 中整理
-                </button>
-              </div>
-            </Card>
-          )}
-
-          {storedPdfs.length > 0 && (
-            <Card className="mt-4">
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">☁️ 已存云端的 PDF</p>
-              <div className="space-y-2">
-                {storedPdfs.map(pdf => (
-                  <div key={pdf.id} className="flex items-center gap-2 text-sm">
-                    <span className="text-gray-400 shrink-0">📄</span>
-                    <a href={pdf.url} target="_blank" rel="noopener" className="flex-1 text-indigo-500 hover:underline truncate">{pdf.name}</a>
-                    <span className="text-xs text-gray-300 shrink-0">{(pdf.size / 1024 / 1024).toFixed(1)} MB</span>
-                    <button onClick={() => deletePdf(pdf)} className="text-gray-200 hover:text-red-400 text-xs shrink-0">🗑</button>
-                  </div>
-                ))}
+                <p className="text-xs text-gray-400 mt-3 text-center">点击后 → Claude 打开 → 粘贴发送 → 复制 JSON → 回来贴到「JSON 导入」</p>
               </div>
             </Card>
           )}
@@ -1212,7 +1201,7 @@ const App = ({ user }) => {
           {page==='flashcards' && <Flashcards cards={flashcards} setCards={setFlash} allTags={allTags} />}
           {page==='homework'   && <HomeworkTracker homework={homework} setHomework={setHomework} />}
           {page==='vocab'      && <VocabularyBook vocab={vocab} setVocab={setVocab} allTags={allTags} />}
-          {page==='pdf'        && <PDFImport setNotes={setNotes} setFlashcards={setFlash} setVocab={setVocab} uid={user.uid} />}
+          {page==='pdf'        && <PDFImport setNotes={setNotes} setFlashcards={setFlash} setVocab={setVocab} />}
           {page==='feedback'   && <FeedbackBoard feedback={feedback} setFeedback={setFeedback} />}
         </main>
       </div>
