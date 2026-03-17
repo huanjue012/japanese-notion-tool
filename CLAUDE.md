@@ -42,3 +42,4 @@ users/{uid}/
 ## 注意
 - 每个模块标题栏有「🗑 全部删除」红色按钮（有数据时显示），需二次确认
 - `system-prompt.md` = Claude mobile app「日语课」project 的 system prompt，勿混淆
+- 如果反馈板有多条待处理的功能需求，必须同时启动多个 agent 并行处理，不要逐一顺序执行
