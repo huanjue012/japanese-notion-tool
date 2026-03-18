@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find /c/Users/Kee/Documents/JapaneseAITools -type f -name *.rules)"
+    ]
+  }
+}
