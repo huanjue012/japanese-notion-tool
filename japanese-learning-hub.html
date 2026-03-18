@@ -389,13 +389,25 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline }) => {
   const exportForClaude = async () => {
     const exported = { notes: notes.map(({ title, content, tags }) => ({ title, content, tags })) };
     const jsonString = JSON.stringify(exported, null, 2);
+    // Trigger JSON file download
+    const today = new Date().toISOString().slice(0, 10);
+    const blob = new Blob([jsonString], { type: 'application/json' });
+    const dlUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = dlUrl;
+    a.download = `notes-export-${today}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(dlUrl);
+    // Copy Claude prompt to clipboard
     const message = `请帮我检查以下日语学习笔记，指出有误的内容、补充不完整的地方，并以相同JSON格式返回修正后的版本：\n\n${jsonString}`;
     try {
       await navigator.clipboard.writeText(message);
     } catch (e) {
       // fallback
     }
-    setExportToast('✅ 已复制！请粘贴到 Claude 对话框');
+    setExportToast('✅ 已下载 JSON 文件，提示语已复制到剪贴板！');
     setTimeout(() => setExportToast(''), 3000);
     window.open('https://claude.ai/project/019cf9e9-9f1d-7066-9a04-29908e81ebbf', '_blank');
   };
