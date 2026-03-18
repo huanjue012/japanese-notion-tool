@@ -10,10 +10,10 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
   <style>
     * { box-sizing: border-box; }
     body { margin: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
@@ -316,6 +316,7 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline }) => {
   const [modal, setModal] = useState(null);
   const [form, setForm] = useState({ title: '', content: '', tags: [], images: [] });
   const [uploadingImg, setUploadingImg] = useState(false);
+  const [contentExpanded, setContentExpanded] = useState(false);
 
   const tagCounts = useMemo(() => {
     const c = {};
@@ -330,21 +331,38 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline }) => {
     return ms && mt;
   }), [notes, search, activeTag]);
 
-  const openNew = () => { setForm({ title: '', content: '', tags: activeTag ? [activeTag] : [], images: [] }); setModal('new'); };
-  const openEdit = n => { setForm({ ...n, images: n.images || [] }); setModal(n.id); };
+  const openNew = () => { setForm({ title: '', content: '', tags: activeTag ? [activeTag] : [], images: [] }); setContentExpanded(false); setModal('new'); };
+  const openEdit = n => { setForm({ ...n, images: n.images || [] }); setContentExpanded(false); setModal(n.id); };
 
-  const uploadImage = async (file) => {
-    if (!navigator.onLine) { alert('上传图片需要网络连接'); return; }
-    if (!file.type.startsWith('image/')) { alert('请选择图片文件'); return; }
+  const uploadFile = async (file) => {
+    if (!navigator.onLine) { alert('上传文件需要网络连接'); return; }
+    const isImage = file.type.startsWith('image/');
+    const isPdf   = file.type === 'application/pdf';
+    if (!isImage && !isPdf) { alert('请选择图片或 PDF 文件'); return; }
     setUploadingImg(true);
     try {
-      const path = `users/${uid}/images/${genId()}_${file.name}`;
+      const folder = isImage ? 'images' : 'pdfs';
+      const path = `users/${uid}/${folder}/${genId()}_${file.name}`;
       const ref = fbStorage.ref(path);
       await ref.put(file);
       const url = await ref.getDownloadURL();
-      setForm(p => ({ ...p, images: [...(p.images || []), { url, path, name: file.name }] }));
+      setForm(p => ({ ...p, images: [...(p.images || []), { url, path, name: file.name, type: isImage ? 'image' : 'pdf' }] }));
     } catch (e) { alert('上传失败：' + e.message); }
     finally { setUploadingImg(false); }
+  };
+
+  const downloadFile = async (url, name) => {
+    try {
+      const res = await fetch(url);
+      const blob = await res.blob();
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = name;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    } catch {
+      window.open(url, '_blank');
+    }
   };
 
   const removeImage = (path) => setForm(p => ({ ...p, images: p.images.filter(i => i.path !== path) }));
@@ -393,7 +411,15 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline }) => {
               <div className="md-body line-clamp-3 mb-3" dangerouslySetInnerHTML={{ __html: window.marked ? marked.parse(n.content || '') : n.content }} />
               {n.images?.length > 0 && (
                 <div className="flex flex-wrap gap-1 mb-2">
-                  {n.images.map((img, i) => <img key={i} src={img.url} className="w-14 h-14 object-cover rounded-lg border border-gray-100" />)}
+                  {n.images.map((att, i) => att.type === 'pdf' ? (
+                    <a key={i} href={att.url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
+                      className="w-14 h-14 border border-gray-100 rounded-lg bg-red-50 flex flex-col items-center justify-center hover:bg-red-100 transition-colors">
+                      <span className="text-xl">📄</span>
+                      <span className="text-xs text-gray-400 truncate w-full text-center px-1">{att.name?.split('.')[0]?.slice(0,6)}</span>
+                    </a>
+                  ) : (
+                    <img key={i} src={att.url} className="w-14 h-14 object-cover rounded-lg border border-gray-100" />
+                  ))}
                 </div>
               )}
               <div className="flex flex-wrap gap-1">
@@ -407,32 +433,74 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline }) => {
 
       <Modal open={!!modal} onClose={() => setModal(null)} title={modal === 'new' ? '新建笔记' : '编辑笔记'} wide>
         <Input label="标题" value={form.title} onChange={e => setForm(p => ({...p, title: e.target.value}))} placeholder="笔记标题…" />
-        <Textarea label="内容" value={form.content} onChange={e => setForm(p => ({...p, content: e.target.value}))} placeholder="记录知识点、例句、文法解释…支持 Markdown 表格" rows={10} />
-        {form.content && (
-          <div className="mt-2 mb-2 border border-gray-100 rounded-xl bg-gray-50 p-3">
-            <p className="text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wide">预览</p>
-            <div className="md-body" dangerouslySetInnerHTML={{ __html: window.marked ? marked.parse(form.content) : form.content }} />
+        <div className="mb-3">
+          <div className="flex items-center justify-between mb-1">
+            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+              内容 {contentExpanded ? '▲' : '▼'}
+            </label>
+            <button type="button" onClick={() => setContentExpanded(v => !v)}
+              className="text-xs text-indigo-500 hover:text-indigo-700 font-medium">
+              {contentExpanded ? '收起' : '展开编辑'}
+            </button>
           </div>
-        )}
+          {!contentExpanded && form.content && (
+            <div className="border border-gray-100 rounded-xl bg-gray-50 px-3 py-2 cursor-pointer text-xs text-gray-400 line-clamp-2"
+              onClick={() => setContentExpanded(true)}>
+              {form.content.slice(0, 120)}{form.content.length > 120 ? '…' : ''}
+            </div>
+          )}
+          {!contentExpanded && !form.content && (
+            <div className="border border-dashed border-gray-200 rounded-xl py-3 text-center text-xs text-gray-300 cursor-pointer"
+              onClick={() => setContentExpanded(true)}>
+              点击展开输入内容
+            </div>
+          )}
+          {contentExpanded && (
+            <>
+              <textarea rows={10}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-transparent resize-none"
+                value={form.content}
+                onChange={e => setForm(p => ({...p, content: e.target.value}))}
+                placeholder="记录知识点、例句、文法解释…支持 Markdown 表格" />
+              {form.content && (
+                <div className="mt-2 mb-2 border border-gray-100 rounded-xl bg-gray-50 p-3">
+                  <p className="text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wide">预览</p>
+                  <div className="md-body"
+                    dangerouslySetInnerHTML={{ __html: window.marked ? marked.parse(form.content) : form.content }} />
+                </div>
+              )}
+            </>
+          )}
+        </div>
         <TagSelector selected={form.tags} onChange={tags => setForm(p => ({...p, tags}))} pool={allTags} />
         <div className="mt-3">
-          <p className="text-xs font-semibold text-gray-500 mb-1.5">图片</p>
+          <p className="text-xs font-semibold text-gray-500 mb-1.5">附件（图片 / PDF）</p>
           <div className="flex flex-wrap gap-2 mb-2">
-            {(form.images || []).map((img, i) => (
+            {(form.images || []).map((att, i) => (
               <div key={i} className="relative group">
-                <img src={img.url} className="w-16 h-16 object-cover rounded-lg border border-gray-200" />
-                <button onClick={() => removeImage(img.path)}
+                {att.type === 'pdf' ? (
+                  <div className="w-16 h-16 border border-gray-200 rounded-lg bg-red-50 flex flex-col items-center justify-center overflow-hidden">
+                    <span className="text-2xl">📄</span>
+                    <span className="text-xs text-gray-400 truncate w-full text-center px-1">{att.name?.split('.')[0]?.slice(0,8)}</span>
+                  </div>
+                ) : (
+                  <img src={att.url} className="w-16 h-16 object-cover rounded-lg border border-gray-200" />
+                )}
+                <button onClick={() => removeImage(att.path)}
                   className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">×</button>
+                <button onClick={() => downloadFile(att.url, att.name)}
+                  className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs rounded-b-lg py-0.5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                  title={`下载 ${att.name}`}>↓</button>
               </div>
             ))}
             <label className={`w-16 h-16 border-2 border-dashed rounded-lg flex flex-col items-center justify-center transition-all
               ${isOnline ? 'border-gray-200 cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/30' : 'border-gray-100 cursor-not-allowed opacity-40'}`}
-              title={isOnline ? '' : '离线时无法上传图片'}>
-              <input type="file" accept="image/*" disabled={!isOnline} onChange={e => e.target.files?.[0] && uploadImage(e.target.files[0])} className="hidden" />
+              title={isOnline ? '' : '离线时无法上传文件'}>
+              <input type="file" accept="image/*,application/pdf" disabled={!isOnline} onChange={e => e.target.files?.[0] && uploadFile(e.target.files[0])} className="hidden" />
               {uploadingImg ? <div className="w-4 h-4 border-2 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" /> : <span className="text-gray-300 text-xl">+</span>}
             </label>
           </div>
-          <p className="text-xs text-gray-300">每张图片最大 5 MB</p>
+          <p className="text-xs text-gray-300">每个文件最大 5 MB（图片或 PDF）</p>
         </div>
         <div className="flex justify-end gap-2 pt-2">
           <Btn variant="secondary" onClick={() => setModal(null)}>取消</Btn>
@@ -446,7 +514,7 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline }) => {
 // ─── FLASHCARDS ───────────────────────────────────────────────────────────────
 const INTERVALS = { 1: 1, 2: 3, 3: 7, 4: 14 };
 
-const Flashcards = ({ cards, setCards, allTags, onNav }) => {
+const Flashcards = ({ cards, setCards, allTags, onNav, notes = [] }) => {
   const [view, setView] = useState('list'); // list | review | form
   const [editId, setEditId] = useState(null);
   const [form, setForm] = useState({ front: '', back: '', tags: [] });
@@ -454,9 +522,17 @@ const Flashcards = ({ cards, setCards, allTags, onNav }) => {
   const [activeTag, setActiveTag] = useState(null);
   const [idx, setIdx] = useState(0);
   const [flipped, setFlipped] = useState(false);
+  const [noteIdx, setNoteIdx] = useState(0);
 
   const dueCards = useMemo(() => cards.filter(c => !c.nextReview || new Date(c.nextReview) <= new Date()), [cards]);
   const reviewList = filterMode === 'due' ? dueCards : cards;
+
+  const relatedNotes = useMemo(() => {
+    if (!flipped || !reviewList[idx]) return [];
+    const cardTags = new Set(reviewList[idx].tags || []);
+    if (cardTags.size === 0) return [];
+    return notes.filter(n => n.tags?.some(t => cardTags.has(t)));
+  }, [flipped, idx, reviewList, notes]);
 
   useEffect(() => {
     if (view !== 'review' || !onNav) return;
@@ -479,7 +555,7 @@ const Flashcards = ({ cards, setCards, allTags, onNav }) => {
   const rate = q => {
     const next = new Date(); next.setDate(next.getDate() + INTERVALS[q]);
     setCards(p => p.map(c => c.id === reviewList[idx].id ? { ...c, nextReview: next.toISOString(), lastReviewed: new Date().toISOString(), reviewCount: (c.reviewCount||0)+1, difficulty: q } : c));
-    if (idx < reviewList.length - 1) { setIdx(i => i+1); setFlipped(false); }
+    if (idx < reviewList.length - 1) { setIdx(i => i+1); setFlipped(false); setNoteIdx(0); }
     else setView('list');
   };
 
@@ -513,7 +589,33 @@ const Flashcards = ({ cards, setCards, allTags, onNav }) => {
           </div>
         )}
         <p className="text-center text-xs text-gray-300 mt-4">再来=1天 · 困难=3天 · 良好=7天 · 简单=14天</p>
-        {onNav && <p className="text-center text-xs text-gray-300 mt-2">按 <kbd className="bg-gray-100 px-1 rounded text-gray-400">N</kbd> 查看相关知识库笔记</p>}
+        {relatedNotes.length > 0 && (
+          <div className="mt-4 bg-indigo-50 border border-indigo-100 rounded-xl p-3">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs font-semibold text-indigo-600 uppercase tracking-wide">
+                相关笔记 {relatedNotes.length > 1 && `(${noteIdx + 1}/${relatedNotes.length})`}
+              </p>
+              {relatedNotes.length > 1 && (
+                <div className="flex gap-1">
+                  <button onClick={() => setNoteIdx(i => Math.max(0, i - 1))}
+                    disabled={noteIdx === 0}
+                    className="px-2 py-0.5 text-xs rounded bg-white border border-indigo-200 text-indigo-600 disabled:opacity-30">‹</button>
+                  <button onClick={() => setNoteIdx(i => Math.min(relatedNotes.length - 1, i + 1))}
+                    disabled={noteIdx === relatedNotes.length - 1}
+                    className="px-2 py-0.5 text-xs rounded bg-white border border-indigo-200 text-indigo-600 disabled:opacity-30">›</button>
+                </div>
+              )}
+            </div>
+            <p className="text-sm font-medium text-gray-800 mb-1">{relatedNotes[noteIdx].title}</p>
+            <div className="md-body line-clamp-3"
+              dangerouslySetInnerHTML={{ __html: window.marked ? marked.parse(relatedNotes[noteIdx].content || '') : relatedNotes[noteIdx].content }} />
+            {relatedNotes[noteIdx].tags?.length > 0 && (
+              <div className="flex flex-wrap gap-1 mt-2">
+                {relatedNotes[noteIdx].tags.map(t => <Badge key={t}>{t}</Badge>)}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     );
   }
@@ -1260,7 +1362,7 @@ const App = ({ user }) => {
         <main className="flex-1 overflow-y-auto p-4 md:p-8">
           {page==='dashboard'  && <Dashboard notes={notes} homework={homework} flashcards={flashcards} vocab={vocab} onNav={nav} />}
           {page==='knowledge'  && <KnowledgeBase notes={notes} setNotes={setNotes} allTags={allTags} uid={user.uid} isOnline={isOnline} />}
-          {page==='flashcards' && <Flashcards cards={flashcards} setCards={setFlash} allTags={allTags} onNav={nav} />}
+          {page==='flashcards' && <Flashcards cards={flashcards} setCards={setFlash} allTags={allTags} onNav={nav} notes={notes} />}
           {page==='homework'   && <HomeworkTracker homework={homework} setHomework={setHomework} />}
           {page==='vocab'      && <VocabularyBook vocab={vocab} setVocab={setVocab} allTags={allTags} />}
           {page==='pdf'        && <PDFImport setNotes={setNotes} setFlashcards={setFlash} setVocab={setVocab} uid={user.uid} isOnline={isOnline} />}
