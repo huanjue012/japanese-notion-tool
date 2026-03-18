@@ -904,6 +904,7 @@ const VocabularyBook = ({ vocab, setVocab, allTags }) => {
   const [view, setView] = useState('list'); // list | quiz
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
+  const [activeTag, setActiveTag] = useState(null);
   const [modal, setModal] = useState(null);
   const [form, setForm] = useState({ japanese:'', hiragana:'', english:'', chinese:'', example:'', tags:[], mastery:'new' });
   const [quizIdx, setQuizIdx] = useState(0);
@@ -915,8 +916,15 @@ const VocabularyBook = ({ vocab, setVocab, allTags }) => {
     const q = search.toLowerCase();
     const ms = !q || v.japanese?.includes(q) || v.hiragana?.includes(q) || v.english?.toLowerCase().includes(q) || v.chinese?.includes(q);
     const mf = filter === 'all' || v.mastery === filter;
-    return ms && mf;
-  }), [vocab, search, filter]);
+    const mt = !activeTag || v.tags?.includes(activeTag);
+    return ms && mf && mt;
+  }), [vocab, search, filter, activeTag]);
+
+  const vocabTagCounts = useMemo(() => {
+    const c = {};
+    vocab.forEach(v => v.tags?.forEach(t => { c[t] = (c[t] || 0) + 1; }));
+    return c;
+  }, [vocab]);
 
   const openNew = () => { setForm({japanese:'',hiragana:'',english:'',chinese:'',example:'',tags:[],mastery:'new'}); setModal('new'); };
   const openEdit = v => { setForm({...v}); setModal(v.id); };
@@ -949,7 +957,10 @@ const VocabularyBook = ({ vocab, setVocab, allTags }) => {
       <div className="max-w-md mx-auto">
         <div className="flex justify-between items-center mb-5">
           <Btn variant="ghost" onClick={() => setView('list')}>← 返回</Btn>
-          <span className="text-sm text-gray-400">{(quizIdx % filtered.length) + 1} / {filtered.length}</span>
+          <div className="text-right">
+            {activeTag && <p className="text-xs text-indigo-500 mb-0.5">#{activeTag}</p>}
+            <span className="text-sm text-gray-400">{(quizIdx % filtered.length) + 1} / {filtered.length}</span>
+          </div>
         </div>
         <div onClick={() => setShowAns(a => !a)} className="bg-white rounded-2xl shadow-lg border border-gray-100 p-10 text-center cursor-pointer hover:shadow-xl transition-shadow min-h-52 flex flex-col items-center justify-center mb-4">
           {!showAns ? (
@@ -995,11 +1006,19 @@ const VocabularyBook = ({ vocab, setVocab, allTags }) => {
       <input value={search} onChange={e => setSearch(e.target.value)} placeholder="搜索日语、中文、英文…"
         className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-indigo-300" />
 
-      <div className="flex flex-wrap gap-2 mb-5">
+      <div className="flex flex-wrap gap-2 mb-3">
         {[['all','全部'],...Object.entries(MASTERY).map(([k,{label}])=>[k,label])].map(([k,l]) => (
           <button key={k} onClick={() => setFilter(k)} className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${filter===k?'bg-indigo-600 text-white':'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>{l} ({counts[k]||0})</button>
         ))}
       </div>
+      {Object.keys(vocabTagCounts).length > 0 && (
+        <div className="flex flex-wrap gap-1.5 mb-4">
+          <Badge onClick={() => setActiveTag(null)} color={!activeTag ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600'}>全部标签</Badge>
+          {Object.entries(vocabTagCounts).sort((a,b) => b[1]-a[1]).map(([tag, cnt]) => (
+            <Badge key={tag} onClick={() => setActiveTag(activeTag === tag ? null : tag)} color={activeTag === tag ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600'}>{tag} ({cnt})</Badge>
+          ))}
+        </div>
+      )}
 
       {filtered.length === 0 ? (
         <Card className="text-center py-16"><p className="text-4xl mb-3">📖</p><p className="text-gray-400 mb-4">还没有单词</p><Btn onClick={openNew}>添加第一个单词</Btn></Card>
