@@ -594,7 +594,10 @@ const Flashcards = ({ cards, setCards, allTags, onNav, notes = [] }) => {
   const [noteIdx, setNoteIdx] = useState(0);
 
   const dueCards = useMemo(() => cards.filter(c => !c.nextReview || new Date(c.nextReview) <= new Date()), [cards]);
-  const reviewList = filterMode === 'due' ? dueCards : cards;
+  const reviewList = useMemo(() => {
+    const base = filterMode === 'due' ? dueCards : cards;
+    return activeTag ? base.filter(c => c.tags?.includes(activeTag)) : base;
+  }, [filterMode, dueCards, cards, activeTag]);
 
   const relatedNotes = useMemo(() => {
     if (!flipped || !reviewList[idx]) return [];
@@ -636,7 +639,10 @@ const Flashcards = ({ cards, setCards, allTags, onNav, notes = [] }) => {
       <div className="max-w-lg mx-auto">
         <div className="flex justify-between items-center mb-3">
           <Btn variant="ghost" onClick={() => setView('list')}>← 返回</Btn>
-          <span className="text-sm text-gray-400">{idx + 1} / {reviewList.length}</span>
+          <div className="text-right">
+            {activeTag && <p className="text-xs text-indigo-500 mb-0.5">#{activeTag}</p>}
+            <span className="text-sm text-gray-400">{idx + 1} / {reviewList.length}</span>
+          </div>
         </div>
         <div className="w-full bg-gray-100 rounded-full h-1.5 mb-6">
           <div className="bg-indigo-500 h-1.5 rounded-full transition-all duration-500" style={{ width: `${(idx / reviewList.length) * 100}%` }} />
