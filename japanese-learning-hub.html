@@ -1169,6 +1169,8 @@ const FeedbackBoard = ({ feedback, setFeedback }) => {
   const [importJson, setImportJson] = useState('');
   const [importErr, setImportErr] = useState('');
   const [importOk,  setImportOk]  = useState('');
+  const [expandedDesc, setExpandedDesc] = useState({});
+  const toggleDesc = (id, e) => { e.stopPropagation(); setExpandedDesc(p => ({...p, [id]: !p[id]})); };
 
   const byStatus = s => feedback.filter(f => f.status === s);
   const openNew = () => { setForm({title:'',description:'',status:'backlog'}); setEditId(null); setModal(true); };
@@ -1236,7 +1238,12 @@ const FeedbackBoard = ({ feedback, setFeedback }) => {
                     <p className="text-sm font-semibold text-gray-800 flex-1 pr-1">{item.title}</p>
                     <button onClick={e => { e.stopPropagation(); del(item.id); }} className="text-gray-200 hover:text-red-400 text-xs shrink-0">×</button>
                   </div>
-                  {item.description && <p className="text-xs text-gray-500 mb-2">{item.description}</p>}
+                  {item.description && (
+                    <div className="mb-2">
+                      {expandedDesc[item.id] && <p className="text-xs text-gray-500 mb-1">{item.description}</p>}
+                      <button onClick={e => toggleDesc(item.id, e)} className="text-xs text-indigo-400 hover:text-indigo-600">{expandedDesc[item.id] ? '▲ 收起' : '▼ 详情'}</button>
+                    </div>
+                  )}
                   <p className="text-xs text-gray-300 mb-2">{fmt(item.createdAt)}</p>
                   <div className="flex flex-wrap gap-1">
                     {Object.entries(FB_STATUS).filter(([s]) => s !== status).map(([s, c]) => (
