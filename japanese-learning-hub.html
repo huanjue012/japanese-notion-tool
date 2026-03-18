@@ -908,6 +908,8 @@ const VocabularyBook = ({ vocab, setVocab, allTags }) => {
   const [form, setForm] = useState({ japanese:'', hiragana:'', english:'', chinese:'', example:'', tags:[], mastery:'new' });
   const [quizIdx, setQuizIdx] = useState(0);
   const [showAns, setShowAns] = useState(false);
+  const [showJapanese, setShowJapanese] = useState(true);
+  const [showHiragana, setShowHiragana] = useState(true);
 
   const filtered = useMemo(() => vocab.filter(v => {
     const q = search.toLowerCase();
@@ -935,6 +937,14 @@ const VocabularyBook = ({ vocab, setVocab, allTags }) => {
 
   if (view === 'quiz' && filtered.length > 0) {
     const word = filtered[quizIdx % filtered.length];
+    const toggleJapanese = () => {
+      if (showJapanese && !showHiragana) return;
+      setShowJapanese(v => !v);
+    };
+    const toggleHiragana = () => {
+      if (showHiragana && !showJapanese) return;
+      setShowHiragana(v => !v);
+    };
     return (
       <div className="max-w-md mx-auto">
         <div className="flex justify-between items-center mb-5">
@@ -944,8 +954,8 @@ const VocabularyBook = ({ vocab, setVocab, allTags }) => {
         <div onClick={() => setShowAns(a => !a)} className="bg-white rounded-2xl shadow-lg border border-gray-100 p-10 text-center cursor-pointer hover:shadow-xl transition-shadow min-h-52 flex flex-col items-center justify-center mb-4">
           {!showAns ? (
             <div>
-              <p className="text-4xl font-bold text-gray-800 mb-1">{word.japanese}</p>
-              {word.hiragana && word.hiragana !== word.japanese && <p className="text-lg text-gray-400">{word.hiragana}</p>}
+              {showJapanese && <p className="text-4xl font-bold text-gray-800 mb-1">{word.japanese}</p>}
+              {showHiragana && word.hiragana && word.hiragana !== word.japanese && <p className="text-lg text-gray-400">{word.hiragana}</p>}
               <p className="text-xs text-gray-300 mt-4">点击查看意思</p>
             </div>
           ) : (
@@ -954,6 +964,10 @@ const VocabularyBook = ({ vocab, setVocab, allTags }) => {
               {word.example && <p className="text-sm text-gray-400 mt-3 italic">{word.example}</p>}
             </div>
           )}
+        </div>
+        <div className="flex gap-2 justify-center mb-4">
+          <button onClick={toggleJapanese} className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${showJapanese ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-500'}`}>漢字</button>
+          <button onClick={toggleHiragana} className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${showHiragana ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-500'}`}>仮名</button>
         </div>
         {showAns && (
           <div className="grid grid-cols-4 gap-2">
