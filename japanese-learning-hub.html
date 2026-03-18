@@ -502,7 +502,6 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline }) => {
               {uploadingImg ? <div className="w-4 h-4 border-2 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" /> : <span className="text-gray-300 text-xl">+</span>}
             </label>
           </div>
-          <p className="text-xs text-gray-300">每个文件最大 5 MB（图片或 PDF）</p>
         </div>
         <div className="flex justify-end gap-2 pt-2">
           <Btn variant="secondary" onClick={() => setModal(null)}>取消</Btn>
@@ -979,6 +978,7 @@ const PDFImport = ({ setNotes, setFlashcards, setVocab, uid, isOnline }) => {
   const [err, setErr] = useState('');
   const [ok, setOk] = useState('');
   const [imgFiles, setImgFiles] = useState([]);
+  const [pdfFiles, setPdfFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
 
   const addImgFiles = e => {
@@ -988,13 +988,20 @@ const PDFImport = ({ setNotes, setFlashcards, setVocab, uid, isOnline }) => {
   };
   const removeImg = idx => setImgFiles(p => p.filter((_, i) => i !== idx));
 
+  const addPdfFiles = e => {
+    const files = Array.from(e.target.files || []);
+    setPdfFiles(p => [...p, ...files]);
+    e.target.value = '';
+  };
+  const removePdf = idx => setPdfFiles(p => p.filter((_, i) => i !== idx));
+
   const importJSON = async () => {
     setErr(''); setOk('');
     let d;
     try { d = JSON.parse(json); } catch(e) { setErr('JSON 格式有误：' + e.message); return; }
 
     let uploadedImages = [];
-    if (imgFiles.length > 0 && d.notes?.length && uid) {
+    if ((imgFiles.length > 0 || pdfFiles.length > 0) && d.notes?.length && uid) {
       setUploading(true);
       try {
         for (const file of imgFiles) {
@@ -1002,9 +1009,16 @@ const PDFImport = ({ setNotes, setFlashcards, setVocab, uid, isOnline }) => {
           const ref = fbStorage.ref(path);
           await ref.put(file);
           const url = await ref.getDownloadURL();
-          uploadedImages.push({ url, path, name: file.name });
+          uploadedImages.push({ url, path, name: file.name, type: 'image' });
         }
-      } catch(e) { setErr('图片上传失败：' + e.message); setUploading(false); return; }
+        for (const file of pdfFiles) {
+          const path = `users/${uid}/pdfs/${genId()}_${file.name}`;
+          const ref = fbStorage.ref(path);
+          await ref.put(file);
+          const url = await ref.getDownloadURL();
+          uploadedImages.push({ url, path, name: file.name, type: 'pdf' });
+        }
+      } catch(e) { setErr('文件上传失败：' + e.message); setUploading(false); return; }
       setUploading(false);
     }
 
@@ -1015,10 +1029,11 @@ const PDFImport = ({ setNotes, setFlashcards, setVocab, uid, isOnline }) => {
     }
     if (d.flashcards?.length) { setFlashcards(p => [...p, ...d.flashcards.map(x=>({...x,id:genId(),createdAt:new Date().toISOString()}))]); cnt.f = d.flashcards.length; }
     if (d.vocabulary?.length) { setVocab(p => [...p, ...d.vocabulary.map(x=>({...x,id:genId(),createdAt:new Date().toISOString()}))]); cnt.v = d.vocabulary.length; }
-    const imgMsg = uploadedImages.length > 0 ? ` · 图片 ${uploadedImages.length} 张` : '';
-    setOk(`✅ 导入成功！笔记 ${cnt.n} 条 · 闪卡 ${cnt.f} 张 · 词汇 ${cnt.v} 个${imgMsg}`);
+    const fileMsg = uploadedImages.length > 0 ? ` · 文件 ${uploadedImages.length} 个` : '';
+    setOk(`✅ 导入成功！笔记 ${cnt.n} 条 · 闪卡 ${cnt.f} 张 · 词汇 ${cnt.v} 个${fileMsg}`);
     setJson('');
     setImgFiles([]);
+    setPdfFiles([]);
   };
 
   const EXAMPLE = `{
@@ -1072,19 +1087,37 @@ const PDFImport = ({ setNotes, setFlashcards, setVocab, uid, isOnline }) => {
           <Card>
             <Textarea label="粘贴 Claude 整理好的 JSON" value={json} onChange={e => setJson(e.target.value)} placeholder='{"notes":[...],"flashcards":[...],"vocabulary":[...]}' rows={10} />
             <div className="mb-4">
-              <p className="text-xs text-gray-400 mb-2">可附加图片到导入的笔记（可选）</p>
-              <label className={`inline-flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-xl transition-colors
-                ${isOnline ? 'cursor-pointer bg-gray-100 hover:bg-gray-200 text-gray-600' : 'cursor-not-allowed bg-gray-50 text-gray-300'}`}
-                title={isOnline ? '' : '离线时无法上传图片'}>
-                <span>🖼 选择图片</span>
-                <input type="file" accept="image/*" multiple disabled={!isOnline} className="hidden" onChange={addImgFiles} />
-              </label>
+              <p className="text-xs text-gray-400 mb-2">可附加图片或 PDF 到导入的笔记（可选）</p>
+              <div className="flex gap-2 flex-wrap">
+                <label className={`inline-flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-xl transition-colors
+                  ${isOnline ? 'cursor-pointer bg-gray-100 hover:bg-gray-200 text-gray-600' : 'cursor-not-allowed bg-gray-50 text-gray-300'}`}
+                  title={isOnline ? '' : '离线时无法上传'}>
+                  <span>🖼 选择图片</span>
+                  <input type="file" accept="image/*" multiple disabled={!isOnline} className="hidden" onChange={addImgFiles} />
+                </label>
+                <label className={`inline-flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-xl transition-colors
+                  ${isOnline ? 'cursor-pointer bg-gray-100 hover:bg-gray-200 text-gray-600' : 'cursor-not-allowed bg-gray-50 text-gray-300'}`}
+                  title={isOnline ? '' : '离线时无法上传'}>
+                  <span>📄 选择 PDF</span>
+                  <input type="file" accept="application/pdf" multiple disabled={!isOnline} className="hidden" onChange={addPdfFiles} />
+                </label>
+              </div>
               {imgFiles.length > 0 && (
                 <div className="flex flex-wrap gap-2 mt-3">
                   {imgFiles.map((file, idx) => (
                     <div key={idx} className="relative group">
                       <img src={URL.createObjectURL(file)} alt={file.name} className="w-16 h-16 object-cover rounded-lg border border-gray-200" />
                       <button onClick={() => removeImg(idx)} className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">×</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {pdfFiles.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-3">
+                  {pdfFiles.map((file, idx) => (
+                    <div key={idx} className="relative group flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
+                      <span className="text-xs text-gray-600 max-w-32 truncate">{file.name}</span>
+                      <button onClick={() => removePdf(idx)} className="text-red-400 hover:text-red-600 text-xs ml-1">×</button>
                     </div>
                   ))}
                 </div>
