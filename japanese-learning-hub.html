@@ -65,10 +65,12 @@ firebase.initializeApp(FIREBASE_CONFIG);
 const fbAuth    = firebase.auth();
 const fbDb      = firebase.firestore();
 const fbStorage = firebase.storage();
-fbDb.enableIndexedDbPersistence().catch(err => {
-  if (err.code !== 'failed-precondition' && err.code !== 'unimplemented')
-    console.warn('Firestore persistence error:', err);
-});
+if (typeof fbDb.enableIndexedDbPersistence === 'function') {
+  fbDb.enableIndexedDbPersistence().catch(err => {
+    if (err.code !== 'failed-precondition' && err.code !== 'unimplemented')
+      console.warn('Firestore persistence error:', err);
+  });
+}
 
 // ─── FIRESTORE COLLECTION HOOK ────────────────────────────────────────────────
 // Drop-in replacement for useLocalStorage — syncs to Firestore in real time.
