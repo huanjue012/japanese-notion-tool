@@ -234,7 +234,7 @@ const DEFAULT_TAGS = ['文法','词汇','助词','动词','形容词','打招呼
 
 // ─── DASHBOARD ────────────────────────────────────────────────────────────────
 const Dashboard = ({ notes, homework, flashcards, vocab, onNav }) => {
-  const pending = homework.filter(h => h.status !== 'done');
+  const pending = homework.filter(h => h.status === 'pending');
   const overdue = homework.filter(isOverdue);
   const thisWeek = homework.filter(h => {
     if (h.status === 'done' || !h.dueDate) return false;
@@ -735,10 +735,11 @@ const HW_STATUS = {
   done:      { label: '已整理', color: 'bg-green-100 text-green-700', dot: '🟢' },
 };
 
-const HomeworkTracker = ({ homework, setHomework }) => {
+const HomeworkTracker = ({ homework, setHomework, uid, isOnline }) => {
   const [filter, setFilter] = useState('all');
   const [modal, setModal] = useState(null);
-  const [form, setForm] = useState({ title: '', lessonNumber: '', dueDate: '', submittedDate: '', status: 'pending', teacherFeedback: '', notes: '' });
+  const [form, setForm] = useState({ title: '', lessonNumber: '', dueDate: '', submittedDate: '', status: 'pending', teacherFeedback: '', notes: '', attachments: [] });
+  const [uploadingAtt, setUploadingAtt] = useState(false);
 
   const counts = useMemo(() => {
     const c = { all: homework.length };
@@ -748,8 +749,8 @@ const HomeworkTracker = ({ homework, setHomework }) => {
 
   const displayed = filter === 'all' ? homework : homework.filter(h => h.status === filter);
 
-  const openNew = () => { setForm({ title:'', lessonNumber:'', dueDate:'', submittedDate:'', status:'pending', teacherFeedback:'', notes:'' }); setModal('new'); };
-  const openEdit = h => { setForm({...h}); setModal(h.id); };
+  const openNew = () => { setForm({ title:'', lessonNumber:'', dueDate:'', submittedDate:'', status:'pending', teacherFeedback:'', notes:'', attachments:[] }); setModal('new'); };
+  const openEdit = h => { setForm({...h, attachments: h.attachments || [] }); setModal(h.id); };
   const save = () => {
     if (!form.title.trim()) return;
     if (modal === 'new') setHomework(p => [...p, { ...form, id: genId(), createdAt: new Date().toISOString() }]);
@@ -757,6 +758,30 @@ const HomeworkTracker = ({ homework, setHomework }) => {
     setModal(null);
   };
   const del = id => { if (confirm('删除此功课记录？')) setHomework(p => p.filter(h => h.id !== id)); };
+  const markSubmitted = (e, id) => {
+    e.stopPropagation();
+    setHomework(p => p.map(h => h.id === id ? { ...h, status: 'submitted', submittedDate: new Date().toISOString().split('T')[0] } : h));
+  };
+
+  const uploadAttachment = async (file) => {
+    if (!isOnline) { alert('上传文件需要网络连接'); return; }
+    const isImg = file.type.startsWith('image/');
+    const isPdf = file.type === 'application/pdf';
+    if (!isImg && !isPdf) { alert('请选择图片或 PDF 文件'); return; }
+    setUploadingAtt(true);
+    try {
+      const path = `users/${uid}/homework/${genId()}_${file.name}`;
+      const ref = fbStorage.ref(path);
+      await ref.put(file);
+      const url = await ref.getDownloadURL();
+      setForm(p => ({ ...p, attachments: [...(p.attachments || []), { url, path, name: file.name, type: isImg ? 'image' : 'pdf' }] }));
+    } catch (e) { alert('上传失败：' + e.message); }
+    finally { setUploadingAtt(false); }
+  };
+
+  const removeAttachment = (path) => {
+    setForm(p => ({ ...p, attachments: (p.attachments || []).filter(a => a.path !== path) }));
+  };
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -794,6 +819,7 @@ const HomeworkTracker = ({ homework, setHomework }) => {
                     <h3 className="font-semibold text-gray-800 text-sm">{h.title}</h3>
                     {isOverdue(h) && <Badge color="bg-red-100 text-red-600">⚠ 逾期</Badge>}
                     <Badge color={HW_STATUS[h.status]?.color}>{HW_STATUS[h.status]?.label}</Badge>
+                    {h.attachments?.length > 0 && <span className="text-xs text-gray-400">📎 {h.attachments.length}</span>}
                   </div>
                   <div className="flex gap-3 text-xs text-gray-400 flex-wrap">
                     {h.lessonNumber && <span>第 {h.lessonNumber} 课</span>}
@@ -802,6 +828,12 @@ const HomeworkTracker = ({ homework, setHomework }) => {
                   </div>
                   {h.teacherFeedback && (
                     <div className="mt-2 text-xs bg-blue-50 text-blue-600 rounded-lg px-3 py-1.5 line-clamp-2">💬 {h.teacherFeedback}</div>
+                  )}
+                  {h.status === 'pending' && (
+                    <button onClick={e => markSubmitted(e, h.id)}
+                      className="mt-2 inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition-colors font-medium">
+                      ✓ 标记已提交
+                    </button>
                   )}
                 </div>
                 <button onClick={e => { e.stopPropagation(); del(h.id); }} className="text-gray-200 hover:text-red-400 shrink-0">🗑</button>
@@ -820,6 +852,27 @@ const HomeworkTracker = ({ homework, setHomework }) => {
         </div>
         <Select label="状态" value={form.status} onChange={e => setForm(p=>({...p,status:e.target.value}))} options={Object.entries(HW_STATUS).map(([v,{label}])=>({value:v,label}))} />
         <Textarea label="老师评语" value={form.teacherFeedback||''} onChange={e => setForm(p=>({...p,teacherFeedback:e.target.value}))} placeholder="记录老师的批改意见、扣分原因…" rows={4} />
+        <div className="mb-3">
+          <p className="text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">附件（作业文件 / 老师批改）</p>
+          {(form.attachments || []).length > 0 && (
+            <div className="space-y-1 mb-2">
+              {(form.attachments || []).map((att, i) => (
+                <div key={i} className="flex items-center gap-2 bg-gray-50 border border-gray-100 rounded-lg px-3 py-1.5">
+                  <span className="text-sm">{att.type === 'pdf' ? '📄' : '🖼'}</span>
+                  <span className="text-xs text-gray-600 flex-1 truncate">{att.name}</span>
+                  <a href={att.url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="text-xs text-indigo-500 hover:text-indigo-700 shrink-0">↗</a>
+                  <button onClick={() => removeAttachment(att.path)} className="text-xs text-red-400 hover:text-red-600 shrink-0 font-bold">×</button>
+                </div>
+              ))}
+            </div>
+          )}
+          <label className={`inline-flex items-center gap-2 text-sm font-medium px-3 py-1.5 rounded-lg transition-colors
+            ${isOnline ? 'cursor-pointer bg-gray-100 hover:bg-gray-200 text-gray-600' : 'cursor-not-allowed bg-gray-50 text-gray-300'}`}
+            title={isOnline ? '' : '离线时无法上传'}>
+            {uploadingAtt ? <span className="text-xs text-gray-400">上传中…</span> : <><span>+</span><span>上传文件（PDF / 图片）</span></>}
+            <input type="file" accept="image/*,application/pdf" disabled={!isOnline || uploadingAtt} onChange={e => e.target.files?.[0] && uploadAttachment(e.target.files[0])} className="hidden" />
+          </label>
+        </div>
         <Textarea label="自己的笔记" value={form.notes||''} onChange={e => setForm(p=>({...p,notes:e.target.value}))} placeholder="自己的反思，下次要注意的地方…" rows={3} />
         <div className="flex justify-end gap-2 pt-2"><Btn variant="secondary" onClick={() => setModal(null)}>取消</Btn><Btn onClick={save}>保存</Btn></div>
       </Modal>
@@ -1469,7 +1522,7 @@ const App = ({ user }) => {
     return Array.from(s);
   }, [notes, flashcards, vocab]);
 
-  const pendingHw = homework.filter(h => h.status !== 'done').length;
+  const pendingHw = homework.filter(h => h.status === 'pending').length;
   const dueCards  = flashcards.filter(c => !c.nextReview || new Date(c.nextReview) <= new Date()).length;
 
   const [userName, setUserNameState] = React.useState(() => localStorage.getItem('jp_userName') || '');
@@ -1546,7 +1599,7 @@ const App = ({ user }) => {
           {page==='dashboard'  && <Dashboard notes={notes} homework={homework} flashcards={flashcards} vocab={vocab} onNav={nav} />}
           {page==='knowledge'  && <KnowledgeBase notes={notes} setNotes={setNotes} allTags={allTags} uid={user.uid} isOnline={isOnline} />}
           {page==='flashcards' && <Flashcards cards={flashcards} setCards={setFlash} allTags={allTags} onNav={nav} notes={notes} />}
-          {page==='homework'   && <HomeworkTracker homework={homework} setHomework={setHomework} />}
+          {page==='homework'   && <HomeworkTracker homework={homework} setHomework={setHomework} uid={user.uid} isOnline={isOnline} />}
           {page==='vocab'      && <VocabularyBook vocab={vocab} setVocab={setVocab} allTags={allTags} />}
           {page==='pdf'        && <PDFImport setNotes={setNotes} setFlashcards={setFlash} setVocab={setVocab} uid={user.uid} isOnline={isOnline} notes={notes} />}
           {page==='feedback'   && <FeedbackBoard feedback={feedback} setFeedback={setFeedback} />}
