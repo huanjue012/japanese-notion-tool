@@ -1335,6 +1335,8 @@ const Settings = () => {
     return stored ? (parseInt(stored) / 1073741824).toFixed(1) : '4.5';
   });
   const [saved, setSaved] = React.useState(false);
+  const [userName, setUserName] = React.useState(() => localStorage.getItem('jp_userName') || '');
+  const [nameSaved, setNameSaved] = React.useState(false);
 
   const usedBytes = parseInt(localStorage.getItem('jp_storageUsed') || '0');
   const limitBytes = parseInt(localStorage.getItem('jp_storageLimit') || '4831838208');
@@ -1352,9 +1354,27 @@ const Settings = () => {
     setTimeout(() => setSaved(false), 2000);
   };
 
+  const saveName = () => {
+    localStorage.setItem('jp_userName', userName.trim());
+    setNameSaved(true);
+    setTimeout(() => setNameSaved(false), 2000);
+  };
+
   return (
     <div className="max-w-lg mx-auto">
       <h1 className="text-xl font-bold text-gray-800 mb-6">⚙️ 设置</h1>
+      <Card className="mb-4">
+        <h2 className="font-semibold text-gray-700 mb-4">个人信息</h2>
+        <div className="flex gap-2 items-end">
+          <div className="flex-1">
+            <label className="block text-xs text-gray-500 mb-1">显示名称</label>
+            <input type="text" value={userName} onChange={e => setUserName(e.target.value)}
+              placeholder="输入你的名字"
+              className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+          </div>
+          <Btn onClick={saveName}>{nameSaved ? '✅ 已保存' : '保存'}</Btn>
+        </div>
+      </Card>
       <Card>
         <h2 className="font-semibold text-gray-700 mb-4">存储空间</h2>
         <div className="mb-3">
@@ -1366,6 +1386,7 @@ const Settings = () => {
             <div className={`h-2.5 rounded-full transition-all ${pct >= 90 ? 'bg-red-500' : pct >= 70 ? 'bg-amber-400' : 'bg-indigo-500'}`} style={{width: `${pct}%`}} />
           </div>
           <p className="text-xs text-gray-400 mt-1">{pct}% 已用（{limitGb} GB 限额）</p>
+          <p className="text-xs text-gray-400 mt-1">ℹ️ 仅统计本版本安装后上传的文件，历史文件不计入。</p>
         </div>
         <div className="flex gap-2 items-end">
           <div className="flex-1">
@@ -1426,6 +1447,20 @@ const App = ({ user }) => {
   const pendingHw = homework.filter(h => h.status !== 'done').length;
   const dueCards  = flashcards.filter(c => !c.nextReview || new Date(c.nextReview) <= new Date()).length;
 
+  const [userName, setUserNameState] = React.useState(() => localStorage.getItem('jp_userName') || '');
+
+  // Sync userName when navigating to settings and back
+  React.useEffect(() => {
+    const onStorage = () => setUserNameState(localStorage.getItem('jp_userName') || '');
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
+
+  // Re-read userName whenever the page changes (in case user saved name in Settings)
+  React.useEffect(() => {
+    setUserNameState(localStorage.getItem('jp_userName') || '');
+  }, [page]);
+
   const nav = (id) => { setPage(id); setSideOpen(false); };
 
   const SideNav = () => (
@@ -1438,6 +1473,7 @@ const App = ({ user }) => {
             <p className="text-xs text-gray-400">Japanese Learning Hub</p>
           </div>
         </div>
+        {userName && <p className="text-xs text-indigo-500 mt-2 font-medium">你好，{userName}！</p>}
       </div>
       <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
         {PAGES.map(p => (
