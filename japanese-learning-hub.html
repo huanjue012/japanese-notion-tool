@@ -234,7 +234,7 @@ const TagSelector = ({ selected = [], onChange, pool = [] }) => {
 const DEFAULT_TAGS = ['文法','词汇','助词','动词','形容词','打招呼','数字','时间','N5','第1课','第2课','第3课'];
 
 // ─── DASHBOARD ────────────────────────────────────────────────────────────────
-const Dashboard = ({ notes, homework, flashcards, vocab, onNav }) => {
+const Dashboard = ({ notes, homework, flashcards, vocab, onNav, userName }) => {
   const pending = homework.filter(h => h.status === 'pending');
   const overdue = homework.filter(isOverdue);
   const thisWeek = homework.filter(h => {
@@ -255,7 +255,7 @@ const Dashboard = ({ notes, homework, flashcards, vocab, onNav }) => {
   return (
     <div className="max-w-3xl mx-auto">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">おはようございます！👋</h1>
+        <h1 className="text-2xl font-bold text-gray-800">{userName ? `${userName}，おはようございます！👋` : 'おはようございます！👋'}</h1>
         <p className="text-gray-400 text-sm mt-1">继续加油，你的日语学习旅程还在进行中。</p>
       </div>
 
@@ -554,9 +554,10 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteId
             </button>
           </div>
           {!contentExpanded && form.content && (
-            <div className="border border-gray-100 rounded-xl bg-gray-50 px-3 py-2 cursor-pointer text-xs text-gray-400 line-clamp-2"
+            <div className="border border-gray-100 rounded-xl bg-gray-50 px-3 py-2 cursor-pointer"
               onClick={() => setContentExpanded(true)}>
-              {form.content.slice(0, 120)}{form.content.length > 120 ? '…' : ''}
+              <div className="md-body line-clamp-3 text-sm"
+                dangerouslySetInnerHTML={{ __html: window.marked ? marked.parse(form.content) : form.content }} />
             </div>
           )}
           {!contentExpanded && !form.content && (
@@ -1828,7 +1829,7 @@ const App = ({ user }) => {
         )}
         <StorageBanner />
         <main className="flex-1 overflow-y-auto p-4 md:p-8">
-          {page==='dashboard'  && <Dashboard notes={notes} homework={homework} flashcards={flashcards} vocab={vocab} onNav={nav} />}
+          {page==='dashboard'  && <Dashboard notes={notes} homework={homework} flashcards={flashcards} vocab={vocab} onNav={nav} userName={userName} />}
           {page==='knowledge'  && <KnowledgeBase notes={notes} setNotes={setNotes} allTags={allTags} uid={user.uid} isOnline={isOnline} importedNoteIds={importedNoteIds} setImportedNoteIds={setImportedNoteIds} />}
           {page==='flashcards' && <Flashcards cards={flashcards} setCards={setFlash} allTags={allTags} onNav={nav} notes={notes} />}
           {page==='homework'   && <HomeworkTracker homework={homework} setHomework={setHomework} uid={user.uid} isOnline={isOnline} />}
