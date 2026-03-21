@@ -1400,154 +1400,6 @@ const PDFImport = ({ setNotes, setFlashcards, setVocab, uid, isOnline, notes, fl
   );
 };
 
-// ─── FEEDBACK BOARD ───────────────────────────────────────────────────────────
-const FB_STATUS = {
-  backlog:       { label: '积压/待评估', bg: 'bg-amber-50',  header: 'bg-amber-100 text-amber-700', dot: '🟡' },
-  pending:       { label: '待处理',      bg: 'bg-gray-50',   header: 'bg-gray-100 text-gray-600',   dot: '⚪' },
-  'in-progress': { label: '进行中',      bg: 'bg-blue-50',   header: 'bg-blue-100 text-blue-700',   dot: '🔵' },
-  done:          { label: '已完成',      bg: 'bg-green-50',  header: 'bg-green-100 text-green-700', dot: '🟢' },
-};
-
-const FeedbackBoard = ({ feedback, setFeedback }) => {
-  const [modal, setModal] = useState(false);
-  const [form, setForm] = useState({ title:'', description:'', status:'backlog' });
-  const [editId, setEditId] = useState(null);
-  const [exportModal, setExportModal] = useState(false);
-  const [exportStatuses, setExportStatuses] = useState(['backlog', 'pending', 'in-progress']);
-  const [importModal, setImportModal] = useState(false);
-  const [importJson, setImportJson] = useState('');
-  const [importErr, setImportErr] = useState('');
-  const [importOk,  setImportOk]  = useState('');
-  const [expandedDesc, setExpandedDesc] = useState({});
-  const toggleDesc = (id, e) => { e.stopPropagation(); setExpandedDesc(p => ({...p, [id]: !p[id]})); };
-
-  const byStatus = s => feedback.filter(f => f.status === s);
-  const openNew = () => { setForm({title:'',description:'',status:'backlog'}); setEditId(null); setModal(true); };
-  const openEdit = item => { setForm({...item}); setEditId(item.id); setModal(true); };
-  const save = () => {
-    if (!form.title.trim()) return;
-    if (editId) setFeedback(p => p.map(f => f.id===editId ? {...f,...form,updatedAt:new Date().toISOString()} : f));
-    else setFeedback(p => [...p, {...form, id:genId(), createdAt:new Date().toISOString()}]);
-    setModal(false);
-  };
-  const setStatus = (id, status) => setFeedback(p => p.map(f => f.id===id?{...f,status}:f));
-  const del = id => { if (confirm('删除？')) setFeedback(p => p.filter(f => f.id!==id)); };
-
-  const exportData = () => JSON.stringify(
-    feedback.filter(f => exportStatuses.includes(f.status)).map(({ id, title, description, status }) => ({ id, title, description, status })),
-    null, 2
-  );
-  const toggleExportStatus = s => setExportStatuses(p => p.includes(s) ? p.filter(x => x !== s) : [...p, s]);
-
-  const importStatuses = () => {
-    setImportErr(''); setImportOk('');
-    let parsed;
-    try { parsed = JSON.parse(importJson); }
-    catch (e) { setImportErr('JSON 格式有误：' + e.message); return; }
-    if (!Array.isArray(parsed) || parsed.length === 0) {
-      setImportErr('格式错误：需要一个非空数组'); return;
-    }
-    const validStatuses = Object.keys(FB_STATUS);
-    const invalid = parsed.filter(item => typeof item.id !== 'string' || !validStatuses.includes(item.status));
-    if (invalid.length > 0) { setImportErr(`有 ${invalid.length} 条记录的 id 或 status 无效`); return; }
-
-    const changedCount = parsed.filter(item =>
-      feedback.some(f => f.id === item.id && f.status !== item.status)
-    ).length;
-    const updates = new Map(parsed.map(item => [item.id, item.status]));
-    setFeedback(p => p.map(f =>
-      updates.has(f.id) ? { ...f, status: updates.get(f.id), updatedAt: new Date().toISOString() } : f
-    ));
-    setImportOk(`✅ 已更新 ${changedCount} 条记录的状态`);
-    setImportJson('');
-  };
-
-  return (
-    <div className="max-w-4xl mx-auto">
-      <div className="flex items-center justify-between mb-1">
-        <h1 className="text-xl font-bold text-gray-800">💬 功能反馈板</h1>
-        <div className="flex gap-2">
-          <Btn variant="secondary" onClick={() => setExportModal(true)}>导出反馈</Btn>
-          <Btn variant="secondary" onClick={() => { setImportModal(true); setImportJson(''); setImportErr(''); setImportOk(''); }}>导入状态更新</Btn>
-          <Btn onClick={openNew}>+ 提交反馈</Btn>
-        </div>
-      </div>
-      <p className="text-gray-400 text-sm mb-6">记录你希望改善或新增的功能，自己追踪进度。</p>
-
-      <div className="grid md:grid-cols-4 gap-4">
-        {Object.entries(FB_STATUS).map(([status, cfg]) => (
-          <div key={status}>
-            <div className={`${cfg.header} rounded-xl px-3 py-2 mb-3 text-sm font-semibold flex items-center gap-2`}>
-              {cfg.dot} {cfg.label} <span className="ml-auto text-xs opacity-60">{byStatus(status).length}</span>
-            </div>
-            <div className="space-y-2">
-              {byStatus(status).map(item => (
-                <div key={item.id} className={`${cfg.bg} rounded-xl p-3 border border-gray-100 hover:shadow-sm transition-shadow cursor-pointer`} onClick={() => openEdit(item)}>
-                  <div className="flex justify-between items-start mb-1">
-                    <p className="text-sm font-semibold text-gray-800 flex-1 pr-1">{item.title}</p>
-                    <button onClick={e => { e.stopPropagation(); del(item.id); }} className="text-gray-200 hover:text-red-400 text-xs shrink-0">×</button>
-                  </div>
-                  {item.description && (
-                    <div className="mb-2">
-                      {expandedDesc[item.id] && <p className="text-xs text-gray-500 mb-1">{item.description}</p>}
-                      <button onClick={e => toggleDesc(item.id, e)} className="text-xs text-indigo-400 hover:text-indigo-600">{expandedDesc[item.id] ? '▲ 收起' : '▼ 详情'}</button>
-                    </div>
-                  )}
-                  <p className="text-xs text-gray-300 mb-2">{fmt(item.createdAt)}</p>
-                  <div className="flex flex-wrap gap-1">
-                    {Object.entries(FB_STATUS).filter(([s]) => s !== status).map(([s, c]) => (
-                      <button key={s} onClick={e => { e.stopPropagation(); setStatus(item.id, s); }}
-                        className="text-xs px-2 py-0.5 rounded-md bg-white border border-gray-200 text-gray-400 hover:border-indigo-300 hover:text-indigo-600 transition-colors">
-                        → {c.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ))}
-              {byStatus(status).length === 0 && <p className="text-gray-300 text-xs text-center py-6">暂无</p>}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <Modal open={modal} onClose={() => setModal(false)} title={editId ? '编辑反馈' : '提交新反馈'}>
-        <Input label="功能请求 / 问题" value={form.title} onChange={e => setForm(p=>({...p,title:e.target.value}))} placeholder="例：希望能有音频播放功能" />
-        <Textarea label="详细描述" value={form.description||''} onChange={e => setForm(p=>({...p,description:e.target.value}))} placeholder="描述你希望改善的地方，或遇到的问题…" rows={4} />
-        <Select label="状态" value={form.status} onChange={e => setForm(p=>({...p,status:e.target.value}))} options={Object.entries(FB_STATUS).map(([v,{label}])=>({value:v,label}))} />
-        <div className="flex justify-end gap-2 pt-2"><Btn variant="secondary" onClick={() => setModal(false)}>取消</Btn><Btn onClick={save}>保存</Btn></div>
-      </Modal>
-
-      <Modal open={exportModal} onClose={() => setExportModal(false)} title="导出反馈 JSON" wide>
-        <p className="text-xs text-gray-500 mb-1">选择要导出的状态：</p>
-        <div className="flex flex-wrap gap-3 mb-3">
-          {Object.entries(FB_STATUS).map(([s, cfg]) => (
-            <label key={s} className="flex items-center gap-1.5 cursor-pointer text-xs text-gray-600">
-              <input type="checkbox" checked={exportStatuses.includes(s)} onChange={() => toggleExportStatus(s)} className="accent-indigo-500" />
-              {cfg.dot} {cfg.label} <span className="text-gray-400">({byStatus(s).length})</span>
-            </label>
-          ))}
-        </div>
-        <p className="text-xs text-gray-400 mb-2">将下方 JSON 发给 Claude，请 Claude 审阅并更新每条记录的 <code>status</code>，然后将返回的 JSON 通过"导入状态更新"粘贴回来。</p>
-        <pre className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-xs overflow-auto max-h-60 whitespace-pre-wrap break-all">{exportData()}</pre>
-        <div className="flex justify-end gap-2 pt-3">
-          <Btn variant="secondary" onClick={() => setExportModal(false)}>关闭</Btn>
-          <Btn onClick={() => navigator.clipboard.writeText(exportData())}>📋 复制 JSON</Btn>
-        </div>
-      </Modal>
-
-      <Modal open={importModal} onClose={() => setImportModal(false)} title="导入状态更新" wide>
-        <p className="text-xs text-gray-500 mb-2">将 Claude 返回的 JSON 粘贴到下方，点击"导入"即可更新对应卡片的状态。</p>
-        <Textarea label="粘贴 JSON" value={importJson} onChange={e => setImportJson(e.target.value)} placeholder={'[\n  { "id": "...", "status": "in-progress" },\n  ...\n]'} rows={8} />
-        {importErr && <p className="text-xs text-red-500 mt-1">{importErr}</p>}
-        {importOk  && <p className="text-xs text-green-600 mt-1">{importOk}</p>}
-        <div className="flex justify-end gap-2 pt-3">
-          <Btn variant="secondary" onClick={() => setImportModal(false)}>关闭</Btn>
-          <Btn onClick={importStatuses} disabled={!importJson.trim()}>导入</Btn>
-        </div>
-      </Modal>
-    </div>
-  );
-};
 
 // ─── AUTH GATE ────────────────────────────────────────────────────────────────
 const AuthGate = ({ children }) => {
@@ -1734,8 +1586,7 @@ const PAGES = [
   { id: 'homework',   label: '功课',     icon: '📋' },
   { id: 'vocab',      label: '单词本',   icon: '📖' },
   { id: 'pdf',        label: 'PDF 导入', icon: '📄' },
-  { id: 'feedback',   label: '功能反馈', icon: '💬' },
-  { id: 'settings',   label: '设置',     icon: '⚙️' },
+{ id: 'settings',   label: '设置',     icon: '⚙️' },
 ];
 
 const App = ({ user }) => {
@@ -1746,7 +1597,6 @@ const App = ({ user }) => {
   const [flashcards, setFlash]    = useFirestoreCollection('flashcards', user.uid);
   const [homework, setHomework]   = useFirestoreCollection('homework',   user.uid);
   const [vocab, setVocab]         = useFirestoreCollection('vocab',      user.uid);
-  const [feedback, setFeedback]   = useFirestoreCollection('feedback',   user.uid);
   const [importedNoteIds, setImportedNoteIds] = useState([]);
 
   const allTags = useMemo(() => {
@@ -1835,7 +1685,6 @@ const App = ({ user }) => {
           {page==='homework'   && <HomeworkTracker homework={homework} setHomework={setHomework} uid={user.uid} isOnline={isOnline} />}
           {page==='vocab'      && <VocabularyBook vocab={vocab} setVocab={setVocab} allTags={allTags} />}
           {page==='pdf'        && <PDFImport setNotes={setNotes} setFlashcards={setFlash} setVocab={setVocab} uid={user.uid} isOnline={isOnline} notes={notes} flashcards={flashcards} vocab={vocab} setPage={setPage} setImportedNoteIds={setImportedNoteIds} />}
-          {page==='feedback'   && <FeedbackBoard feedback={feedback} setFeedback={setFeedback} />}
           {page==='settings'   && <Settings uid={user.uid} />}
         </main>
       </div>
