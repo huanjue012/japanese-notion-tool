@@ -14,6 +14,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
   <style>
     * { box-sizing: border-box; }
     body { margin: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
@@ -145,7 +146,7 @@ const useOnlineStatus = () => {
 };
 
 const fmt = (iso) => iso ? new Date(iso).toLocaleDateString('zh-CN') : '—';
-const isOverdue = (hw) => hw.status !== 'done' && hw.dueDate && new Date(hw.dueDate) < new Date();
+const isOverdue = (hw) => hw.status !== 'done' && hw.status !== 'submitted' && hw.dueDate && new Date(hw.dueDate) < new Date();
 
 // ─── UI PRIMITIVES ─────────────────────────────────────────────────────────────
 const Badge = ({ children, color = 'bg-indigo-100 text-indigo-700', onClick, onRemove, className = '' }) => (
@@ -312,7 +313,7 @@ const Dashboard = ({ notes, homework, flashcards, vocab, onNav }) => {
 };
 
 // ─── KNOWLEDGE BASE ────────────────────────────────────────────────────────────
-const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline }) => {
+const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteIds, setImportedNoteIds }) => {
   const [search, setSearch] = useState('');
   const [activeTag, setActiveTag] = useState(null);
   const [modal, setModal] = useState(null);
@@ -322,6 +323,9 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline }) => {
   const [exportToast, setExportToast] = useState('');
   const [deleteModal, setDeleteModal] = useState(false);
   const [deleteJson, setDeleteJson] = useState('');
+  const [filterExpanded, setFilterExpanded] = useState(true);
+  const [imagePreview, setImagePreview] = useState(null); // { url, name }
+  const [pdfPreview, setPdfPreview] = useState(null); // { url, name }
 
   const tagCounts = useMemo(() => {
     const c = {};
@@ -329,31 +333,47 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline }) => {
     return c;
   }, [notes]);
 
-  const filtered = useMemo(() => notes.filter(n => {
-    const q = search.toLowerCase();
-    const ms = !q || n.title.toLowerCase().includes(q) || n.content.toLowerCase().includes(q);
-    const mt = !activeTag || n.tags?.includes(activeTag);
-    return ms && mt;
-  }), [notes, search, activeTag]);
+  const filtered = useMemo(() => {
+    let result = notes.filter(n => {
+      const q = search.toLowerCase();
+      const ms = !q || n.title.toLowerCase().includes(q) || n.content.toLowerCase().includes(q);
+      const mt = !activeTag || n.tags?.includes(activeTag);
+      return ms && mt;
+    });
+    if (importedNoteIds?.length > 0) {
+      result = result.filter(n => importedNoteIds.includes(n.id));
+    }
+    return result.sort((a,b) => new Date(b.updatedAt||b.createdAt||0) - new Date(a.updatedAt||a.createdAt||0));
+  }, [notes, search, activeTag, importedNoteIds]);
 
   const openNew = () => { setForm({ title: '', content: '', tags: activeTag ? [activeTag] : [], images: [] }); setContentExpanded(false); setModal('new'); };
   const openEdit = n => { setForm({ ...n, images: n.images || [] }); setContentExpanded(false); setModal(n.id); };
 
   const uploadFile = async (file) => {
     if (!navigator.onLine) { alert('上传文件需要网络连接'); return; }
-    const isImage = file.type.startsWith('image/');
+    const isHeic = file.type === 'image/heic' || file.type === 'image/heif' || /\.heic$/i.test(file.name) || /\.heif$/i.test(file.name);
+    let isImage = file.type.startsWith('image/') || isHeic;
     const isPdf   = file.type === 'application/pdf';
     if (!isImage && !isPdf) { alert('请选择图片或 PDF 文件'); return; }
     setUploadingImg(true);
     try {
+      let uploadFile = file;
+      let uploadName = file.name;
+      if (isHeic && window.heic2any) {
+        try {
+          const converted = await window.heic2any({ blob: file, toType: 'image/png' });
+          uploadFile = converted instanceof Blob ? converted : converted[0];
+          uploadName = file.name.replace(/\.heic$/i, '.png').replace(/\.heif$/i, '.png');
+        } catch(e) { /* 转换失败则直接上传原文件 */ }
+      }
       const folder = isImage ? 'images' : 'pdfs';
-      const path = `users/${uid}/${folder}/${genId()}_${file.name}`;
+      const path = `users/${uid}/${folder}/${genId()}_${uploadName}`;
       const ref = fbStorage.ref(path);
-      await ref.put(file);
+      await ref.put(uploadFile);
       const url = await ref.getDownloadURL();
-      const used = parseInt(localStorage.getItem('jp_storageUsed') || '0') + file.size;
+      const used = parseInt(localStorage.getItem('jp_storageUsed') || '0') + uploadFile.size;
       localStorage.setItem('jp_storageUsed', String(used));
-      setForm(p => ({ ...p, images: [...(p.images || []), { url, path, name: file.name, type: isImage ? 'image' : 'pdf', size: file.size }] }));
+      setForm(p => ({ ...p, images: [...(p.images || []), { url, path, name: uploadName, type: isImage ? 'image' : 'pdf', size: uploadFile.size }] }));
     } catch (e) { alert('上传失败：' + e.message); }
     finally { setUploadingImg(false); }
   };
@@ -456,11 +476,28 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline }) => {
       <input value={search} onChange={e => setSearch(e.target.value)} placeholder="搜索笔记标题或内容..."
         className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-300" />
 
-      <div className="flex flex-wrap gap-1.5 mb-4">
-        <Badge onClick={() => setActiveTag(null)} color={!activeTag ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600'}>全部 ({notes.length})</Badge>
-        {Object.entries(tagCounts).sort((a,b) => b[1]-a[1]).map(([tag, cnt]) => (
-          <Badge key={tag} onClick={() => setActiveTag(activeTag === tag ? null : tag)} color={activeTag === tag ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600'}>{tag} ({cnt})</Badge>
-        ))}
+      {importedNoteIds?.length > 0 && (
+        <div className="flex items-center gap-2 mb-3 px-3 py-2 bg-indigo-50 rounded-xl text-xs text-indigo-700">
+          <span>显示刚导入的 {importedNoteIds.length} 条笔记</span>
+          <button onClick={() => setImportedNoteIds([])} className="ml-auto text-indigo-400 hover:text-indigo-600">清除筛选 ×</button>
+        </div>
+      )}
+
+      <div className="mb-4">
+        <div className="flex items-center justify-between mb-1.5">
+          <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">标签筛选</span>
+          <button onClick={() => setFilterExpanded(v => !v)} className="text-xs text-gray-400 hover:text-gray-600">
+            {filterExpanded ? '收起 ▲' : '展开 ▼'}
+          </button>
+        </div>
+        {filterExpanded && (
+          <div className="flex flex-wrap gap-1.5">
+            <Badge onClick={() => setActiveTag(null)} color={!activeTag ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600'}>全部 ({notes.length})</Badge>
+            {Object.entries(tagCounts).sort((a,b) => b[1]-a[1]).map(([tag, cnt]) => (
+              <Badge key={tag} onClick={() => setActiveTag(activeTag === tag ? null : tag)} color={activeTag === tag ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600'}>{tag} ({cnt})</Badge>
+            ))}
+          </div>
+        )}
       </div>
 
       {filtered.length === 0 ? (
@@ -477,17 +514,21 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline }) => {
                 <h3 className="font-semibold text-gray-800 text-sm leading-snug flex-1 pr-2">{n.title}</h3>
                 <button onClick={e => { e.stopPropagation(); del(n.id); }} className="text-gray-200 hover:text-red-400 shrink-0 text-base">🗑</button>
               </div>
-              <div className="md-body line-clamp-3 mb-3" dangerouslySetInnerHTML={{ __html: window.marked ? marked.parse(n.content || '') : n.content }} />
+              <div className="mb-3 text-xs text-gray-500 leading-relaxed"
+                style={{display:'-webkit-box',WebkitLineClamp:3,WebkitBoxOrient:'vertical',overflow:'hidden'}}>
+                {(n.content||'').replace(/#{1,6}\s/g,'').replace(/\*\*/g,'').replace(/\*/g,'').replace(/`/g,'').replace(/\[([^\]]+)\]\([^)]+\)/g,'$1').replace(/\n/g,' ').trim()}
+              </div>
               {n.images?.length > 0 && (
                 <div className="flex flex-wrap gap-1 mb-2">
                   {n.images.map((att, i) => att.type === 'pdf' ? (
-                    <a key={i} href={att.url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
-                      className="w-14 h-14 border border-gray-100 rounded-lg bg-red-50 flex flex-col items-center justify-center hover:bg-red-100 transition-colors">
+                    <button key={i} onClick={e => { e.stopPropagation(); setPdfPreview({ url: att.url, name: att.name }); }}
+                      className="w-14 h-14 border border-gray-100 rounded-lg bg-red-50 flex flex-col items-center justify-center hover:bg-red-100 transition-colors cursor-pointer">
                       <span className="text-xl">📄</span>
                       <span className="text-xs text-gray-400 truncate w-full text-center px-1">{att.name?.split('.')[0]?.slice(0,6)}</span>
-                    </a>
+                    </button>
                   ) : (
-                    <img key={i} src={att.url} className="w-14 h-14 object-cover rounded-lg border border-gray-100" />
+                    <img key={i} src={att.url} onClick={e => { e.stopPropagation(); setImagePreview({ url: att.url, name: att.name }); }}
+                      className="w-14 h-14 object-cover rounded-lg border border-gray-100 cursor-pointer hover:opacity-80 transition-opacity" />
                   ))}
                 </div>
               )}
@@ -548,12 +589,14 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline }) => {
             {(form.images || []).map((att, i) => (
               <div key={i} className="relative group">
                 {att.type === 'pdf' ? (
-                  <div className="w-16 h-16 border border-gray-200 rounded-lg bg-red-50 flex flex-col items-center justify-center overflow-hidden">
+                  <div className="w-16 h-16 border border-gray-200 rounded-lg bg-red-50 flex flex-col items-center justify-center overflow-hidden cursor-pointer hover:bg-red-100 transition-colors"
+                    onClick={() => setPdfPreview({ url: att.url, name: att.name })}>
                     <span className="text-2xl">📄</span>
                     <span className="text-xs text-gray-400 truncate w-full text-center px-1">{att.name?.split('.')[0]?.slice(0,8)}</span>
                   </div>
                 ) : (
-                  <img src={att.url} className="w-16 h-16 object-cover rounded-lg border border-gray-200" />
+                  <img src={att.url} onClick={() => setImagePreview({ url: att.url, name: att.name })}
+                    className="w-16 h-16 object-cover rounded-lg border border-gray-200 cursor-pointer hover:opacity-80 transition-opacity" />
                 )}
                 <button onClick={() => removeImage(att.path)}
                   className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">×</button>
@@ -576,6 +619,30 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline }) => {
           <Btn onClick={save}>保存</Btn>
         </div>
       </Modal>
+      {imagePreview && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80" onClick={() => setImagePreview(null)}>
+          <div className="relative max-w-4xl max-h-full p-4" onClick={e => e.stopPropagation()}>
+            <img src={imagePreview.url} alt={imagePreview.name} className="max-w-full max-h-[85vh] rounded-xl object-contain" />
+            <button onClick={() => setImagePreview(null)}
+              className="absolute -top-2 -right-2 bg-white rounded-full w-8 h-8 flex items-center justify-center text-gray-600 hover:text-gray-900 shadow-lg text-lg font-bold">×</button>
+            {imagePreview.name && <p className="text-center text-white text-xs mt-2 opacity-70">{imagePreview.name}</p>}
+          </div>
+        </div>
+      )}
+      {pdfPreview && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80" onClick={() => setPdfPreview(null)}>
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-4xl mx-4" style={{height:'85vh'}} onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+              <span className="text-sm font-medium text-gray-700 truncate">{pdfPreview.name}</span>
+              <div className="flex items-center gap-3">
+                <a href={pdfPreview.url} target="_blank" rel="noopener noreferrer" className="text-xs text-indigo-600 hover:text-indigo-800 font-medium">在新标签页打开</a>
+                <button onClick={() => setPdfPreview(null)} className="text-gray-400 hover:text-gray-600 text-xl font-bold">×</button>
+              </div>
+            </div>
+            <iframe src={pdfPreview.url} className="w-full rounded-b-2xl" style={{height:'calc(85vh - 53px)'}} title={pdfPreview.name} />
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -853,9 +920,11 @@ const HomeworkTracker = ({ homework, setHomework, uid, isOnline }) => {
       ) : (
         <div className="space-y-3">
           {[...displayed].sort((a,b) => {
-            if (isOverdue(a) && !isOverdue(b)) return -1;
-            if (!isOverdue(a) && isOverdue(b)) return 1;
-            return new Date(a.dueDate||0) - new Date(b.dueDate||0);
+            const aP = a.status === 'pending', bP = b.status === 'pending';
+            if (aP && !bP) return -1;
+            if (!aP && bP) return 1;
+            if (aP && bP) return new Date(a.dueDate||0) - new Date(b.dueDate||0);
+            return new Date(b.updatedAt||b.createdAt||0) - new Date(a.updatedAt||a.createdAt||0);
           }).map(h => (
             <Card key={h.id} onClick={() => openEdit(h)} className={isOverdue(h) ? 'border-red-200 bg-red-50/50' : ''}>
               <div className="flex items-start gap-3">
@@ -1132,11 +1201,12 @@ const PDF_COMMANDS = [
   },
 ];
 
-const PDFImport = ({ setNotes, setFlashcards, setVocab, uid, isOnline, notes }) => {
+const PDFImport = ({ setNotes, setFlashcards, setVocab, uid, isOnline, notes, flashcards, vocab, setPage, setImportedNoteIds }) => {
   const [tab, setTab] = useState('pdf');
   const [json, setJson] = useState('');
   const [err, setErr] = useState('');
   const [ok, setOk] = useState('');
+  const [lastImportedCount, setLastImportedCount] = useState(0);
   const [imgFiles, setImgFiles] = useState([]);
   const [pdfFiles, setPdfFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
@@ -1189,16 +1259,34 @@ const PDFImport = ({ setNotes, setFlashcards, setVocab, uid, isOnline, notes }) 
     let cnt = {n:0,f:0,v:0};
     let skipped = 0;
     if (d.notes?.length) {
-      const newNotes = d.notes.filter(x => !notes.some(n => n.title === x.title));
-      skipped = d.notes.length - newNotes.length;
-      setNotes(p => [...p, ...newNotes.map(x=>({ ...x, id:genId(), createdAt:new Date().toISOString(), images:[...(x.images||[]),...uploadedImages] }))]);
-      cnt.n = newNotes.length;
+      const rawNew = d.notes.filter(x => !notes.some(n => n.title === x.title));
+      skipped = d.notes.length - rawNew.length;
+      const withIds = rawNew.map(x=>({ ...x, id:genId(), createdAt:new Date().toISOString(), images:[...(x.images||[]),...uploadedImages] }));
+      setNotes(p => [...p, ...withIds]);
+      cnt.n = withIds.length;
+      if (withIds.length > 0 && setImportedNoteIds) setImportedNoteIds(withIds.map(x => x.id));
     }
-    if (d.flashcards?.length) { setFlashcards(p => [...p, ...d.flashcards.map(x=>({...x,id:genId(),createdAt:new Date().toISOString()}))]); cnt.f = d.flashcards.length; }
-    if (d.vocabulary?.length) { setVocab(p => [...p, ...d.vocabulary.map(x=>({...x,id:genId(),createdAt:new Date().toISOString()}))]); cnt.v = d.vocabulary.length; }
+    let skippedF = 0, skippedV = 0;
+    if (d.flashcards?.length) {
+      const newCards = d.flashcards.filter(x => !flashcards.some(f => f.front === x.front));
+      skippedF = d.flashcards.length - newCards.length;
+      setFlashcards(p => [...p, ...newCards.map(x=>({...x,id:genId(),createdAt:new Date().toISOString()}))]);
+      cnt.f = newCards.length;
+    }
+    if (d.vocabulary?.length) {
+      const newVocab = d.vocabulary.filter(x => !vocab.some(v => v.japanese === x.japanese));
+      skippedV = d.vocabulary.length - newVocab.length;
+      setVocab(p => [...p, ...newVocab.map(x=>({...x,id:genId(),createdAt:new Date().toISOString()}))]);
+      cnt.v = newVocab.length;
+    }
     const fileMsg = uploadedImages.length > 0 ? ` · 文件 ${uploadedImages.length} 个` : '';
-    const skipMsg = skipped > 0 ? ` · 跳过重复 ${skipped} 条` : '';
+    const skipParts = [];
+    if (skipped > 0) skipParts.push(`笔记 ${skipped}`);
+    if (skippedF > 0) skipParts.push(`闪卡 ${skippedF}`);
+    if (skippedV > 0) skipParts.push(`单词 ${skippedV}`);
+    const skipMsg = skipParts.length > 0 ? ` · 跳过重复：${skipParts.join('、')}` : '';
     setOk(`✅ 导入成功！笔记 ${cnt.n} 条 · 闪卡 ${cnt.f} 张 · 词汇 ${cnt.v} 个${fileMsg}${skipMsg}`);
+    setLastImportedCount(cnt.n);
     setJson('');
     setImgFiles([]);
     setPdfFiles([]);
@@ -1292,7 +1380,17 @@ const PDFImport = ({ setNotes, setFlashcards, setVocab, uid, isOnline, notes }) 
               )}
             </div>
             {err && <p className="text-red-500 text-sm mb-3">⚠️ {err}</p>}
-            {ok && <p className="text-green-600 text-sm mb-3">{ok}</p>}
+            {ok && (
+              <div className="mb-3">
+                <p className="text-green-600 text-sm font-medium">{ok}</p>
+                {lastImportedCount > 0 && setPage && (
+                  <button onClick={() => setPage('knowledge')}
+                    className="mt-2 text-xs text-indigo-600 hover:text-indigo-800 underline font-medium">
+                    前往知识库查看刚导入的笔记 →
+                  </button>
+                )}
+              </div>
+            )}
             <Btn onClick={importJSON} disabled={!json.trim() || uploading}>{uploading ? '上传中…' : '保存'}</Btn>
           </Card>
         </div>
@@ -1648,6 +1746,7 @@ const App = ({ user }) => {
   const [homework, setHomework]   = useFirestoreCollection('homework',   user.uid);
   const [vocab, setVocab]         = useFirestoreCollection('vocab',      user.uid);
   const [feedback, setFeedback]   = useFirestoreCollection('feedback',   user.uid);
+  const [importedNoteIds, setImportedNoteIds] = useState([]);
 
   const allTags = useMemo(() => {
     const s = new Set(DEFAULT_TAGS);
@@ -1730,11 +1829,11 @@ const App = ({ user }) => {
         <StorageBanner />
         <main className="flex-1 overflow-y-auto p-4 md:p-8">
           {page==='dashboard'  && <Dashboard notes={notes} homework={homework} flashcards={flashcards} vocab={vocab} onNav={nav} />}
-          {page==='knowledge'  && <KnowledgeBase notes={notes} setNotes={setNotes} allTags={allTags} uid={user.uid} isOnline={isOnline} />}
+          {page==='knowledge'  && <KnowledgeBase notes={notes} setNotes={setNotes} allTags={allTags} uid={user.uid} isOnline={isOnline} importedNoteIds={importedNoteIds} setImportedNoteIds={setImportedNoteIds} />}
           {page==='flashcards' && <Flashcards cards={flashcards} setCards={setFlash} allTags={allTags} onNav={nav} notes={notes} />}
           {page==='homework'   && <HomeworkTracker homework={homework} setHomework={setHomework} uid={user.uid} isOnline={isOnline} />}
           {page==='vocab'      && <VocabularyBook vocab={vocab} setVocab={setVocab} allTags={allTags} />}
-          {page==='pdf'        && <PDFImport setNotes={setNotes} setFlashcards={setFlash} setVocab={setVocab} uid={user.uid} isOnline={isOnline} notes={notes} />}
+          {page==='pdf'        && <PDFImport setNotes={setNotes} setFlashcards={setFlash} setVocab={setVocab} uid={user.uid} isOnline={isOnline} notes={notes} flashcards={flashcards} vocab={vocab} setPage={setPage} setImportedNoteIds={setImportedNoteIds} />}
           {page==='feedback'   && <FeedbackBoard feedback={feedback} setFeedback={setFeedback} />}
           {page==='settings'   && <Settings uid={user.uid} />}
         </main>
