@@ -820,6 +820,7 @@ const Flashcards = ({ cards, setCards, allTags, onNav, notes = [] }) => {
   }
 
   return (
+    <>
     <div className="max-w-4xl mx-auto">
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-xl font-bold text-gray-800">🃏 闪卡复习</h1>
@@ -902,6 +903,7 @@ const Flashcards = ({ cards, setCards, allTags, onNav, notes = [] }) => {
       </Modal>
     )}
     {exportToast && <div className="fixed bottom-4 right-4 bg-green-600 text-white px-4 py-2 rounded-xl shadow-lg z-50 text-sm">{exportToast}</div>}
+    </>
   );
 };
 
