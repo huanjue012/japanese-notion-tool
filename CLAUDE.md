@@ -17,7 +17,6 @@ users/{uid}/
   notes/        — 知识库笔记 {title, content, tags, images, createdAt, updatedAt}
   flashcards/   — 闪卡 {front, back, tags, nextReview, createdAt}
   homework/     — 功课 {title, lessonNumber, dueDate, submittedDate, status, teacherFeedback, notes}
-  vocab/        — 单词本 {japanese, hiragana, chinese, english, example, tags, mastery}
   feedback/     — 功能反馈 {title, description, status}
 ```
 
@@ -25,8 +24,7 @@ users/{uid}/
 ```json
 {
   "notes": [{"title": "", "content": "", "tags": []}],
-  "flashcards": [{"front": "", "back": "", "tags": []}],
-  "vocabulary": [{"japanese": "", "hiragana": "", "chinese": "", "mastery": "new", "tags": []}]
+  "flashcards": [{"front": "", "back": "", "tags": []}]
 }
 ```
 
@@ -35,7 +33,6 @@ users/{uid}/
 - **知识库**：笔记，Markdown 渲染（marked.js），支持图片上传，标签/搜索筛选
 - **闪卡**：SRS 复习（1/3/7/14 天），标签筛选
 - **功课**：4 状态流转（pending→submitted→graded→organized），逾期高亮
-- **单词本**：4 级掌握度，Quiz 模式
 - **PDF 导入**：「打开 Claude AI」按钮 → 直接跳转「日语课」project；JSON 导入标签页
 - **反馈板**：Kanban（backlog/pending/in-progress/done），支持导出/导入 JSON
 
@@ -43,3 +40,4 @@ users/{uid}/
 - 每个模块标题栏有「🗑 全部删除」红色按钮（有数据时显示），需二次确认
 - `system-prompt.md` = Claude mobile app「日语课」project 的 system prompt，勿混淆
 - 如果反馈板有多条待处理的功能需求，必须同时启动多个 agent 并行处理，不要逐一顺序执行
+- 每当只修改知识库或闪卡其中一个模块时，如果该功能可以放进另一个模块，必须问用户要不要同步过去

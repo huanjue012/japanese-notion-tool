@@ -234,7 +234,7 @@ const TagSelector = ({ selected = [], onChange, pool = [] }) => {
 const DEFAULT_TAGS = ['文法','词汇','助词','动词','形容词','打招呼','数字','时间','N5','第1课','第2课','第3课'];
 
 // ─── DASHBOARD ────────────────────────────────────────────────────────────────
-const Dashboard = ({ notes, homework, flashcards, vocab, onNav, userName }) => {
+const Dashboard = ({ notes, homework, flashcards, onNav, userName }) => {
   const pending = homework.filter(h => h.status === 'pending');
   const overdue = homework.filter(isOverdue);
   const thisWeek = homework.filter(h => {
@@ -242,13 +242,12 @@ const Dashboard = ({ notes, homework, flashcards, vocab, onNav, userName }) => {
     const d = (new Date(h.dueDate) - new Date()) / 86400000;
     return d >= 0 && d <= 7;
   });
-  const mastered = vocab.filter(v => v.mastery === 'mastered').length;
   const dueCards = flashcards.filter(c => !c.nextReview || new Date(c.nextReview) <= new Date()).length;
 
   const stats = [
     { label: '笔记', value: notes.length, icon: '📝', grad: 'from-violet-500 to-indigo-600', page: 'knowledge' },
     { label: '闪卡', value: flashcards.length, icon: '🃏', grad: 'from-cyan-500 to-blue-600', page: 'flashcards' },
-    { label: '词汇掌握', value: `${mastered}/${vocab.length}`, icon: '✅', grad: 'from-emerald-500 to-teal-600', page: 'vocab' },
+    { label: '今日复习', value: dueCards, icon: '🔔', grad: 'from-emerald-500 to-teal-600', page: 'flashcards' },
     { label: '待交功课', value: pending.length, icon: '📋', grad: 'from-orange-500 to-red-500', page: 'homework' },
   ];
 
@@ -660,6 +659,10 @@ const Flashcards = ({ cards, setCards, allTags, onNav, notes = [] }) => {
   const [idx, setIdx] = useState(0);
   const [flipped, setFlipped] = useState(false);
   const [noteIdx, setNoteIdx] = useState(0);
+  const [filterExpanded, setFilterExpanded] = useState(true);
+  const [exportToast, setExportToast] = useState('');
+  const [deleteModal, setDeleteModal] = useState(false);
+  const [deleteJson, setDeleteJson] = useState('');
 
   const dueCards = useMemo(() => cards.filter(c => !c.nextReview || new Date(c.nextReview) <= new Date()), [cards]);
   const reviewList = useMemo(() => {
@@ -700,6 +703,42 @@ const Flashcards = ({ cards, setCards, allTags, onNav, notes = [] }) => {
   };
 
   const del = id => { if (confirm('删除此闪卡？')) setCards(p => p.filter(c => c.id !== id)); };
+
+  const exportForClaude = async () => {
+    const exported = { flashcards: cards.map(({ front, back, tags }) => ({ front, back, tags })) };
+    const jsonString = JSON.stringify(exported, null, 2);
+    const today = new Date().toISOString().slice(0, 10);
+    const blob = new Blob([jsonString], { type: 'application/json' });
+    const dlUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = dlUrl;
+    a.download = `flashcards-export-${today}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(dlUrl);
+    const message = `请帮我检查以下日语闪卡，找出重复或有误的内容，并以相同JSON格式返回修正后的版本，同时提供 {"delete_duplicates": ["front1", "front2"]} 列出需要删除的重复卡片：\n\n${jsonString}`;
+    try { await navigator.clipboard.writeText(message); } catch(e) {}
+    setExportToast('✅ 已下载 JSON 文件，提示语已复制到剪贴板！');
+    setTimeout(() => setExportToast(''), 3000);
+    window.open('https://claude.ai/project/019cf9e9-9f1d-7066-9a04-29908e81ebbf', '_blank');
+  };
+
+  const applyDeleteList = () => {
+    let d;
+    try { d = JSON.parse(deleteJson); } catch(e) { alert('JSON 格式有误：' + e.message); return; }
+    const fronts = d.delete_duplicates;
+    if (!Array.isArray(fronts) || fronts.length === 0) { alert('未找到 delete_duplicates 字段或列表为空'); return; }
+    const frontSet = new Set(fronts);
+    const toDelete = cards.filter(c => frontSet.has(c.front));
+    if (toDelete.length === 0) { alert('没有匹配的闪卡'); return; }
+    if (!confirm(`将删除以下 ${toDelete.length} 张闪卡：\n${toDelete.map(c => '· ' + c.front).join('\n')}\n\n确认删除？`)) return;
+    setCards(p => p.filter(c => !frontSet.has(c.front)));
+    setDeleteModal(false);
+    setDeleteJson('');
+    setExportToast(`✅ 已删除 ${toDelete.length} 张重复闪卡`);
+    setTimeout(() => setExportToast(''), 3000);
+  };
 
   if (view === 'review' && reviewList.length > 0) {
     const card = reviewList[idx] || reviewList[0];
@@ -786,6 +825,8 @@ const Flashcards = ({ cards, setCards, allTags, onNav, notes = [] }) => {
         <h1 className="text-xl font-bold text-gray-800">🃏 闪卡复习</h1>
         <div className="flex gap-2">
           {cards.length > 0 && <Btn variant="danger" onClick={() => { if (confirm(`删除全部 ${cards.length} 张闪卡？此操作不可恢复。`)) setCards([]); }}>🗑 全部删除</Btn>}
+          {cards.length > 0 && <Btn variant="secondary" onClick={exportForClaude}>导出给 Claude</Btn>}
+          {cards.length > 0 && <Btn variant="secondary" onClick={() => setDeleteModal(true)}>🗑 删除重复</Btn>}
           <Btn variant="secondary" onClick={openNew}>+ 新建</Btn>
           {cards.length > 0 && <Btn onClick={startReview}>开始复习 {dueCards.length > 0 && `(${dueCards.length} 到期)`}</Btn>}
         </div>
@@ -804,11 +845,21 @@ const Flashcards = ({ cards, setCards, allTags, onNav, notes = [] }) => {
         const displayList = activeTag ? baseList.filter(c => c.tags?.includes(activeTag)) : baseList;
         return <>
           {Object.keys(tagCounts).length > 0 && (
-            <div className="flex flex-wrap gap-1.5 mb-4">
-              <Badge onClick={() => setActiveTag(null)} color={!activeTag ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600'}>全部 ({baseList.length})</Badge>
-              {Object.entries(tagCounts).sort((a,b)=>b[1]-a[1]).map(([tag,cnt]) => (
-                <Badge key={tag} onClick={() => setActiveTag(activeTag===tag?null:tag)} color={activeTag===tag?'bg-indigo-600 text-white':'bg-gray-100 text-gray-600'}>{tag} ({cnt})</Badge>
-              ))}
+            <div className="mb-4">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">标签筛选</span>
+                <button onClick={() => setFilterExpanded(v => !v)} className="text-xs text-gray-400 hover:text-gray-600">
+                  {filterExpanded ? '收起 ▲' : '展开 ▼'}
+                </button>
+              </div>
+              {filterExpanded && (
+                <div className="flex flex-wrap gap-1.5">
+                  <Badge onClick={() => setActiveTag(null)} color={!activeTag ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600'}>全部 ({baseList.length})</Badge>
+                  {Object.entries(tagCounts).sort((a,b)=>b[1]-a[1]).map(([tag,cnt]) => (
+                    <Badge key={tag} onClick={() => setActiveTag(activeTag===tag?null:tag)} color={activeTag===tag?'bg-indigo-600 text-white':'bg-gray-100 text-gray-600'}>{tag} ({cnt})</Badge>
+                  ))}
+                </div>
+              )}
             </div>
           )}
           {displayList.length === 0 ? (
@@ -838,6 +889,19 @@ const Flashcards = ({ cards, setCards, allTags, onNav, notes = [] }) => {
         </>;
       })()}
     </div>
+    {deleteModal && (
+      <Modal title="删除重复闪卡" onClose={() => { setDeleteModal(false); setDeleteJson(''); }}>
+        <p className="text-sm text-gray-500 mb-2">将 Claude 返回的 JSON 粘贴到此处：</p>
+        <textarea className="w-full border rounded-lg p-2 text-sm font-mono h-40"
+          placeholder='{"delete_duplicates": ["front1", "front2"]}'
+          value={deleteJson} onChange={e => setDeleteJson(e.target.value)} />
+        <div className="flex gap-2 mt-3 justify-end">
+          <Btn variant="secondary" onClick={() => { setDeleteModal(false); setDeleteJson(''); }}>取消</Btn>
+          <Btn variant="danger" onClick={applyDeleteList}>确认删除</Btn>
+        </div>
+      </Modal>
+    )}
+    {exportToast && <div className="fixed bottom-4 right-4 bg-green-600 text-white px-4 py-2 rounded-xl shadow-lg z-50 text-sm">{exportToast}</div>}
   );
 };
 
@@ -996,179 +1060,6 @@ const HomeworkTracker = ({ homework, setHomework, uid, isOnline }) => {
   );
 };
 
-// ─── VOCABULARY BOOK ──────────────────────────────────────────────────────────
-const MASTERY = {
-  new:      { label: '未学', color: 'bg-gray-100 text-gray-500' },
-  learning: { label: '学习中', color: 'bg-orange-100 text-orange-600' },
-  familiar: { label: '已认识', color: 'bg-blue-100 text-blue-600' },
-  mastered: { label: '已掌握', color: 'bg-green-100 text-green-600' },
-};
-
-const VocabularyBook = ({ vocab, setVocab, allTags }) => {
-  const [view, setView] = useState('list'); // list | quiz
-  const [search, setSearch] = useState('');
-  const [filter, setFilter] = useState('all');
-  const [activeTag, setActiveTag] = useState(null);
-  const [modal, setModal] = useState(null);
-  const [form, setForm] = useState({ japanese:'', hiragana:'', english:'', chinese:'', example:'', tags:[], mastery:'new' });
-  const [quizIdx, setQuizIdx] = useState(0);
-  const [showAns, setShowAns] = useState(false);
-  const [showJapanese, setShowJapanese] = useState(true);
-  const [showHiragana, setShowHiragana] = useState(true);
-
-  const filtered = useMemo(() => vocab.filter(v => {
-    const q = search.toLowerCase();
-    const ms = !q || v.japanese?.includes(q) || v.hiragana?.includes(q) || v.english?.toLowerCase().includes(q) || v.chinese?.includes(q);
-    const mf = filter === 'all' || v.mastery === filter;
-    const mt = !activeTag || v.tags?.includes(activeTag);
-    return ms && mf && mt;
-  }), [vocab, search, filter, activeTag]);
-
-  const vocabTagCounts = useMemo(() => {
-    const c = {};
-    vocab.forEach(v => v.tags?.forEach(t => { c[t] = (c[t] || 0) + 1; }));
-    return c;
-  }, [vocab]);
-
-  const openNew = () => { setForm({japanese:'',hiragana:'',english:'',chinese:'',example:'',tags:[],mastery:'new'}); setModal('new'); };
-  const openEdit = v => { setForm({...v}); setModal(v.id); };
-  const save = () => {
-    if (!form.japanese.trim()) return;
-    if (modal==='new') setVocab(p => [...p, {...form, id:genId(), createdAt:new Date().toISOString()}]);
-    else setVocab(p => p.map(v => v.id===modal?{...v,...form}:v));
-    setModal(null);
-  };
-  const del = id => { if (confirm('删除？')) setVocab(p => p.filter(v => v.id!==id)); };
-  const setM = (id, mastery, e) => { e?.stopPropagation(); setVocab(p => p.map(v => v.id===id?{...v,mastery}:v)); };
-
-  const counts = useMemo(() => {
-    const c = {all: vocab.length};
-    Object.keys(MASTERY).forEach(k => c[k] = vocab.filter(v => v.mastery === k).length);
-    return c;
-  }, [vocab]);
-
-  if (view === 'quiz' && filtered.length > 0) {
-    const word = filtered[quizIdx % filtered.length];
-    const toggleJapanese = () => {
-      if (showJapanese && !showHiragana) return;
-      setShowJapanese(v => !v);
-    };
-    const toggleHiragana = () => {
-      if (showHiragana && !showJapanese) return;
-      setShowHiragana(v => !v);
-    };
-    return (
-      <div className="max-w-md mx-auto">
-        <div className="flex justify-between items-center mb-5">
-          <Btn variant="ghost" onClick={() => setView('list')}>← 返回</Btn>
-          <div className="text-right">
-            {activeTag && <p className="text-xs text-indigo-500 mb-0.5">#{activeTag}</p>}
-            <span className="text-sm text-gray-400">{(quizIdx % filtered.length) + 1} / {filtered.length}</span>
-          </div>
-        </div>
-        <div onClick={() => setShowAns(a => !a)} className="bg-white rounded-2xl shadow-lg border border-gray-100 p-10 text-center cursor-pointer hover:shadow-xl transition-shadow min-h-52 flex flex-col items-center justify-center mb-4">
-          {!showAns ? (
-            <div>
-              {showJapanese && <p className="text-4xl font-bold text-gray-800 mb-1">{word.japanese}</p>}
-              {showHiragana && word.hiragana && word.hiragana !== word.japanese && <p className="text-lg text-gray-400">{word.hiragana}</p>}
-              <p className="text-xs text-gray-300 mt-4">点击查看意思</p>
-            </div>
-          ) : (
-            <div>
-              <p className="text-2xl font-semibold text-gray-800">{word.chinese || word.english}</p>
-              {word.example && <p className="text-sm text-gray-400 mt-3 italic">{word.example}</p>}
-            </div>
-          )}
-        </div>
-        <div className="flex gap-2 justify-center mb-4">
-          <button onClick={toggleJapanese} className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${showJapanese ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-500'}`}>漢字</button>
-          <button onClick={toggleHiragana} className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${showHiragana ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-500'}`}>仮名</button>
-        </div>
-        {showAns && (
-          <div className="grid grid-cols-4 gap-2">
-            {Object.entries(MASTERY).map(([k,{label,color}]) => (
-              <button key={k} onClick={() => { setM(word.id, k, null); setQuizIdx(i => i+1); setShowAns(false); }}
-                className={`rounded-xl py-2.5 text-xs font-semibold ${color} hover:opacity-80 transition-opacity`}>{label}</button>
-            ))}
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  return (
-    <div className="max-w-4xl mx-auto">
-      <div className="flex items-center justify-between mb-4">
-        <h1 className="text-xl font-bold text-gray-800">📖 单词本</h1>
-        <div className="flex gap-2">
-          {vocab.length > 0 && <Btn variant="danger" onClick={() => { if (confirm(`删除全部 ${vocab.length} 个词汇？此操作不可恢复。`)) setVocab([]); }}>🗑 全部删除</Btn>}
-          {vocab.length > 0 && <Btn variant="secondary" onClick={() => { setView('quiz'); setQuizIdx(0); setShowAns(false); }}>🎯 测试</Btn>}
-          <Btn onClick={openNew}>+ 添加</Btn>
-        </div>
-      </div>
-
-      <input value={search} onChange={e => setSearch(e.target.value)} placeholder="搜索日语、中文、英文…"
-        className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-indigo-300" />
-
-      <div className="flex flex-wrap gap-2 mb-3">
-        {[['all','全部'],...Object.entries(MASTERY).map(([k,{label}])=>[k,label])].map(([k,l]) => (
-          <button key={k} onClick={() => setFilter(k)} className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${filter===k?'bg-indigo-600 text-white':'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>{l} ({counts[k]||0})</button>
-        ))}
-      </div>
-      {Object.keys(vocabTagCounts).length > 0 && (
-        <div className="flex flex-wrap gap-1.5 mb-4">
-          <Badge onClick={() => setActiveTag(null)} color={!activeTag ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600'}>全部标签</Badge>
-          {Object.entries(vocabTagCounts).sort((a,b) => b[1]-a[1]).map(([tag, cnt]) => (
-            <Badge key={tag} onClick={() => setActiveTag(activeTag === tag ? null : tag)} color={activeTag === tag ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600'}>{tag} ({cnt})</Badge>
-          ))}
-        </div>
-      )}
-
-      {filtered.length === 0 ? (
-        <Card className="text-center py-16"><p className="text-4xl mb-3">📖</p><p className="text-gray-400 mb-4">还没有单词</p><Btn onClick={openNew}>添加第一个单词</Btn></Card>
-      ) : (
-        <div className="grid md:grid-cols-3 gap-3">
-          {filtered.map(v => (
-            <Card key={v.id} onClick={() => openEdit(v)}>
-              <div className="flex justify-between items-start mb-1">
-                <div>
-                  <p className="text-xl font-bold text-gray-800">{v.japanese}</p>
-                  {v.hiragana && v.hiragana !== v.japanese && <p className="text-xs text-gray-400">{v.hiragana}</p>}
-                </div>
-                <button onClick={e => { e.stopPropagation(); del(v.id); }} className="text-gray-200 hover:text-red-400">🗑</button>
-              </div>
-              <p className="text-sm text-gray-600">{v.chinese}{v.chinese && v.english ? ' / ' : ''}{v.english}</p>
-              {v.example && <p className="text-xs text-gray-400 mt-1 italic line-clamp-2">{v.example}</p>}
-              <div className="flex items-center justify-between mt-3">
-                <Badge color={MASTERY[v.mastery||'new']?.color}>{MASTERY[v.mastery||'new']?.label}</Badge>
-                <div className="flex gap-1">
-                  {Object.entries(MASTERY).map(([k]) => (
-                    <button key={k} onClick={e => setM(v.id, k, e)} className={`w-5 h-5 rounded-full text-xs transition-opacity ${v.mastery===k?'opacity-100':'opacity-20 hover:opacity-50'}`} title={MASTERY[k].label}>
-                      {k==='new'?'○':k==='learning'?'◐':k==='familiar'?'◕':'●'}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </Card>
-          ))}
-        </div>
-      )}
-
-      <Modal open={!!modal} onClose={() => setModal(null)} title={modal==='new'?'添加单词':'编辑单词'}>
-        <div className="grid grid-cols-2 gap-3">
-          <Input label="日语" value={form.japanese} onChange={e => setForm(p=>({...p,japanese:e.target.value}))} placeholder="例：先生" />
-          <Input label="假名读音" value={form.hiragana} onChange={e => setForm(p=>({...p,hiragana:e.target.value}))} placeholder="例：せんせい" />
-          <Input label="中文意思" value={form.chinese} onChange={e => setForm(p=>({...p,chinese:e.target.value}))} placeholder="例：老师" />
-          <Input label="英文意思" value={form.english} onChange={e => setForm(p=>({...p,english:e.target.value}))} placeholder="例：Teacher" />
-        </div>
-        <Input label="例句" value={form.example||''} onChange={e => setForm(p=>({...p,example:e.target.value}))} placeholder="例：先生はやさしいです。" />
-        <Select label="掌握程度" value={form.mastery||'new'} onChange={e => setForm(p=>({...p,mastery:e.target.value}))} options={Object.entries(MASTERY).map(([v,{label}])=>({value:v,label}))} />
-        <TagSelector selected={form.tags} onChange={tags => setForm(p=>({...p,tags}))} pool={allTags} />
-        <div className="flex justify-end gap-2 pt-2"><Btn variant="secondary" onClick={() => setModal(null)}>取消</Btn><Btn onClick={save}>保存</Btn></div>
-      </Modal>
-    </div>
-  );
-};
 
 // ─── PDF IMPORT ───────────────────────────────────────────────────────────────
 const PDF_COMMANDS = [
@@ -1187,22 +1078,15 @@ const PDF_COMMANDS = [
     prompt: (text) => `你是一个日语学习助手。请将以下课堂PDF内容整理成JSON格式，只提取闪卡（问答卡），只返回合法JSON，不要加任何说明文字。格式如下：\n{"flashcards": [{"front": "日语/问题", "back": "中文/答案", "tags": ["标签"]}]}\n\nPDF内容：\n\n${text}`,
   },
   {
-    id: 'vocab',
-    label: '📖 整理词汇',
-    desc: '只提取词汇列表',
-    color: 'bg-green-600 hover:bg-green-700',
-    prompt: (text) => `你是一个日语学习助手。请将以下课堂PDF内容整理成JSON格式，只提取词汇，只返回合法JSON，不要加任何说明文字。格式如下：\n{"vocabulary": [{"japanese": "日文", "hiragana": "假名", "chinese": "中文", "mastery": "new", "tags": ["标签"]}]}\n\nPDF内容：\n\n${text}`,
-  },
-  {
     id: 'all',
     label: '✨ 整理全部',
-    desc: '笔记 + 闪卡 + 词汇',
+    desc: '笔记 + 闪卡',
     color: 'bg-indigo-600 hover:bg-indigo-700',
-    prompt: (text) => `你是一个日语学习助手。请将以下课堂PDF内容整理成JSON格式，只返回合法JSON，不要加任何说明文字。格式如下：\n{\n  "notes": [{"title": "笔记标题", "content": "内容", "tags": ["标签"]}],\n  "flashcards": [{"front": "日语/问题", "back": "中文/答案", "tags": ["标签"]}],\n  "vocabulary": [{"japanese": "日文", "hiragana": "假名", "chinese": "中文", "mastery": "new", "tags": ["标签"]}]\n}\n\nPDF内容：\n\n${text}`,
+    prompt: (text) => `你是一个日语学习助手。请将以下课堂PDF内容整理成JSON格式，只返回合法JSON，不要加任何说明文字。格式如下：\n{\n  "notes": [{"title": "笔记标题", "content": "内容", "tags": ["标签"]}],\n  "flashcards": [{"front": "日语/问题", "back": "中文/答案", "tags": ["标签"]}]\n}\n\nPDF内容：\n\n${text}`,
   },
 ];
 
-const PDFImport = ({ setNotes, setFlashcards, setVocab, uid, isOnline, notes, flashcards, vocab, setPage, setImportedNoteIds }) => {
+const PDFImport = ({ setNotes, setFlashcards, uid, isOnline, notes, flashcards, setPage, setImportedNoteIds }) => {
   const [tab, setTab] = useState('pdf');
   const [json, setJson] = useState('');
   const [err, setErr] = useState('');
@@ -1257,7 +1141,7 @@ const PDFImport = ({ setNotes, setFlashcards, setVocab, uid, isOnline, notes, fl
       setUploading(false);
     }
 
-    let cnt = {n:0,f:0,v:0};
+    let cnt = {n:0,f:0};
     let skipped = 0;
     if (d.notes?.length) {
       const rawNew = d.notes.filter(x => !notes.some(n => n.title === x.title));
@@ -1267,26 +1151,19 @@ const PDFImport = ({ setNotes, setFlashcards, setVocab, uid, isOnline, notes, fl
       cnt.n = withIds.length;
       if (withIds.length > 0 && setImportedNoteIds) setImportedNoteIds(withIds.map(x => x.id));
     }
-    let skippedF = 0, skippedV = 0;
+    let skippedF = 0;
     if (d.flashcards?.length) {
       const newCards = d.flashcards.filter(x => !flashcards.some(f => f.front === x.front));
       skippedF = d.flashcards.length - newCards.length;
       setFlashcards(p => [...p, ...newCards.map(x=>({...x,id:genId(),createdAt:new Date().toISOString()}))]);
       cnt.f = newCards.length;
     }
-    if (d.vocabulary?.length) {
-      const newVocab = d.vocabulary.filter(x => !vocab.some(v => v.japanese === x.japanese));
-      skippedV = d.vocabulary.length - newVocab.length;
-      setVocab(p => [...p, ...newVocab.map(x=>({...x,id:genId(),createdAt:new Date().toISOString()}))]);
-      cnt.v = newVocab.length;
-    }
     const fileMsg = uploadedImages.length > 0 ? ` · 文件 ${uploadedImages.length} 个` : '';
     const skipParts = [];
     if (skipped > 0) skipParts.push(`笔记 ${skipped}`);
     if (skippedF > 0) skipParts.push(`闪卡 ${skippedF}`);
-    if (skippedV > 0) skipParts.push(`单词 ${skippedV}`);
     const skipMsg = skipParts.length > 0 ? ` · 跳过重复：${skipParts.join('、')}` : '';
-    setOk(`✅ 导入成功！笔记 ${cnt.n} 条 · 闪卡 ${cnt.f} 张 · 词汇 ${cnt.v} 个${fileMsg}${skipMsg}`);
+    setOk(`✅ 导入成功！笔记 ${cnt.n} 条 · 闪卡 ${cnt.f} 张${fileMsg}${skipMsg}`);
     setLastImportedCount(cnt.n);
     setJson('');
     setImgFiles([]);
@@ -1300,10 +1177,6 @@ const PDFImport = ({ setNotes, setFlashcards, setVocab, uid, isOnline, notes, fl
   "flashcards": [
     {"front": "おはようございます", "back": "早上好（正式）", "tags": ["打招呼"]},
     {"front": "ありがとうございます", "back": "谢谢（正式）", "tags": ["打招呼"]}
-  ],
-  "vocabulary": [
-    {"japanese": "先生", "hiragana": "せんせい", "chinese": "老师", "mastery": "learning"},
-    {"japanese": "学生", "hiragana": "がくせい", "chinese": "学生", "mastery": "new"}
   ]
 }`;
 
@@ -1342,7 +1215,7 @@ const PDFImport = ({ setNotes, setFlashcards, setVocab, uid, isOnline, notes, fl
             <pre className="text-xs text-gray-500 bg-gray-50 rounded-xl p-4 overflow-x-auto">{EXAMPLE}</pre>
           </Card>
           <Card>
-            <Textarea label="粘贴 Claude 整理好的 JSON" value={json} onChange={e => setJson(e.target.value)} placeholder='{"notes":[...],"flashcards":[...],"vocabulary":[...]}' rows={10} />
+            <Textarea label="粘贴 Claude 整理好的 JSON" value={json} onChange={e => setJson(e.target.value)} placeholder='{"notes":[...],"flashcards":[...]}' rows={10} />
             <div className="mb-4">
               <p className="text-xs text-gray-400 mb-2">可附加图片或 PDF 到导入的笔记（可选）</p>
               <div className="flex gap-2 flex-wrap">
@@ -1584,7 +1457,6 @@ const PAGES = [
   { id: 'knowledge',  label: '知识库',   icon: '📝' },
   { id: 'flashcards', label: '闪卡',     icon: '🃏' },
   { id: 'homework',   label: '功课',     icon: '📋' },
-  { id: 'vocab',      label: '单词本',   icon: '📖' },
   { id: 'pdf',        label: 'PDF 导入', icon: '📄' },
 { id: 'settings',   label: '设置',     icon: '⚙️' },
 ];
@@ -1601,9 +1473,9 @@ const App = ({ user }) => {
 
   const allTags = useMemo(() => {
     const s = new Set(DEFAULT_TAGS);
-    [...notes, ...flashcards, ...vocab].forEach(x => x.tags?.forEach(t => s.add(t)));
+    [...notes, ...flashcards].forEach(x => x.tags?.forEach(t => s.add(t)));
     return Array.from(s);
-  }, [notes, flashcards, vocab]);
+  }, [notes, flashcards]);
 
   const pendingHw = homework.filter(h => h.status === 'pending').length;
   const dueCards  = flashcards.filter(c => !c.nextReview || new Date(c.nextReview) <= new Date()).length;
@@ -1621,6 +1493,23 @@ const App = ({ user }) => {
   React.useEffect(() => {
     setUserNameState(localStorage.getItem('jp_userName') || '');
   }, [page]);
+
+  // One-time migration: convert legacy vocab items to flashcards
+  React.useEffect(() => {
+    if (vocab.length > 0 && localStorage.getItem('vocabMigrated') !== 'true') {
+      const newCards = vocab.map(v => ({
+        id: genId(),
+        front: v.japanese + (v.hiragana ? ` (${v.hiragana})` : ''),
+        back: [v.chinese, v.english].filter(Boolean).join(' / ') + (v.example ? `\n\n例：${v.example}` : ''),
+        tags: v.tags || [],
+        nextReview: new Date().toISOString(),
+        createdAt: v.createdAt || new Date().toISOString(),
+      }));
+      setFlash(prev => [...prev, ...newCards]);
+      setVocab([]);
+      localStorage.setItem('vocabMigrated', 'true');
+    }
+  }, [vocab.length]);
 
   const nav = (id) => { setPage(id); setSideOpen(false); };
 
@@ -1679,12 +1568,11 @@ const App = ({ user }) => {
         )}
         <StorageBanner />
         <main className="flex-1 overflow-y-auto p-4 md:p-8">
-          {page==='dashboard'  && <Dashboard notes={notes} homework={homework} flashcards={flashcards} vocab={vocab} onNav={nav} userName={userName} />}
+          {page==='dashboard'  && <Dashboard notes={notes} homework={homework} flashcards={flashcards} onNav={nav} userName={userName} />}
           {page==='knowledge'  && <KnowledgeBase notes={notes} setNotes={setNotes} allTags={allTags} uid={user.uid} isOnline={isOnline} importedNoteIds={importedNoteIds} setImportedNoteIds={setImportedNoteIds} />}
           {page==='flashcards' && <Flashcards cards={flashcards} setCards={setFlash} allTags={allTags} onNav={nav} notes={notes} />}
           {page==='homework'   && <HomeworkTracker homework={homework} setHomework={setHomework} uid={user.uid} isOnline={isOnline} />}
-          {page==='vocab'      && <VocabularyBook vocab={vocab} setVocab={setVocab} allTags={allTags} />}
-          {page==='pdf'        && <PDFImport setNotes={setNotes} setFlashcards={setFlash} setVocab={setVocab} uid={user.uid} isOnline={isOnline} notes={notes} flashcards={flashcards} vocab={vocab} setPage={setPage} setImportedNoteIds={setImportedNoteIds} />}
+          {page==='pdf'        && <PDFImport setNotes={setNotes} setFlashcards={setFlash} uid={user.uid} isOnline={isOnline} notes={notes} flashcards={flashcards} setPage={setPage} setImportedNoteIds={setImportedNoteIds} />}
           {page==='settings'   && <Settings uid={user.uid} />}
         </main>
       </div>
