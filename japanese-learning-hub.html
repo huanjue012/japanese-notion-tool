@@ -311,6 +311,73 @@ const Dashboard = ({ notes, homework, flashcards, onNav, userName }) => {
   );
 };
 
+// ─── SHARED UTILITIES ─────────────────────────────────────────────────────────
+const CollapsibleTagFilter = ({ tagCounts, total, activeTag, setActiveTag, defaultExpanded = false }) => {
+  const [expanded, setExpanded] = useState(defaultExpanded);
+  if (Object.keys(tagCounts).length === 0) return null;
+  return (
+    <div className="mb-4">
+      <div className="flex items-center justify-between mb-1.5">
+        <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">标签筛选</span>
+        <button onClick={() => setExpanded(v => !v)} className="text-xs text-gray-400 hover:text-gray-600">
+          {expanded ? '收起 ▲' : '展开 ▼'}
+        </button>
+      </div>
+      {expanded && (
+        <div className="flex flex-wrap gap-1.5">
+          <Badge onClick={() => setActiveTag(null)} color={!activeTag ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600'}>全部 ({total})</Badge>
+          {Object.entries(tagCounts).sort((a,b) => b[1]-a[1]).map(([tag, cnt]) => (
+            <Badge key={tag} onClick={() => setActiveTag(activeTag === tag ? null : tag)} color={activeTag === tag ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600'}>{tag} ({cnt})</Badge>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const useClaudeExport = ({ items, mapExport, filename, claudePrompt, matchKey, itemLabel, setItems }) => {
+  const [exportToast, setExportToast] = useState('');
+  const [deleteModal, setDeleteModal] = useState(false);
+  const [deleteJson, setDeleteJson] = useState('');
+
+  const exportForClaude = async () => {
+    const exported = mapExport(items);
+    const jsonString = JSON.stringify(exported, null, 2);
+    const today = new Date().toISOString().slice(0, 10);
+    const blob = new Blob([jsonString], { type: 'application/json' });
+    const dlUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = dlUrl;
+    a.download = `${filename}-${today}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(dlUrl);
+    try { await navigator.clipboard.writeText(claudePrompt(jsonString)); } catch(e) {}
+    setExportToast('✅ 已下载 JSON 文件，提示语已复制到剪贴板！');
+    setTimeout(() => setExportToast(''), 3000);
+    window.open('https://claude.ai/project/019cf9e9-9f1d-7066-9a04-29908e81ebbf', '_blank');
+  };
+
+  const applyDeleteList = () => {
+    let d;
+    try { d = JSON.parse(deleteJson); } catch(e) { alert('JSON 格式有误：' + e.message); return; }
+    const keys = d.delete_duplicates;
+    if (!Array.isArray(keys) || keys.length === 0) { alert('未找到 delete_duplicates 字段或列表为空'); return; }
+    const keySet = new Set(keys);
+    const toDelete = items.filter(x => keySet.has(x[matchKey]));
+    if (toDelete.length === 0) { alert(`没有匹配的${itemLabel}`); return; }
+    if (!confirm(`将删除以下 ${toDelete.length} 条${itemLabel}：\n${toDelete.map(x => '· ' + x[matchKey]).join('\n')}\n\n确认删除？`)) return;
+    setItems(p => p.filter(x => !keySet.has(x[matchKey])));
+    setDeleteModal(false);
+    setDeleteJson('');
+    setExportToast(`✅ 已删除 ${toDelete.length} 条重复${itemLabel}`);
+    setTimeout(() => setExportToast(''), 3000);
+  };
+
+  return { exportForClaude, applyDeleteList, exportToast, deleteModal, setDeleteModal, deleteJson, setDeleteJson };
+};
+
 // ─── KNOWLEDGE BASE ────────────────────────────────────────────────────────────
 const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteIds, setImportedNoteIds }) => {
   const [search, setSearch] = useState('');
@@ -319,10 +386,6 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteId
   const [form, setForm] = useState({ title: '', content: '', tags: [], images: [] });
   const [uploadingImg, setUploadingImg] = useState(false);
   const [contentExpanded, setContentExpanded] = useState(false);
-  const [exportToast, setExportToast] = useState('');
-  const [deleteModal, setDeleteModal] = useState(false);
-  const [deleteJson, setDeleteJson] = useState('');
-  const [filterExpanded, setFilterExpanded] = useState(true);
   const [imagePreview, setImagePreview] = useState(null); // { url, name }
   const [pdfPreview, setPdfPreview] = useState(null); // { url, name }
 
@@ -407,47 +470,15 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteId
   };
   const del = id => { if (confirm('确定删除此笔记？')) setNotes(p => p.filter(n => n.id !== id)); };
 
-  const exportForClaude = async () => {
-    const exported = { notes: notes.map(({ title, content, tags }) => ({ title, content, tags })) };
-    const jsonString = JSON.stringify(exported, null, 2);
-    // Trigger JSON file download
-    const today = new Date().toISOString().slice(0, 10);
-    const blob = new Blob([jsonString], { type: 'application/json' });
-    const dlUrl = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = dlUrl;
-    a.download = `notes-export-${today}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(dlUrl);
-    // Copy Claude prompt to clipboard
-    const message = `请帮我检查以下日语学习笔记，指出有误的内容、补充不完整的地方，并以相同JSON格式返回修正后的版本：\n\n${jsonString}`;
-    try {
-      await navigator.clipboard.writeText(message);
-    } catch (e) {
-      // fallback
-    }
-    setExportToast('✅ 已下载 JSON 文件，提示语已复制到剪贴板！');
-    setTimeout(() => setExportToast(''), 3000);
-    window.open('https://claude.ai/project/019cf9e9-9f1d-7066-9a04-29908e81ebbf', '_blank');
-  };
-
-  const applyDeleteList = () => {
-    let d;
-    try { d = JSON.parse(deleteJson); } catch(e) { alert('JSON 格式有误：' + e.message); return; }
-    const titles = d.delete_duplicates;
-    if (!Array.isArray(titles) || titles.length === 0) { alert('未找到 delete_duplicates 字段或列表为空'); return; }
-    const titleSet = new Set(titles);
-    const toDelete = notes.filter(n => titleSet.has(n.title));
-    if (toDelete.length === 0) { alert('没有匹配的笔记标题'); return; }
-    if (!confirm(`将删除以下 ${toDelete.length} 条笔记：\n${toDelete.map(n => '· ' + n.title).join('\n')}\n\n确认删除？`)) return;
-    setNotes(p => p.filter(n => !titleSet.has(n.title)));
-    setDeleteModal(false);
-    setDeleteJson('');
-    setExportToast(`✅ 已删除 ${toDelete.length} 条重复笔记`);
-    setTimeout(() => setExportToast(''), 3000);
-  };
+  const { exportForClaude, applyDeleteList, exportToast, deleteModal, setDeleteModal, deleteJson, setDeleteJson } = useClaudeExport({
+    items: notes,
+    mapExport: items => ({ notes: items.map(({ title, content, tags }) => ({ title, content, tags })) }),
+    filename: 'notes-export',
+    claudePrompt: json => `请帮我检查以下日语学习笔记，指出有误的内容、补充不完整的地方，并以相同JSON格式返回修正后的版本：\n\n${json}`,
+    matchKey: 'title',
+    itemLabel: '笔记',
+    setItems: setNotes,
+  });
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -463,14 +494,16 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteId
 
       {exportToast && <div className="mb-3 text-sm text-green-700 bg-green-50 border border-green-200 rounded-xl px-4 py-2">{exportToast}</div>}
 
-      <Modal open={deleteModal} onClose={() => setDeleteModal(false)} title="导入删除列表">
-        <p className="text-sm text-gray-500 mb-3">将 Claude 返回的 <code className="bg-gray-100 px-1 rounded">{"{"}"delete_duplicates": [...]{"}"}</code> JSON 粘贴到下方：</p>
-        <Textarea value={deleteJson} onChange={e => setDeleteJson(e.target.value)} placeholder='{"delete_duplicates": ["标题1", "标题2"]}' rows={6} />
-        <div className="flex justify-end gap-2 pt-2">
-          <Btn variant="secondary" onClick={() => setDeleteModal(false)}>取消</Btn>
-          <Btn variant="danger" onClick={applyDeleteList}>确认删除</Btn>
-        </div>
-      </Modal>
+      {deleteModal && (
+        <Modal title="删除重复笔记" onClose={() => { setDeleteModal(false); setDeleteJson(''); }}>
+          <p className="text-sm text-gray-500 mb-2">将 Claude 返回的 JSON 粘贴到此处：</p>
+          <Textarea value={deleteJson} onChange={e => setDeleteJson(e.target.value)} placeholder='{"delete_duplicates": ["标题1", "标题2"]}' rows={6} />
+          <div className="flex gap-2 mt-3 justify-end">
+            <Btn variant="secondary" onClick={() => { setDeleteModal(false); setDeleteJson(''); }}>取消</Btn>
+            <Btn variant="danger" onClick={applyDeleteList}>确认删除</Btn>
+          </div>
+        </Modal>
+      )}
 
       <input value={search} onChange={e => setSearch(e.target.value)} placeholder="搜索笔记标题或内容..."
         className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-300" />
@@ -482,22 +515,7 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteId
         </div>
       )}
 
-      <div className="mb-4">
-        <div className="flex items-center justify-between mb-1.5">
-          <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">标签筛选</span>
-          <button onClick={() => setFilterExpanded(v => !v)} className="text-xs text-gray-400 hover:text-gray-600">
-            {filterExpanded ? '收起 ▲' : '展开 ▼'}
-          </button>
-        </div>
-        {filterExpanded && (
-          <div className="flex flex-wrap gap-1.5">
-            <Badge onClick={() => setActiveTag(null)} color={!activeTag ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600'}>全部 ({notes.length})</Badge>
-            {Object.entries(tagCounts).sort((a,b) => b[1]-a[1]).map(([tag, cnt]) => (
-              <Badge key={tag} onClick={() => setActiveTag(activeTag === tag ? null : tag)} color={activeTag === tag ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600'}>{tag} ({cnt})</Badge>
-            ))}
-          </div>
-        )}
-      </div>
+      <CollapsibleTagFilter tagCounts={tagCounts} total={notes.length} activeTag={activeTag} setActiveTag={setActiveTag} />
 
       {filtered.length === 0 ? (
         <Card className="text-center py-16">
@@ -659,11 +677,6 @@ const Flashcards = ({ cards, setCards, allTags, onNav, notes = [] }) => {
   const [idx, setIdx] = useState(0);
   const [flipped, setFlipped] = useState(false);
   const [noteIdx, setNoteIdx] = useState(0);
-  const [filterExpanded, setFilterExpanded] = useState(false);
-  const [exportToast, setExportToast] = useState('');
-  const [deleteModal, setDeleteModal] = useState(false);
-  const [deleteJson, setDeleteJson] = useState('');
-
   const dueCards = useMemo(() => cards.filter(c => !c.nextReview || new Date(c.nextReview) <= new Date()), [cards]);
   const reviewList = useMemo(() => {
     const base = filterMode === 'due' ? dueCards : cards;
@@ -704,41 +717,15 @@ const Flashcards = ({ cards, setCards, allTags, onNav, notes = [] }) => {
 
   const del = id => { if (confirm('删除此闪卡？')) setCards(p => p.filter(c => c.id !== id)); };
 
-  const exportForClaude = async () => {
-    const exported = { flashcards: cards.map(({ front, back, tags }) => ({ front, back, tags })) };
-    const jsonString = JSON.stringify(exported, null, 2);
-    const today = new Date().toISOString().slice(0, 10);
-    const blob = new Blob([jsonString], { type: 'application/json' });
-    const dlUrl = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = dlUrl;
-    a.download = `flashcards-export-${today}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(dlUrl);
-    const message = `请帮我检查以下日语闪卡，找出重复或有误的内容，并以相同JSON格式返回修正后的版本，同时提供 {"delete_duplicates": ["front1", "front2"]} 列出需要删除的重复卡片：\n\n${jsonString}`;
-    try { await navigator.clipboard.writeText(message); } catch(e) {}
-    setExportToast('✅ 已下载 JSON 文件，提示语已复制到剪贴板！');
-    setTimeout(() => setExportToast(''), 3000);
-    window.open('https://claude.ai/project/019cf9e9-9f1d-7066-9a04-29908e81ebbf', '_blank');
-  };
-
-  const applyDeleteList = () => {
-    let d;
-    try { d = JSON.parse(deleteJson); } catch(e) { alert('JSON 格式有误：' + e.message); return; }
-    const fronts = d.delete_duplicates;
-    if (!Array.isArray(fronts) || fronts.length === 0) { alert('未找到 delete_duplicates 字段或列表为空'); return; }
-    const frontSet = new Set(fronts);
-    const toDelete = cards.filter(c => frontSet.has(c.front));
-    if (toDelete.length === 0) { alert('没有匹配的闪卡'); return; }
-    if (!confirm(`将删除以下 ${toDelete.length} 张闪卡：\n${toDelete.map(c => '· ' + c.front).join('\n')}\n\n确认删除？`)) return;
-    setCards(p => p.filter(c => !frontSet.has(c.front)));
-    setDeleteModal(false);
-    setDeleteJson('');
-    setExportToast(`✅ 已删除 ${toDelete.length} 张重复闪卡`);
-    setTimeout(() => setExportToast(''), 3000);
-  };
+  const { exportForClaude, applyDeleteList, exportToast, deleteModal, setDeleteModal, deleteJson, setDeleteJson } = useClaudeExport({
+    items: cards,
+    mapExport: items => ({ flashcards: items.map(({ front, back, tags }) => ({ front, back, tags })) }),
+    filename: 'flashcards-export',
+    claudePrompt: json => `请帮我检查以下日语闪卡，找出重复或有误的内容，并以相同JSON格式返回修正后的版本，同时提供 {"delete_duplicates": ["front1", "front2"]} 列出需要删除的重复卡片：\n\n${json}`,
+    matchKey: 'front',
+    itemLabel: '闪卡',
+    setItems: setCards,
+  });
 
   if (view === 'review' && reviewList.length > 0) {
     const card = reviewList[idx] || reviewList[0];
@@ -845,24 +832,7 @@ const Flashcards = ({ cards, setCards, allTags, onNav, notes = [] }) => {
         baseList.forEach(c => c.tags?.forEach(t => tagCounts[t] = (tagCounts[t]||0)+1));
         const displayList = activeTag ? baseList.filter(c => c.tags?.includes(activeTag)) : baseList;
         return <>
-          {Object.keys(tagCounts).length > 0 && (
-            <div className="mb-4">
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">标签筛选</span>
-                <button onClick={() => setFilterExpanded(v => !v)} className="text-xs text-gray-400 hover:text-gray-600">
-                  {filterExpanded ? '收起 ▲' : '展开 ▼'}
-                </button>
-              </div>
-              {filterExpanded && (
-                <div className="flex flex-wrap gap-1.5">
-                  <Badge onClick={() => setActiveTag(null)} color={!activeTag ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600'}>全部 ({baseList.length})</Badge>
-                  {Object.entries(tagCounts).sort((a,b)=>b[1]-a[1]).map(([tag,cnt]) => (
-                    <Badge key={tag} onClick={() => setActiveTag(activeTag===tag?null:tag)} color={activeTag===tag?'bg-indigo-600 text-white':'bg-gray-100 text-gray-600'}>{tag} ({cnt})</Badge>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
+          <CollapsibleTagFilter tagCounts={tagCounts} total={baseList.length} activeTag={activeTag} setActiveTag={setActiveTag} />
           {displayList.length === 0 ? (
             <Card className="text-center py-16">
               <p className="text-4xl mb-3">{filterMode==='due'?'🎉':'🃏'}</p>
