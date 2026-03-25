@@ -729,7 +729,7 @@ const Flashcards = ({ cards, setCards, allTags, onNav, notes = [] }) => {
     items: cards,
     mapExport: items => ({ flashcards: items.map(({ front, back, tags }) => ({ front, back, tags })) }),
     filename: 'flashcards-export',
-    claudePrompt: json => `请帮我检查以下日语闪卡，找出重复或有误的内容，并以相同JSON格式返回修正后的版本，同时提供 {"delete_duplicates": ["front1", "front2"]} 列出需要删除的重复卡片：\n\n${json}`,
+    claudePrompt: json => `请帮我检查以下日语闪卡，找出完全重复或高度相似的卡片（正面内容相同，或意思完全一样）。\n\n只返回以下格式的 JSON，不要包含任何其他文字或解释：\n{"delete_duplicates": ["重复卡片的front值1", "重复卡片的front值2"]}\n\n如果没有重复，返回 {"delete_duplicates": []}。每组重复中保留最好的一张，只列出应删除的那些。\n\n闪卡数据如下：\n\n${json}`,
     matchKey: 'front',
     itemLabel: '闪卡',
     setItems: setCards,
