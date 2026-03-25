@@ -314,22 +314,29 @@ const Dashboard = ({ notes, homework, flashcards, onNav, userName }) => {
 // ─── SHARED UTILITIES ─────────────────────────────────────────────────────────
 const CollapsibleTagFilter = ({ tagCounts, total, activeTag, setActiveTag, defaultExpanded = false }) => {
   const [expanded, setExpanded] = useState(defaultExpanded);
+  const [tagSearch, setTagSearch] = useState('');
   if (Object.keys(tagCounts).length === 0) return null;
   return (
     <div className="mb-4">
       <div className="flex items-center justify-between mb-1.5">
         <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">标签筛选</span>
-        <button onClick={() => setExpanded(v => !v)} className="text-xs text-gray-400 hover:text-gray-600">
+        <button onClick={() => { setExpanded(v => !v); if (expanded) setTagSearch(''); }} className="text-xs text-gray-400 hover:text-gray-600">
           {expanded ? '收起 ▲' : '展开 ▼'}
         </button>
       </div>
       {expanded && (
-        <div className="flex flex-wrap gap-1.5">
-          <Badge onClick={() => setActiveTag(null)} color={!activeTag ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600'}>全部 ({total})</Badge>
-          {Object.entries(tagCounts).sort((a,b) => b[1]-a[1]).map(([tag, cnt]) => (
-            <Badge key={tag} onClick={() => setActiveTag(activeTag === tag ? null : tag)} color={activeTag === tag ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600'}>{tag} ({cnt})</Badge>
-          ))}
-        </div>
+        <>
+          {Object.keys(tagCounts).length > 5 && (
+            <input value={tagSearch} onChange={e => setTagSearch(e.target.value)} placeholder="搜索标签..."
+              className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-xs mb-2 focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+          )}
+          <div className="flex flex-wrap gap-1.5">
+            <Badge onClick={() => setActiveTag(null)} color={!activeTag ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600'}>全部 ({total})</Badge>
+            {Object.entries(tagCounts).filter(([tag]) => !tagSearch || tag.toLowerCase().includes(tagSearch.toLowerCase())).sort((a,b) => b[1]-a[1]).map(([tag, cnt]) => (
+              <Badge key={tag} onClick={() => setActiveTag(activeTag === tag ? null : tag)} color={activeTag === tag ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600'}>{tag} ({cnt})</Badge>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );
