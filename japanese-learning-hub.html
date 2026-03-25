@@ -502,7 +502,7 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteId
       {exportToast && <div className="mb-3 text-sm text-green-700 bg-green-50 border border-green-200 rounded-xl px-4 py-2">{exportToast}</div>}
 
       {deleteModal && (
-        <Modal title="删除重复笔记" onClose={() => { setDeleteModal(false); setDeleteJson(''); }}>
+        <Modal open={true} title="删除重复笔记" onClose={() => { setDeleteModal(false); setDeleteJson(''); }}>
           <p className="text-sm text-gray-500 mb-2">将 Claude 返回的 JSON 粘贴到此处：</p>
           <Textarea value={deleteJson} onChange={e => setDeleteJson(e.target.value)} placeholder='{"delete_duplicates": ["标题1", "标题2"]}' rows={6} />
           <div className="flex gap-2 mt-3 justify-end">
@@ -873,7 +873,7 @@ const Flashcards = ({ cards, setCards, allTags, onNav, notes = [] }) => {
       })()}
     </div>
     {deleteModal && (
-      <Modal title="删除重复闪卡" onClose={() => { setDeleteModal(false); setDeleteJson(''); }}>
+      <Modal open={true} title="删除重复闪卡" onClose={() => { setDeleteModal(false); setDeleteJson(''); }}>
         <p className="text-sm text-gray-500 mb-2">将 Claude 返回的 JSON 粘贴到此处：</p>
         <textarea className="w-full border rounded-lg p-2 text-sm font-mono h-40"
           placeholder='{"delete_duplicates": ["front1", "front2"]}'
