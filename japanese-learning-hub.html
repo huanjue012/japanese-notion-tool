@@ -674,6 +674,7 @@ const Flashcards = ({ cards, setCards, allTags, onNav, notes = [] }) => {
   const [form, setForm] = useState({ front: '', back: '', tags: [] });
   const [filterMode, setFilterMode] = useState('due');
   const [activeTag, setActiveTag] = useState(null);
+  const [search, setSearch] = useState('');
   const [idx, setIdx] = useState(0);
   const [flipped, setFlipped] = useState(false);
   const [noteIdx, setNoteIdx] = useState(0);
@@ -820,23 +821,27 @@ const Flashcards = ({ cards, setCards, allTags, onNav, notes = [] }) => {
         </div>
       </div>
 
+      <input value={search} onChange={e => setSearch(e.target.value)} placeholder="搜索闪卡正面或背面..."
+        className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+
       <div className="flex gap-1 mb-4 bg-gray-100 rounded-xl p-1 w-fit">
         {[['due',`今日待复习 (${dueCards.length})`],['all',`全部 (${cards.length})`]].map(([k,l]) => (
-          <button key={k} onClick={() => { setFilterMode(k); setActiveTag(null); }} className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${filterMode===k?'bg-white shadow text-gray-800':'text-gray-400 hover:text-gray-600'}`}>{l}</button>
+          <button key={k} onClick={() => { setFilterMode(k); setActiveTag(null); setSearch(''); }} className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${filterMode===k?'bg-white shadow text-gray-800':'text-gray-400 hover:text-gray-600'}`}>{l}</button>
         ))}
       </div>
 
       {(() => {
         const baseList = filterMode === 'due' ? dueCards : cards;
+        const searchFiltered = search ? baseList.filter(c => { const q = search.toLowerCase(); return c.front?.toLowerCase().includes(q) || c.back?.toLowerCase().includes(q); }) : baseList;
         const tagCounts = {};
-        baseList.forEach(c => c.tags?.forEach(t => tagCounts[t] = (tagCounts[t]||0)+1));
-        const displayList = activeTag ? baseList.filter(c => c.tags?.includes(activeTag)) : baseList;
+        searchFiltered.forEach(c => c.tags?.forEach(t => tagCounts[t] = (tagCounts[t]||0)+1));
+        const displayList = activeTag ? searchFiltered.filter(c => c.tags?.includes(activeTag)) : searchFiltered;
         return <>
-          <CollapsibleTagFilter tagCounts={tagCounts} total={baseList.length} activeTag={activeTag} setActiveTag={setActiveTag} />
+          <CollapsibleTagFilter tagCounts={tagCounts} total={searchFiltered.length} activeTag={activeTag} setActiveTag={setActiveTag} />
           {displayList.length === 0 ? (
             <Card className="text-center py-16">
               <p className="text-4xl mb-3">{filterMode==='due'?'🎉':'🃏'}</p>
-              <p className="text-gray-400">{activeTag ? `没有含「${activeTag}」标签的闪卡` : filterMode==='due'?'今天没有需要复习的闪卡！':'还没有闪卡'}</p>
+              <p className="text-gray-400">{search ? `没有匹配「${search}」的闪卡` : activeTag ? `没有含「${activeTag}」标签的闪卡` : filterMode==='due'?'今天没有需要复习的闪卡！':'还没有闪卡'}</p>
               <Btn onClick={openNew} className="mt-4">创建第一张闪卡</Btn>
             </Card>
           ) : (
