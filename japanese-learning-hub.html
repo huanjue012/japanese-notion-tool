@@ -386,12 +386,21 @@ const useClaudeExport = ({ items, mapExport, filename, claudePrompt, matchKey, i
     const keys = d.delete_duplicates;
     if (!Array.isArray(keys) || keys.length === 0) { alert('未找到 delete_duplicates 字段或列表为空'); return; }
     const keySet = new Set(keys);
-    const toDelete = items.filter(x => keySet.has(x[matchKey]));
+    const firstSeen = new Set();
+    const toDelete = items.filter(x => {
+      if (!keySet.has(x[matchKey])) return false;
+      if (!firstSeen.has(x[matchKey])) {
+        firstSeen.add(x[matchKey]);
+        return items.filter(i => i[matchKey] === x[matchKey]).length === 1;
+      }
+      return true;
+    });
     if (toDelete.length === 0) { alert(`没有匹配的${itemLabel}`); return; }
     if (!confirm(`将删除以下 ${toDelete.length} 条${itemLabel}：\n${toDelete.map(x => '· ' + x[matchKey]).join('\n')}\n\n确认删除？`)) return;
     localStorage.setItem('backup_' + filename, JSON.stringify(items));
     setHasBackup(true);
-    setItems(p => p.filter(x => !keySet.has(x[matchKey])));
+    const toDeleteIds = new Set(toDelete.map(x => x.id));
+    setItems(p => p.filter(x => !toDeleteIds.has(x.id)));
     setDeleteModal(false);
     setDeleteJson('');
     setExportToast(`✅ 已删除 ${toDelete.length} 条重复${itemLabel}`);
