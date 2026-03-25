@@ -346,24 +346,38 @@ const useClaudeExport = ({ items, mapExport, filename, claudePrompt, matchKey, i
   const [exportToast, setExportToast] = useState('');
   const [deleteModal, setDeleteModal] = useState(false);
   const [deleteJson, setDeleteJson] = useState('');
+  const [hasBackup, setHasBackup] = useState(() => !!localStorage.getItem('backup_' + filename));
+  const [exportModal, setExportModal] = useState(false);
+  const [exportPromptText, setExportPromptText] = useState('');
+  const [exportJsonString, setExportJsonString] = useState('');
+  const [exportFilename, setExportFilename] = useState('');
 
-  const exportForClaude = async () => {
+  const exportForClaude = () => {
     const exported = mapExport(items);
     const jsonString = JSON.stringify(exported, null, 2);
     const today = new Date().toISOString().slice(0, 10);
-    const blob = new Blob([jsonString], { type: 'application/json' });
+    setExportJsonString(jsonString);
+    setExportFilename(`${filename}-${today}.json`);
+    setExportPromptText(claudePrompt(jsonString));
+    setExportModal(true);
+  };
+
+  const copyPrompt = async () => {
+    try { await navigator.clipboard.writeText(exportPromptText); } catch(e) {}
+    setExportToast('✅ 提示语已复制到剪贴板！');
+    setTimeout(() => setExportToast(''), 3000);
+  };
+
+  const downloadJson = () => {
+    const blob = new Blob([exportJsonString], { type: 'application/json' });
     const dlUrl = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = dlUrl;
-    a.download = `${filename}-${today}.json`;
+    a.download = exportFilename;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(dlUrl);
-    try { await navigator.clipboard.writeText(claudePrompt(jsonString)); } catch(e) {}
-    setExportToast('✅ 已下载 JSON 文件，提示语已复制到剪贴板！');
-    setTimeout(() => setExportToast(''), 3000);
-    window.open('https://claude.ai/project/019cf9e9-9f1d-7066-9a04-29908e81ebbf', '_blank');
   };
 
   const applyDeleteList = () => {
@@ -375,6 +389,8 @@ const useClaudeExport = ({ items, mapExport, filename, claudePrompt, matchKey, i
     const toDelete = items.filter(x => keySet.has(x[matchKey]));
     if (toDelete.length === 0) { alert(`没有匹配的${itemLabel}`); return; }
     if (!confirm(`将删除以下 ${toDelete.length} 条${itemLabel}：\n${toDelete.map(x => '· ' + x[matchKey]).join('\n')}\n\n确认删除？`)) return;
+    localStorage.setItem('backup_' + filename, JSON.stringify(items));
+    setHasBackup(true);
     setItems(p => p.filter(x => !keySet.has(x[matchKey])));
     setDeleteModal(false);
     setDeleteJson('');
@@ -382,7 +398,20 @@ const useClaudeExport = ({ items, mapExport, filename, claudePrompt, matchKey, i
     setTimeout(() => setExportToast(''), 3000);
   };
 
-  return { exportForClaude, applyDeleteList, exportToast, deleteModal, setDeleteModal, deleteJson, setDeleteJson };
+  const restoreBackup = () => {
+    const raw = localStorage.getItem('backup_' + filename);
+    if (!raw) { alert('没有找到备份'); return; }
+    let backup;
+    try { backup = JSON.parse(raw); } catch(e) { alert('备份数据损坏：' + e.message); return; }
+    if (!confirm('确认从备份恢复？当前数据将被替换。')) return;
+    setItems(() => backup);
+    setDeleteModal(false);
+    setDeleteJson('');
+    setExportToast('✅ 已从备份恢复');
+    setTimeout(() => setExportToast(''), 3000);
+  };
+
+  return { exportForClaude, applyDeleteList, restoreBackup, hasBackup, exportToast, deleteModal, setDeleteModal, deleteJson, setDeleteJson, exportModal, setExportModal, exportPromptText, copyPrompt, downloadJson };
 };
 
 // ─── KNOWLEDGE BASE ────────────────────────────────────────────────────────────
@@ -477,7 +506,7 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteId
   };
   const del = id => { if (confirm('确定删除此笔记？')) setNotes(p => p.filter(n => n.id !== id)); };
 
-  const { exportForClaude, applyDeleteList, exportToast, deleteModal, setDeleteModal, deleteJson, setDeleteJson } = useClaudeExport({
+  const { exportForClaude, applyDeleteList, restoreBackup, hasBackup, exportToast, deleteModal, setDeleteModal, deleteJson, setDeleteJson, exportModal, setExportModal, exportPromptText, copyPrompt, downloadJson } = useClaudeExport({
     items: notes,
     mapExport: items => ({ notes: items.map(({ title, content, tags }) => ({ title, content, tags })) }),
     filename: 'notes-export',
@@ -505,9 +534,21 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteId
         <Modal open={true} title="删除重复笔记" onClose={() => { setDeleteModal(false); setDeleteJson(''); }}>
           <p className="text-sm text-gray-500 mb-2">将 Claude 返回的 JSON 粘贴到此处：</p>
           <Textarea value={deleteJson} onChange={e => setDeleteJson(e.target.value)} placeholder='{"delete_duplicates": ["标题1", "标题2"]}' rows={6} />
-          <div className="flex gap-2 mt-3 justify-end">
+          <div className="flex gap-2 mt-3 items-center">
+            <div className="flex-1">{hasBackup && <Btn variant="secondary" onClick={restoreBackup}>恢复备份</Btn>}</div>
             <Btn variant="secondary" onClick={() => { setDeleteModal(false); setDeleteJson(''); }}>取消</Btn>
             <Btn variant="danger" onClick={applyDeleteList}>确认删除</Btn>
+          </div>
+        </Modal>
+      )}
+
+      {exportModal && (
+        <Modal open={true} title="导出给 Claude" onClose={() => setExportModal(false)}>
+          <p className="text-sm text-gray-500 mb-2">以下 Prompt 包含你的数据，复制后粘贴给 Claude：</p>
+          <textarea className="w-full border rounded-lg p-2 text-sm font-mono h-48 resize-none" readOnly value={exportPromptText} />
+          <div className="flex gap-2 mt-3 justify-end">
+            <Btn variant="secondary" onClick={downloadJson}>下载 JSON</Btn>
+            <Btn onClick={copyPrompt}>复制 Prompt</Btn>
           </div>
         </Modal>
       )}
@@ -725,7 +766,7 @@ const Flashcards = ({ cards, setCards, allTags, onNav, notes = [] }) => {
 
   const del = id => { if (confirm('删除此闪卡？')) setCards(p => p.filter(c => c.id !== id)); };
 
-  const { exportForClaude, applyDeleteList, exportToast, deleteModal, setDeleteModal, deleteJson, setDeleteJson } = useClaudeExport({
+  const { exportForClaude, applyDeleteList, restoreBackup, hasBackup, exportToast, deleteModal, setDeleteModal, deleteJson, setDeleteJson, exportModal, setExportModal, exportPromptText, copyPrompt, downloadJson } = useClaudeExport({
     items: cards,
     mapExport: items => ({ flashcards: items.map(({ front, back, tags }) => ({ front, back, tags })) }),
     filename: 'flashcards-export',
@@ -878,9 +919,20 @@ const Flashcards = ({ cards, setCards, allTags, onNav, notes = [] }) => {
         <textarea className="w-full border rounded-lg p-2 text-sm font-mono h-40"
           placeholder='{"delete_duplicates": ["front1", "front2"]}'
           value={deleteJson} onChange={e => setDeleteJson(e.target.value)} />
-        <div className="flex gap-2 mt-3 justify-end">
+        <div className="flex gap-2 mt-3 items-center">
+          <div className="flex-1">{hasBackup && <Btn variant="secondary" onClick={restoreBackup}>恢复备份</Btn>}</div>
           <Btn variant="secondary" onClick={() => { setDeleteModal(false); setDeleteJson(''); }}>取消</Btn>
           <Btn variant="danger" onClick={applyDeleteList}>确认删除</Btn>
+        </div>
+      </Modal>
+    )}
+    {exportModal && (
+      <Modal open={true} title="导出给 Claude" onClose={() => setExportModal(false)}>
+        <p className="text-sm text-gray-500 mb-2">以下 Prompt 包含你的数据，复制后粘贴给 Claude：</p>
+        <textarea className="w-full border rounded-lg p-2 text-sm font-mono h-48 resize-none" readOnly value={exportPromptText} />
+        <div className="flex gap-2 mt-3 justify-end">
+          <Btn variant="secondary" onClick={downloadJson}>下载 JSON</Btn>
+          <Btn onClick={copyPrompt}>复制 Prompt</Btn>
         </div>
       </Modal>
     )}
