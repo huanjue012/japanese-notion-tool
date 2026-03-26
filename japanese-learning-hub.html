@@ -735,6 +735,7 @@ const Flashcards = ({ cards, setCards, allTags, onNav, notes = [] }) => {
   const [idx, setIdx] = useState(0);
   const [flipped, setFlipped] = useState(false);
   const [noteIdx, setNoteIdx] = useState(0);
+  const [sessionCards, setSessionCards] = useState([]);
   const dueCards = useMemo(() => cards.filter(c => !c.nextReview || new Date(c.nextReview) <= new Date()), [cards]);
   const reviewList = useMemo(() => {
     const base = filterMode === 'due' ? dueCards : cards;
@@ -742,11 +743,11 @@ const Flashcards = ({ cards, setCards, allTags, onNav, notes = [] }) => {
   }, [filterMode, dueCards, cards, activeTag]);
 
   const relatedNotes = useMemo(() => {
-    if (!flipped || !reviewList[idx]) return [];
-    const cardTags = new Set(reviewList[idx].tags || []);
+    if (!flipped || !sessionCards[idx]) return [];
+    const cardTags = new Set(sessionCards[idx].tags || []);
     if (cardTags.size === 0) return [];
     return notes.filter(n => n.tags?.some(t => cardTags.has(t)));
-  }, [flipped, idx, reviewList, notes]);
+  }, [flipped, idx, sessionCards, notes]);
 
   useEffect(() => {
     if (view !== 'review' || !onNav) return;
@@ -755,7 +756,7 @@ const Flashcards = ({ cards, setCards, allTags, onNav, notes = [] }) => {
     return () => window.removeEventListener('keydown', onKey);
   }, [view, onNav]);
 
-  const startReview = () => { setIdx(0); setFlipped(false); setView('review'); };
+  const startReview = () => { setIdx(0); setFlipped(false); setSessionCards(reviewList); setView('review'); };
   const openNew = () => { setForm({ front: '', back: '', tags: [] }); setEditId(null); setView('form'); };
   const openEdit = c => { setForm({...c}); setEditId(c.id); setView('form'); };
 
@@ -768,8 +769,8 @@ const Flashcards = ({ cards, setCards, allTags, onNav, notes = [] }) => {
 
   const rate = q => {
     const next = new Date(); next.setDate(next.getDate() + INTERVALS[q]);
-    setCards(p => p.map(c => c.id === reviewList[idx].id ? { ...c, nextReview: next.toISOString(), lastReviewed: new Date().toISOString(), reviewCount: (c.reviewCount||0)+1, difficulty: q } : c));
-    if (idx < reviewList.length - 1) { setIdx(i => i+1); setFlipped(false); setNoteIdx(0); }
+    setCards(p => p.map(c => c.id === sessionCards[idx].id ? { ...c, nextReview: next.toISOString(), lastReviewed: new Date().toISOString(), reviewCount: (c.reviewCount||0)+1, difficulty: q } : c));
+    if (idx < sessionCards.length - 1) { setIdx(i => i+1); setFlipped(false); setNoteIdx(0); }
     else setView('list');
   };
 
@@ -785,19 +786,19 @@ const Flashcards = ({ cards, setCards, allTags, onNav, notes = [] }) => {
     setItems: setCards,
   });
 
-  if (view === 'review' && reviewList.length > 0) {
-    const card = reviewList[idx] || reviewList[0];
+  if (view === 'review' && sessionCards.length > 0) {
+    const card = sessionCards[idx] || sessionCards[0];
     return (
       <div className="max-w-lg mx-auto">
         <div className="flex justify-between items-center mb-3">
           <Btn variant="ghost" onClick={() => setView('list')}>← 返回</Btn>
           <div className="text-right">
             {activeTag && <p className="text-xs text-indigo-500 mb-0.5">#{activeTag}</p>}
-            <span className="text-sm text-gray-400">{idx + 1} / {reviewList.length}</span>
+            <span className="text-sm text-gray-400">{idx + 1} / {sessionCards.length}</span>
           </div>
         </div>
         <div className="w-full bg-gray-100 rounded-full h-1.5 mb-6">
-          <div className="bg-indigo-500 h-1.5 rounded-full transition-all duration-500" style={{ width: `${(idx / reviewList.length) * 100}%` }} />
+          <div className="bg-indigo-500 h-1.5 rounded-full transition-all duration-500" style={{ width: `${(idx / sessionCards.length) * 100}%` }} />
         </div>
         <div className="card-flip mb-6" style={{minHeight: '200px'}}>
           <div className={`card-flip-inner relative w-full`} style={{minHeight: '200px'}}>
