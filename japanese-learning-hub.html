@@ -146,7 +146,7 @@ const useOnlineStatus = () => {
 };
 
 const fmt = (iso) => iso ? new Date(iso).toLocaleDateString('zh-CN') : '—';
-const isOverdue = (hw) => hw.status !== 'done' && hw.status !== 'submitted' && hw.dueDate && new Date(hw.dueDate) < new Date();
+const isOverdue = (hw) => hw.status === 'pending' && hw.dueDate && new Date(hw.dueDate) < new Date();
 
 // ─── UI PRIMITIVES ─────────────────────────────────────────────────────────────
 const Badge = ({ children, color = 'bg-indigo-100 text-indigo-700', onClick, onRemove, className = '' }) => (
