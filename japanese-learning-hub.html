@@ -245,7 +245,7 @@ const Dashboard = ({ notes, homework, flashcards, onNav, userName }) => {
     const d = (new Date(h.dueDate) - new Date()) / 86400000;
     return d >= 0 && d <= 7;
   });
-  const dueCards = flashcards.filter(c => !c.nextReview || new Date(c.nextReview) <= new Date()).length;
+  const dueCards = flashcards.filter(c => !c.completed && (!c.nextReview || new Date(c.nextReview) <= new Date())).length;
 
   const stats = [
     { label: '笔记', value: notes.length, icon: '📝', grad: 'from-violet-500 to-indigo-600', page: 'knowledge' },
@@ -738,9 +738,12 @@ const Flashcards = ({ cards, setCards, allTags, onNav, notes = [] }) => {
   const [flipped, setFlipped] = useState(false);
   const [noteIdx, setNoteIdx] = useState(0);
   const [sessionCards, setSessionCards] = useState([]);
-  const dueCards = useMemo(() => cards.filter(c => !c.nextReview || new Date(c.nextReview) <= new Date()), [cards]);
+  const dueCards = useMemo(() => cards.filter(c => !c.completed && (!c.nextReview || new Date(c.nextReview) <= new Date())), [cards]);
   const reviewList = useMemo(() => {
-    const base = filterMode === 'due' ? dueCards : cards;
+    let base;
+    if (filterMode === 'due') base = dueCards;
+    else if (filterMode === 'completed') base = cards.filter(c => c.completed);
+    else base = cards.filter(c => !c.completed);
     return activeTag ? base.filter(c => c.tags?.includes(activeTag)) : base;
   }, [filterMode, dueCards, cards, activeTag]);
 
@@ -769,7 +772,18 @@ const Flashcards = ({ cards, setCards, allTags, onNav, notes = [] }) => {
     setView('list');
   };
 
+  const markComplete = () => {
+    setCards(p => p.map(c => c.id === sessionCards[idx].id ? { ...c, completed: true, nextReview: null, lastReviewed: new Date().toISOString() } : c));
+    if (idx < sessionCards.length - 1) { setIdx(i => i+1); setFlipped(false); setNoteIdx(0); }
+    else setView('list');
+  };
+
+  const toggleComplete = id => {
+    setCards(p => p.map(c => c.id === id ? { ...c, completed: !c.completed, nextReview: null } : c));
+  };
+
   const rate = q => {
+    if (q === 4 && sessionCards[idx].difficulty === 4) { markComplete(); return; }
     const next = new Date(); next.setDate(next.getDate() + INTERVALS[q]);
     setCards(p => p.map(c => c.id === sessionCards[idx].id ? { ...c, nextReview: next.toISOString(), lastReviewed: new Date().toISOString(), reviewCount: (c.reviewCount||0)+1, difficulty: q } : c));
     if (idx < sessionCards.length - 1) { setIdx(i => i+1); setFlipped(false); setNoteIdx(0); }
@@ -812,11 +826,14 @@ const Flashcards = ({ cards, setCards, allTags, onNav, notes = [] }) => {
           </div>
         </div>
         {flipped && (
-          <div className="grid grid-cols-4 gap-2">
-            {[{q:1,l:'再来',c:'bg-red-100 text-red-700 hover:bg-red-200 border border-red-200'},{q:2,l:'困难',c:'bg-orange-100 text-orange-700 hover:bg-orange-200 border border-orange-200'},{q:3,l:'良好',c:'bg-blue-100 text-blue-700 hover:bg-blue-200 border border-blue-200'},{q:4,l:'简单',c:'bg-green-100 text-green-700 hover:bg-green-200 border border-green-200'}].map(({q,l,c}) => (
-              <button key={q} onClick={() => rate(q)} className={`rounded-xl py-3 font-semibold text-sm transition-colors ${c}`}>{l}</button>
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-4 gap-2">
+              {[{q:1,l:'再来',c:'bg-red-100 text-red-700 hover:bg-red-200 border border-red-200'},{q:2,l:'困难',c:'bg-orange-100 text-orange-700 hover:bg-orange-200 border border-orange-200'},{q:3,l:'良好',c:'bg-blue-100 text-blue-700 hover:bg-blue-200 border border-blue-200'},{q:4,l:'简单',c:'bg-green-100 text-green-700 hover:bg-green-200 border border-green-200'}].map(({q,l,c}) => (
+                <button key={q} onClick={() => rate(q)} className={`rounded-xl py-3 font-semibold text-sm transition-colors ${c}`}>{l}</button>
+              ))}
+            </div>
+            <button onClick={markComplete} className="w-full mt-2 rounded-xl py-2.5 font-semibold text-sm transition-colors bg-gray-100 text-gray-500 hover:bg-gray-200 border border-gray-200">✓ 已完成（不再复习）</button>
+          </>
         )}
         <p className="text-center text-xs text-gray-300 mt-4">再来=1天 · 困难=3天 · 良好=7天 · 简单=14天</p>
         {relatedNotes.length > 0 && (
@@ -885,13 +902,16 @@ const Flashcards = ({ cards, setCards, allTags, onNav, notes = [] }) => {
         className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-300" />
 
       <div className="flex gap-1 mb-4 bg-gray-100 rounded-xl p-1 w-fit">
-        {[['due',`今日待复习 (${dueCards.length})`],['all',`全部 (${cards.length})`]].map(([k,l]) => (
+        {[['due',`今日待复习 (${dueCards.length})`],['all',`全部 (${cards.filter(c=>!c.completed).length})`],['completed',`已完成 (${cards.filter(c=>c.completed).length})`]].map(([k,l]) => (
           <button key={k} onClick={() => { setFilterMode(k); setActiveTag(null); setSearch(''); }} className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${filterMode===k?'bg-white shadow text-gray-800':'text-gray-400 hover:text-gray-600'}`}>{l}</button>
         ))}
       </div>
 
       {(() => {
-        const baseList = filterMode === 'due' ? dueCards : cards;
+        let baseList;
+        if (filterMode === 'due') baseList = dueCards;
+        else if (filterMode === 'completed') baseList = cards.filter(c => c.completed);
+        else baseList = cards.filter(c => !c.completed);
         const searchFiltered = search ? baseList.filter(c => { const q = search.toLowerCase(); return c.front?.toLowerCase().includes(q) || c.back?.toLowerCase().includes(q); }) : baseList;
         const tagCounts = {};
         searchFiltered.forEach(c => c.tags?.forEach(t => tagCounts[t] = (tagCounts[t]||0)+1));
@@ -901,7 +921,7 @@ const Flashcards = ({ cards, setCards, allTags, onNav, notes = [] }) => {
           {displayList.length === 0 ? (
             <Card className="text-center py-16">
               <p className="text-4xl mb-3">{filterMode==='due'?'🎉':'🃏'}</p>
-              <p className="text-gray-400">{search ? `没有匹配「${search}」的闪卡` : activeTag ? `没有含「${activeTag}」标签的闪卡` : filterMode==='due'?'今天没有需要复习的闪卡！':'还没有闪卡'}</p>
+              <p className="text-gray-400">{search ? `没有匹配「${search}」的闪卡` : activeTag ? `没有含「${activeTag}」标签的闪卡` : filterMode==='due'?'今天没有需要复习的闪卡！':filterMode==='completed'?'还没有已完成的闪卡':'还没有闪卡'}</p>
               <Btn onClick={openNew} className="mt-4">创建第一张闪卡</Btn>
             </Card>
           ) : (
@@ -911,13 +931,19 @@ const Flashcards = ({ cards, setCards, allTags, onNav, notes = [] }) => {
               <div className="flex justify-between items-start mb-1">
                 <p className="text-sm font-semibold text-gray-800 flex-1 pr-2">{c.front}</p>
                 <div className="flex gap-1 shrink-0">
-                  <button onClick={() => openEdit(c)} className="text-gray-200 hover:text-blue-400 text-sm">✏️</button>
+                  {!c.completed && <button onClick={() => openEdit(c)} className="text-gray-200 hover:text-blue-400 text-sm">✏️</button>}
                   <button onClick={() => del(c.id)} className="text-gray-200 hover:text-red-400 text-sm">🗑</button>
                 </div>
               </div>
               <p className="text-xs text-gray-400 border-t pt-2">{c.back}</p>
-              <div className="flex flex-wrap gap-1 mt-2">{c.tags?.map(t => <Badge key={t}>{t}</Badge>)}</div>
-              {c.nextReview && <p className="text-xs text-gray-300 mt-2">下次复习：{fmt(c.nextReview)}</p>}
+              <div className="flex flex-wrap gap-1 mt-2">
+                {c.completed && <Badge color="bg-emerald-100 text-emerald-700">✓ 已完成</Badge>}
+                {c.tags?.map(t => <Badge key={t}>{t}</Badge>)}
+              </div>
+              {c.completed
+                ? <button onClick={() => toggleComplete(c.id)} className="text-xs text-gray-300 hover:text-indigo-400 mt-2 transition-colors">↩ 恢复复习</button>
+                : c.nextReview && <p className="text-xs text-gray-300 mt-2">下次复习：{fmt(c.nextReview)}</p>
+              }
             </Card>
           ))}
             </div>
@@ -1526,7 +1552,7 @@ const App = ({ user }) => {
   }, [notes, flashcards]);
 
   const pendingHw = homework.filter(h => h.status === 'pending').length;
-  const dueCards  = flashcards.filter(c => !c.nextReview || new Date(c.nextReview) <= new Date()).length;
+  const dueCards  = flashcards.filter(c => !c.completed && (!c.nextReview || new Date(c.nextReview) <= new Date())).length;
 
   const [userName, setUserNameState] = React.useState(() => localStorage.getItem('jp_userName') || '');
 
