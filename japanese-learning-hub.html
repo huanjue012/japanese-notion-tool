@@ -556,13 +556,13 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteId
       ? [transInput.trim(), transResult]
       : [transResult, transInput.trim()];
     if (cards.some(c => c.front === front && c.back === back)) {
-      setTransAdded('dup');
-      setTimeout(() => setTransAdded(false), 2000);
+      setTransAdded({ front, back, isDup: true });
+      setTimeout(() => setTransAdded(false), 2500);
       return;
     }
     setCards(p => [...p, { id: genId(), front, back, tags: [], createdAt: new Date().toISOString() }]);
-    setTransAdded(true);
-    setTimeout(() => setTransAdded(false), 2000);
+    setTransAdded({ front, back });
+    setTimeout(() => setTransAdded(false), 2500);
   };
 
   return (
@@ -716,8 +716,14 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteId
           {transResult && (
             <button onClick={addToFlashcard} disabled={!!transAdded}
               className="w-full py-2 border border-indigo-200 text-indigo-700 rounded-lg text-sm font-medium hover:bg-indigo-50 transition-colors disabled:opacity-60">
-              {transAdded === 'dup' ? '⚠ 已在闪卡中' : transAdded ? '✓ 已加入闪卡' : '＋ 加入闪卡'}
+              {transAdded?.isDup ? '⚠ 已在闪卡中' : transAdded ? '✓ 已加入闪卡' : '＋ 加入闪卡'}
             </button>
+          )}
+          {transAdded && (
+            <div className={`mt-2 rounded-lg px-3 py-2 text-xs border ${transAdded.isDup ? 'bg-yellow-50 border-yellow-200 text-yellow-800' : 'bg-green-50 border-green-200 text-green-800'}`}>
+              <div className="flex gap-1 mb-0.5"><span className="font-semibold">表：</span><span>{transAdded.front}</span></div>
+              <div className="flex gap-1"><span className="font-semibold">背：</span><span>{transAdded.back}</span></div>
+            </div>
           )}
         </div>
       )}
