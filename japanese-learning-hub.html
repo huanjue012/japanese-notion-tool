@@ -427,15 +427,22 @@ const useClaudeExport = ({ items, mapExport, filename, claudePrompt, matchKey, i
 };
 
 // ─── KNOWLEDGE BASE ────────────────────────────────────────────────────────────
-const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteIds, setImportedNoteIds }) => {
+const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteIds, setImportedNoteIds, setCards }) => {
   const [search, setSearch] = useState('');
   const [activeTag, setActiveTag] = useState(null);
   const [modal, setModal] = useState(null);
   const [form, setForm] = useState({ title: '', content: '', tags: [], images: [] });
   const [uploadingImg, setUploadingImg] = useState(false);
+  const [activeView, setActiveView] = useState('notes'); // 'notes' | 'translate'
+  const [transInput, setTransInput] = useState('');
+  const [transResult, setTransResult] = useState('');
+  const [transDir, setTransDir] = useState('ja|zh'); // 'ja|zh' or 'zh|ja'
+  const [transLoading, setTransLoading] = useState(false);
+  const [transAdded, setTransAdded] = useState(false);
   const [contentExpanded, setContentExpanded] = useState(false);
   const [imagePreview, setImagePreview] = useState(null); // { url, name }
   const [pdfPreview, setPdfPreview] = useState(null); // { url, name }
+  const [bookmarkFilter, setBookmarkFilter] = useState(false);
 
   const tagCounts = useMemo(() => {
     const c = {};
@@ -448,14 +455,16 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteId
       const q = search.toLowerCase();
       const ms = !q || n.title.toLowerCase().includes(q) || n.content.toLowerCase().includes(q);
       const mt = !activeTag || n.tags?.includes(activeTag);
-      return ms && mt;
+      const mb = !bookmarkFilter || !!n.bookmarked;
+      return ms && mt && mb;
     });
     if (importedNoteIds?.length > 0) {
       result = result.filter(n => importedNoteIds.includes(n.id));
     }
     return result.sort((a,b) => new Date(b.updatedAt||b.createdAt||0) - new Date(a.updatedAt||a.createdAt||0));
-  }, [notes, search, activeTag, importedNoteIds]);
+  }, [notes, search, activeTag, importedNoteIds, bookmarkFilter]);
 
+  const toggleBookmark = id => setNotes(p => p.map(n => n.id === id ? { ...n, bookmarked: !n.bookmarked, updatedAt: new Date().toISOString() } : n));
   const openNew = () => { setForm({ title: '', content: '', tags: activeTag ? [activeTag] : [], images: [] }); setContentExpanded(false); setModal('new'); };
   const openEdit = n => { setForm({ ...n, images: n.images || [] }); setContentExpanded(false); setModal(n.id); };
 
@@ -512,7 +521,7 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteId
   };
   const save = () => {
     if (!form.title.trim()) return;
-    if (modal === 'new') setNotes(p => [...p, { ...form, id: genId(), createdAt: new Date().toISOString() }]);
+    if (modal === 'new') setNotes(p => [...p, { ...form, bookmarked: form.bookmarked || false, id: genId(), createdAt: new Date().toISOString() }]);
     else setNotes(p => p.map(n => n.id === modal ? { ...n, ...form, updatedAt: new Date().toISOString() } : n));
     setModal(null);
   };
@@ -528,10 +537,44 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteId
     setItems: setNotes,
   });
 
+  const translate = async () => {
+    if (!transInput.trim()) return;
+    setTransLoading(true); setTransResult(''); setTransAdded(false);
+    try {
+      const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(transInput.trim())}&langpair=${transDir}`;
+      const res = await fetch(url);
+      const data = await res.json();
+      setTransResult(data.responseData?.translatedText || '翻译失败');
+    } catch { setTransResult('翻译失败，请检查网络'); }
+    finally { setTransLoading(false); }
+  };
+
+  const addToFlashcard = () => {
+    if (!transInput.trim() || !transResult) return;
+    const [front, back] = transDir === 'ja|zh'
+      ? [transInput.trim(), transResult]
+      : [transResult, transInput.trim()];
+    setCards(p => [...p, { id: genId(), front, back, tags: [], createdAt: new Date().toISOString() }]);
+    setTransAdded(true);
+    setTimeout(() => setTransAdded(false), 2000);
+  };
+
   return (
     <div className="max-w-4xl mx-auto">
       <div className="flex items-center justify-between mb-4">
-        <h1 className="text-xl font-bold text-gray-800">📝 知识库</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-xl font-bold text-gray-800">📝 知识库</h1>
+          <div className="flex gap-1 bg-gray-100 rounded-lg p-0.5">
+            <button onClick={() => setActiveView('notes')}
+              className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${activeView === 'notes' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+              笔记列表
+            </button>
+            <button onClick={() => setActiveView('translate')}
+              className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${activeView === 'translate' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+              翻译
+            </button>
+          </div>
+        </div>
         <div className="flex gap-2">
           {notes.length > 0 && <Btn variant="danger" onClick={() => { if (confirm(`删除全部 ${notes.length} 条笔记？此操作不可恢复。`)) setNotes([]); }}>🗑 全部删除</Btn>}
           {notes.length > 0 && <Btn variant="secondary" onClick={() => setDeleteModal(true)}>🗑 删除重复</Btn>}
@@ -565,19 +608,29 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteId
         </Modal>
       )}
 
-      <input value={search} onChange={e => setSearch(e.target.value)} placeholder="搜索笔记标题或内容..."
-        className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+      {activeView === 'notes' && <input value={search} onChange={e => setSearch(e.target.value)} placeholder="搜索笔记标题或内容..."
+        className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-300" />}
 
-      {importedNoteIds?.length > 0 && (
+      {activeView === 'notes' && importedNoteIds?.length > 0 && (
         <div className="flex items-center gap-2 mb-3 px-3 py-2 bg-indigo-50 rounded-xl text-xs text-indigo-700">
           <span>显示刚导入的 {importedNoteIds.length} 条笔记</span>
           <button onClick={() => setImportedNoteIds([])} className="ml-auto text-indigo-400 hover:text-indigo-600">清除筛选 ×</button>
         </div>
       )}
 
-      <CollapsibleTagFilter tagCounts={tagCounts} total={notes.length} activeTag={activeTag} setActiveTag={setActiveTag} />
+      {activeView === 'notes' && <CollapsibleTagFilter tagCounts={tagCounts} total={notes.length} activeTag={activeTag} setActiveTag={setActiveTag} />}
 
-      {filtered.length === 0 ? (
+      {activeView === 'notes' && <div className="flex gap-2 mb-3">
+        <button onClick={() => setBookmarkFilter(false)}
+          className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${!bookmarkFilter ? 'bg-indigo-100 text-indigo-700' : 'text-gray-400 hover:text-gray-600'}`}>
+          全部
+        </button>
+        <button onClick={() => setBookmarkFilter(true)}
+          className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${bookmarkFilter ? 'bg-yellow-100 text-yellow-700' : 'text-gray-400 hover:text-gray-600'}`}>
+          ★ 收藏
+        </button>
+      </div>}
+      {activeView === 'notes' && (filtered.length === 0 ? (
         <Card className="text-center py-16">
           <p className="text-4xl mb-3">📭</p>
           <p className="text-gray-400 mb-4">{search || activeTag ? '没有符合条件的笔记' : '还没有笔记'}</p>
@@ -589,7 +642,13 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteId
             <Card key={n.id} onClick={() => openEdit(n)}>
               <div className="flex items-start justify-between mb-1">
                 <h3 className="font-semibold text-gray-800 text-sm leading-snug flex-1 pr-2">{n.title}</h3>
-                <button onClick={e => { e.stopPropagation(); del(n.id); }} className="text-gray-200 hover:text-red-400 shrink-0 text-base">🗑</button>
+                <div className="flex items-center gap-1 shrink-0">
+                  <button onClick={e => { e.stopPropagation(); toggleBookmark(n.id); }}
+                    className={`text-base leading-none transition-colors ${n.bookmarked ? 'text-yellow-400' : 'text-gray-200 hover:text-yellow-300'}`}>
+                    {n.bookmarked ? '★' : '☆'}
+                  </button>
+                  <button onClick={e => { e.stopPropagation(); del(n.id); }} className="text-gray-200 hover:text-red-400 text-base">🗑</button>
+                </div>
               </div>
               <div className="mb-3 text-xs text-gray-500 leading-relaxed"
                 style={{display:'-webkit-box',WebkitLineClamp:3,WebkitBoxOrient:'vertical',overflow:'hidden'}}>
@@ -615,6 +674,45 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteId
               <p className="text-xs text-gray-300 mt-2">{fmt(n.updatedAt || n.createdAt)}</p>
             </Card>
           ))}
+        </div>
+      ))}
+
+      {activeView === 'translate' && (
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <button onClick={() => setTransDir('ja|zh')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${transDir === 'ja|zh' ? 'bg-indigo-50 border-indigo-300 text-indigo-700' : 'border-gray-200 text-gray-500 hover:border-gray-300'}`}>
+              日 → 中
+            </button>
+            <button onClick={() => setTransDir('zh|ja')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${transDir === 'zh|ja' ? 'bg-indigo-50 border-indigo-300 text-indigo-700' : 'border-gray-200 text-gray-500 hover:border-gray-300'}`}>
+              中 → 日
+            </button>
+            <span className="text-xs text-gray-400 ml-1">MyMemory 翻译</span>
+          </div>
+          <textarea
+            value={transInput}
+            onChange={e => { setTransInput(e.target.value); setTransResult(''); setTransAdded(false); }}
+            placeholder={transDir === 'ja|zh' ? '输入日语...' : '输入中文...'}
+            rows={4}
+            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 resize-none mb-3"
+          />
+          <button onClick={translate} disabled={transLoading || !transInput.trim()}
+            className="w-full py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium disabled:opacity-40 hover:bg-indigo-700 transition-colors mb-4">
+            {transLoading ? '翻译中...' : '翻译'}
+          </button>
+          {transResult && (
+            <div className="bg-gray-50 rounded-lg p-3 mb-3">
+              <p className="text-xs text-gray-400 mb-1">{transDir === 'ja|zh' ? '中文翻译' : '日语翻译'}</p>
+              <p className="text-sm text-gray-700">{transResult}</p>
+            </div>
+          )}
+          {transResult && (
+            <button onClick={addToFlashcard} disabled={transAdded}
+              className="w-full py-2 border border-indigo-200 text-indigo-700 rounded-lg text-sm font-medium hover:bg-indigo-50 transition-colors disabled:opacity-60">
+              {transAdded ? '✓ 已加入闪卡' : '＋ 加入闪卡'}
+            </button>
+          )}
         </div>
       )}
 
@@ -1643,7 +1741,7 @@ const App = ({ user }) => {
         <StorageBanner />
         <main className="flex-1 overflow-y-auto p-4 md:p-8">
           {page==='dashboard'  && <Dashboard notes={notes} homework={homework} flashcards={flashcards} onNav={nav} userName={userName} />}
-          {page==='knowledge'  && <KnowledgeBase notes={notes} setNotes={setNotes} allTags={allTags} uid={user.uid} isOnline={isOnline} importedNoteIds={importedNoteIds} setImportedNoteIds={setImportedNoteIds} />}
+          {page==='knowledge'  && <KnowledgeBase notes={notes} setNotes={setNotes} allTags={allTags} uid={user.uid} isOnline={isOnline} importedNoteIds={importedNoteIds} setImportedNoteIds={setImportedNoteIds} setCards={setFlash} />}
           {page==='flashcards' && <Flashcards cards={flashcards} setCards={setFlash} allTags={allTags} onNav={nav} notes={notes} />}
           {page==='homework'   && <HomeworkTracker homework={homework} setHomework={setHomework} uid={user.uid} isOnline={isOnline} />}
           {page==='pdf'        && <PDFImport setNotes={setNotes} setFlashcards={setFlash} uid={user.uid} isOnline={isOnline} notes={notes} flashcards={flashcards} setPage={setPage} setImportedNoteIds={setImportedNoteIds} />}
