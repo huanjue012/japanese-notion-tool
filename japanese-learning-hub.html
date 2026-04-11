@@ -562,7 +562,7 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteId
     }
     setCards(p => [...p, { id: genId(), front, back, tags: [], createdAt: new Date().toISOString() }]);
     setTransAdded(true);
-    setTimeout(() => { setTransAdded(false); setPage('flashcards'); }, 1500);
+    setTimeout(() => setTransAdded(false), 2000);
   };
 
   return (
@@ -716,7 +716,7 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteId
           {transResult && (
             <button onClick={addToFlashcard} disabled={!!transAdded}
               className="w-full py-2 border border-indigo-200 text-indigo-700 rounded-lg text-sm font-medium hover:bg-indigo-50 transition-colors disabled:opacity-60">
-              {transAdded === 'dup' ? '⚠ 已在闪卡中' : transAdded ? '✓ 已加入，跳转中…' : '＋ 加入闪卡'}
+              {transAdded === 'dup' ? '⚠ 已在闪卡中' : transAdded ? '✓ 已加入闪卡' : '＋ 加入闪卡'}
             </button>
           )}
         </div>
