@@ -56,6 +56,26 @@ const { useState, useEffect, useCallback, useMemo, useRef } = React;
 // ─── UTILITIES ────────────────────────────────────────────────────────────────
 const genId = () => Date.now().toString(36) + Math.random().toString(36).substr(2);
 
+// ─── GEMINI API ───────────────────────────────────────────────────────────────
+async function callGemini(prompt) {
+  const apiKey = localStorage.getItem('gemini_api_key');
+  if (!apiKey) throw new Error('NO_KEY');
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+    }
+  );
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message || 'API_ERROR');
+  }
+  const data = await res.json();
+  return data.candidates[0].content.parts[0].text;
+}
+
 // ─── FIREBASE SETUP ───────────────────────────────────────────────────────────
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyA3lZwqbGQKLyaxR5ws4XZ8LfRDcvVTLhI",
@@ -1505,6 +1525,14 @@ const Settings = ({ uid }) => {
   const [isScanning, setIsScanning] = React.useState(false);
   const [scanResult, setScanResult] = React.useState(null);
   const [usedBytes, setUsedBytes] = React.useState(() => parseInt(localStorage.getItem('jp_storageUsed') || '0'));
+  const [geminiKey, setGeminiKey] = React.useState(() => localStorage.getItem('gemini_api_key') || '');
+  const [keySaved, setKeySaved] = React.useState(false);
+
+  const saveGeminiKey = () => {
+    localStorage.setItem('gemini_api_key', geminiKey.trim());
+    setKeySaved(true);
+    setTimeout(() => setKeySaved(false), 2000);
+  };
 
   const limitBytes = parseInt(localStorage.getItem('jp_storageLimit') || '4831838208');
   const usedMb = (usedBytes / 1048576).toFixed(1);
@@ -1617,6 +1645,27 @@ const Settings = ({ uid }) => {
           <Btn onClick={save}>{saved ? '✅ 已保存' : '保存'}</Btn>
         </div>
       </Card>
+      <Card className="mb-4">
+        <h2 className="font-semibold text-gray-700 mb-1">AI 功能设置</h2>
+        <p className="text-xs text-gray-400 mb-3">
+          用于「AI练习」模块。免费申请：
+          <a href="https://aistudio.google.com" target="_blank" rel="noopener noreferrer" className="text-indigo-500 underline ml-1">aistudio.google.com</a>
+        </p>
+        <div className="flex gap-2 items-end">
+          <div className="flex-1">
+            <label className="block text-xs text-gray-500 mb-1">Gemini API Key</label>
+            <input
+              type="password"
+              value={geminiKey}
+              onChange={e => setGeminiKey(e.target.value)}
+              placeholder="AIza..."
+              className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+            />
+          </div>
+          <Btn onClick={saveGeminiKey}>{keySaved ? '✅ 已保存' : '保存'}</Btn>
+        </div>
+        {geminiKey && <p className="text-xs text-emerald-600 mt-2">✓ 已配置 API Key</p>}
+      </Card>
     </div>
   );
 };
@@ -1635,6 +1684,325 @@ const StorageBanner = () => {
   );
 };
 
+// ─── AI PRACTICE ──────────────────────────────────────────────────────────────
+const AIPractice = ({ notes, setNotes, allTags, setPage }) => {
+  const [tab, setTab] = React.useState('correct');
+  const [noKey, setNoKey] = React.useState(false);
+
+  const handleNoKey = () => setNoKey(true);
+
+  const tabs = [
+    { id: 'correct', label: '批改造句' },
+    { id: 'organize', label: '整理笔记' },
+    { id: 'quiz', label: '出题测验' },
+  ];
+
+  if (noKey) return (
+    <div className="max-w-lg mx-auto text-center py-16">
+      <p className="text-4xl mb-4">🔑</p>
+      <p className="font-semibold text-gray-700 mb-2">请先设置 Gemini API Key</p>
+      <p className="text-sm text-gray-400 mb-4">免费申请：aistudio.google.com</p>
+      <Btn onClick={() => { setNoKey(false); setPage('settings'); }}>前往设置</Btn>
+    </div>
+  );
+
+  return (
+    <div className="max-w-2xl mx-auto">
+      <h1 className="text-xl font-bold text-gray-800 mb-4">🤖 AI 练习</h1>
+      <div className="flex gap-1 bg-gray-100 p-1 rounded-xl mb-6 w-fit">
+        {tabs.map(t => (
+          <button key={t.id} onClick={() => setTab(t.id)}
+            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${tab === t.id ? 'bg-white shadow text-gray-800' : 'text-gray-400 hover:text-gray-600'}`}>
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {tab === 'correct' && <CorrectTab onNoKey={handleNoKey} />}
+      {tab === 'organize' && <OrganizeTab notes={notes} setNotes={setNotes} onNoKey={handleNoKey} />}
+      {tab === 'quiz' && <QuizTab notes={notes} allTags={allTags} onNoKey={handleNoKey} />}
+    </div>
+  );
+};
+
+const CorrectTab = ({ onNoKey }) => {
+  const [sentence, setSentence] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+
+  const correct = async () => {
+    if (!sentence.trim()) return;
+    setLoading(true);
+    setResult('');
+    try {
+      const prompt = `你是日语老师，我是N5初学者。请批改以下日语句子：
+1. 指出所有语法错误（如果没有错误请说明句子正确）
+2. 解释每个错误的原因
+3. 给出正确版本
+4. 如果有更自然的表达方式也请提供
+
+请用中文解释，保留日文原文。
+
+句子：${sentence}`;
+      const res = await callGemini(prompt);
+      setResult(res);
+    } catch (e) {
+      if (e.message === 'NO_KEY') { onNoKey(); return; }
+      setResult('❌ 请求失败：' + e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Card>
+      <h2 className="font-semibold text-gray-700 mb-3">输入日语句子，AI 帮你批改</h2>
+      <textarea
+        value={sentence}
+        onChange={e => setSentence(e.target.value)}
+        placeholder="例：私はご飯を食べです。"
+        rows={3}
+        className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 mb-3 resize-none"
+      />
+      <Btn onClick={correct} disabled={loading || !sentence.trim()}>
+        {loading ? '批改中…' : '批改'}
+      </Btn>
+      {result && (
+        <div className="mt-4 p-3 bg-gray-50 rounded-xl border border-gray-100">
+          <div className="md-body" dangerouslySetInnerHTML={{ __html: marked.parse(result) }} />
+        </div>
+      )}
+    </Card>
+  );
+};
+
+const OrganizeTab = ({ notes, setNotes, onNoKey }) => {
+  const [raw, setRaw] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [title, setTitle] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const [saved, setSaved] = React.useState(false);
+
+  const organize = async () => {
+    if (!raw.trim()) return;
+    setLoading(true);
+    setResult('');
+    setSaved(false);
+    try {
+      const prompt = `你是日语老师，请把以下上课笔记整理成结构清晰的学习笔记。
+要求：
+- 使用 Markdown 格式（标题、表格、重点标注）
+- 中文解释，日文原文保留
+- 将重要规则、例句整理成表格
+- 用 ⚠️ 标注容易混淆的点
+
+上课内容：
+${raw}`;
+      const res = await callGemini(prompt);
+      setResult(res);
+      // Auto-extract a title from first line
+      const firstLine = res.split('\n')[0].replace(/^#+\s*/, '').trim();
+      setTitle(firstLine || '上课笔记');
+    } catch (e) {
+      if (e.message === 'NO_KEY') { onNoKey(); return; }
+      setResult('❌ 请求失败：' + e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const saveNote = () => {
+    if (!result) return;
+    const newNote = {
+      id: Date.now().toString(36) + Math.random().toString(36).substr(2),
+      title: title || '上课笔记',
+      content: result,
+      tags: ['上课笔记'],
+      images: [],
+      bookmarked: false,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    setNotes(prev => [newNote, ...prev]);
+    setSaved(true);
+  };
+
+  return (
+    <Card>
+      <h2 className="font-semibold text-gray-700 mb-3">粘贴上课内容，AI 整理成笔记</h2>
+      <textarea
+        value={raw}
+        onChange={e => setRaw(e.target.value)}
+        placeholder="粘贴上课笔记、老师写的内容、或你自己记的零散文字…"
+        rows={6}
+        className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 mb-3 resize-none"
+      />
+      <Btn onClick={organize} disabled={loading || !raw.trim()}>
+        {loading ? '整理中…' : '整理笔记'}
+      </Btn>
+
+      {result && (
+        <div className="mt-4">
+          <div className="flex items-center gap-2 mb-2">
+            <input
+              value={title}
+              onChange={e => setTitle(e.target.value)}
+              placeholder="笔记标题"
+              className="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+            />
+            <Btn variant={saved ? 'success' : 'primary'} onClick={saveNote} disabled={saved}>
+              {saved ? '✅ 已存入知识库' : '保存到知识库'}
+            </Btn>
+          </div>
+          <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
+            <div className="md-body" dangerouslySetInnerHTML={{ __html: marked.parse(result) }} />
+          </div>
+        </div>
+      )}
+    </Card>
+  );
+};
+
+const QuizTab = ({ notes, allTags, onNoKey }) => {
+  const [selectedTags, setSelectedTags] = React.useState([]);
+  const [quizType, setQuizType] = React.useState('choice');
+  const [questions, setQuestions] = React.useState([]);
+  const [answers, setAnswers] = React.useState({});
+  const [revealed, setRevealed] = React.useState({});
+  const [loading, setLoading] = React.useState(false);
+  const [started, setStarted] = React.useState(false);
+
+  const toggleTag = (tag) => {
+    setSelectedTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]);
+  };
+
+  const generate = async () => {
+    setLoading(true);
+    setQuestions([]);
+    setAnswers({});
+    setRevealed({});
+    setStarted(false);
+    try {
+      const relevantNotes = notes
+        .filter(n => selectedTags.length === 0 || selectedTags.some(t => n.tags?.includes(t) || n.title.includes(t) || n.content.includes(t)))
+        .slice(0, 5)
+        .map(n => `【${n.title}】\n${n.content}`)
+        .join('\n\n---\n\n');
+
+      const context = relevantNotes || '（无相关笔记，请根据N5日语常识出题）';
+      const typeDesc = quizType === 'choice' ? '单选题（4个选项，标明正确答案）' : '填空题（用___标注空格位置）';
+
+      const prompt = `你是日语老师，请根据以下学习笔记出${typeDesc}5道，测试对「${selectedTags.length > 0 ? selectedTags.join('、') : 'N5日语'}」的掌握。
+
+要求：
+- 每题单独用 JSON 格式输出，整体包在一个 JSON 数组里
+- 每道题包含字段：q（题目）、options（选项数组，填空题为空数组[]）、answer（正确答案）、explanation（中文解析）
+- 题目用中日混合，日文作为考核内容
+
+笔记内容：
+${context}
+
+请只输出 JSON 数组，不要其他文字。`;
+
+      const res = await callGemini(prompt);
+      const jsonMatch = res.match(/\[[\s\S]*\]/);
+      if (!jsonMatch) throw new Error('格式错误，请重试');
+      const parsed = JSON.parse(jsonMatch[0]);
+      setQuestions(parsed);
+      setStarted(true);
+    } catch (e) {
+      if (e.message === 'NO_KEY') { onNoKey(); return; }
+      alert('出题失败：' + e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const reveal = (idx) => setRevealed(prev => ({ ...prev, [idx]: true }));
+
+  return (
+    <div>
+      {!started ? (
+        <Card>
+          <h2 className="font-semibold text-gray-700 mb-3">选择测验范围</h2>
+          <p className="text-xs text-gray-400 mb-2">选择标签（不选则出 N5 综合题）</p>
+          <div className="flex flex-wrap gap-2 mb-4">
+            {allTags.map(tag => (
+              <Badge
+                key={tag}
+                onClick={() => toggleTag(tag)}
+                color={selectedTags.includes(tag) ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600'}
+              >{tag}</Badge>
+            ))}
+          </div>
+          <div className="flex gap-3 mb-4">
+            {[['choice', '选择题'], ['fill', '填空题']].map(([v, l]) => (
+              <label key={v} className="flex items-center gap-2 cursor-pointer text-sm text-gray-600">
+                <input type="radio" value={v} checked={quizType === v} onChange={() => setQuizType(v)} />
+                {l}
+              </label>
+            ))}
+          </div>
+          <Btn onClick={generate} disabled={loading}>
+            {loading ? '出题中…' : '出题（5道）'}
+          </Btn>
+        </Card>
+      ) : (
+        <div className="space-y-4">
+          {questions.map((q, idx) => (
+            <Card key={idx}>
+              <p className="text-sm font-medium text-gray-700 mb-3">Q{idx + 1}. {q.q}</p>
+              {q.options && q.options.length > 0 ? (
+                <div className="space-y-2 mb-3">
+                  {q.options.map((opt, oi) => {
+                    const isCorrect = opt === q.answer || opt.startsWith(q.answer);
+                    const isSelected = answers[idx] === opt;
+                    let color = 'border-gray-200 text-gray-700';
+                    if (revealed[idx]) {
+                      color = isCorrect ? 'border-emerald-400 bg-emerald-50 text-emerald-700' : isSelected ? 'border-red-300 bg-red-50 text-red-600' : 'border-gray-200 text-gray-400';
+                    } else if (isSelected) {
+                      color = 'border-indigo-400 bg-indigo-50 text-indigo-700';
+                    }
+                    return (
+                      <button key={oi} disabled={!!revealed[idx]}
+                        onClick={() => { setAnswers(prev => ({ ...prev, [idx]: opt })); }}
+                        className={`w-full text-left border rounded-lg px-3 py-2 text-sm transition-colors ${color}`}>
+                        {opt}
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : (
+                <input
+                  disabled={!!revealed[idx]}
+                  value={answers[idx] || ''}
+                  onChange={e => setAnswers(prev => ({ ...prev, [idx]: e.target.value }))}
+                  placeholder="填入答案…"
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 mb-3"
+                />
+              )}
+              {!revealed[idx] ? (
+                <Btn size="sm" variant="secondary" onClick={() => reveal(idx)}
+                  disabled={q.options?.length > 0 ? !answers[idx] : !answers[idx]?.trim()}>
+                  查看答案
+                </Btn>
+              ) : (
+                <div className="mt-2 p-2 bg-blue-50 rounded-lg text-xs text-blue-700">
+                  <span className="font-semibold">答案：</span>{q.answer}
+                  {q.explanation && <><br /><span className="font-semibold">解析：</span>{q.explanation}</>}
+                </div>
+              )}
+            </Card>
+          ))}
+          <Btn variant="secondary" onClick={() => { setStarted(false); setQuestions([]); setAnswers({}); setRevealed({}); }}>
+            重新出题
+          </Btn>
+        </div>
+      )}
+    </div>
+  );
+};
+
 // ─── APP SHELL ────────────────────────────────────────────────────────────────
 const PAGES = [
   { id: 'dashboard',  label: '总览',     icon: '🏠' },
@@ -1642,7 +2010,8 @@ const PAGES = [
   { id: 'flashcards', label: '闪卡',     icon: '🃏' },
   { id: 'homework',   label: '功课',     icon: '📋' },
   { id: 'pdf',        label: 'PDF 导入', icon: '📄' },
-{ id: 'settings',   label: '设置',     icon: '⚙️' },
+  { id: 'ai',         label: 'AI 练习',  icon: '🤖' },
+  { id: 'settings',   label: '设置',     icon: '⚙️' },
 ];
 
 const App = ({ user }) => {
@@ -1757,6 +2126,7 @@ const App = ({ user }) => {
           {page==='flashcards' && <Flashcards cards={flashcards} setCards={setFlash} allTags={allTags} onNav={nav} notes={notes} />}
           {page==='homework'   && <HomeworkTracker homework={homework} setHomework={setHomework} uid={user.uid} isOnline={isOnline} />}
           {page==='pdf'        && <PDFImport setNotes={setNotes} setFlashcards={setFlash} uid={user.uid} isOnline={isOnline} notes={notes} flashcards={flashcards} setPage={setPage} setImportedNoteIds={setImportedNoteIds} />}
+          {page==='ai'         && <AIPractice notes={notes} setNotes={setNotes} allTags={allTags} setPage={setPage} />}
           {page==='settings'   && <Settings uid={user.uid} />}
         </main>
       </div>
