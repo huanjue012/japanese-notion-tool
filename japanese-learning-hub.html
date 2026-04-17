@@ -1744,8 +1744,21 @@ const Settings = ({ uid }) => {
   const [geminiKey, setGeminiKey] = React.useState(() => localStorage.getItem('gemini_api_key') || '');
   const [keySaved, setKeySaved] = React.useState(false);
 
+  // Sync settings from Firestore on mount (picks up changes from other devices)
+  React.useEffect(() => {
+    if (!uid) return;
+    fbDb.collection('users').doc(uid).get().then(doc => {
+      if (!doc.exists) return;
+      const d = doc.data();
+      if (d.geminiApiKey !== undefined) { localStorage.setItem('gemini_api_key', d.geminiApiKey); setGeminiKey(d.geminiApiKey); }
+      if (d.storageLimit  !== undefined) { localStorage.setItem('jp_storageLimit', String(d.storageLimit)); setLimitGb((d.storageLimit / 1073741824).toFixed(1)); }
+      if (d.userName      !== undefined) { localStorage.setItem('jp_userName', d.userName); setUserName(d.userName); }
+    }).catch(() => {});
+  }, [uid]);
+
   const saveGeminiKey = () => {
     localStorage.setItem('gemini_api_key', geminiKey.trim());
+    fbDb.collection('users').doc(uid).set({ geminiApiKey: geminiKey.trim() }, { merge: true }).catch(() => {});
     setKeySaved(true);
     setTimeout(() => setKeySaved(false), 2000);
   };
@@ -1760,13 +1773,16 @@ const Settings = ({ uid }) => {
   const save = () => {
     const gb = parseFloat(limitGb);
     if (isNaN(gb) || gb < 0.1 || gb > 5) return;
-    localStorage.setItem('jp_storageLimit', String(Math.round(gb * 1073741824)));
+    const bytes = Math.round(gb * 1073741824);
+    localStorage.setItem('jp_storageLimit', String(bytes));
+    fbDb.collection('users').doc(uid).set({ storageLimit: bytes }, { merge: true }).catch(() => {});
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };
 
   const saveName = () => {
     localStorage.setItem('jp_userName', userName.trim());
+    fbDb.collection('users').doc(uid).set({ userName: userName.trim() }, { merge: true }).catch(() => {});
     setNameSaved(true);
     setTimeout(() => setNameSaved(false), 2000);
   };
@@ -2319,6 +2335,17 @@ const App = ({ user }) => {
   const dueCards  = flashcards.filter(c => !c.completed && (!c.nextReview || new Date(c.nextReview) <= new Date())).length;
 
   const [userName, setUserNameState] = React.useState(() => localStorage.getItem('jp_userName') || '');
+
+  // Load settings from Firestore on login so they work on any device
+  React.useEffect(() => {
+    fbDb.collection('users').doc(user.uid).get().then(doc => {
+      if (!doc.exists) return;
+      const d = doc.data();
+      if (d.geminiApiKey !== undefined) localStorage.setItem('gemini_api_key', d.geminiApiKey);
+      if (d.storageLimit  !== undefined) localStorage.setItem('jp_storageLimit', String(d.storageLimit));
+      if (d.userName      !== undefined) { localStorage.setItem('jp_userName', d.userName); setUserNameState(d.userName); }
+    }).catch(() => {});
+  }, [user.uid]);
 
   // Sync userName when navigating to settings and back
   React.useEffect(() => {
