@@ -116,6 +116,12 @@ const useFirestoreCollection = (collectionName, uid) => {
         const items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         setDataLocal(items);
         try { localStorage.setItem(lsKey, JSON.stringify(items)); } catch {}
+      }, err => {
+        if (err.code === 'permission-denied') {
+          console.warn(`[Firestore] permission-denied on ${collectionName} — check security rules`);
+        } else {
+          console.error(`[Firestore] snapshot error on ${collectionName}:`, err);
+        }
       });
     };
     subscribe();
