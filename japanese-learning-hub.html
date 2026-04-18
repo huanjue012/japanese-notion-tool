@@ -2229,6 +2229,124 @@ ${context}
   );
 };
 
+// ─── TEXT TO SPEECH ───────────────────────────────────────────────────────────
+const TextToSpeech = () => {
+  const [text, setText] = useState('');
+  const [voices, setVoices] = useState([]);
+  const [selectedVoice, setSelectedVoice] = useState('');
+  const [rate, setRate] = useState(1);
+  const [speaking, setSpeaking] = useState(false);
+  const [supported] = useState(!!window.speechSynthesis);
+
+  useEffect(() => {
+    if (!window.speechSynthesis) return;
+    const load = () => {
+      const all = window.speechSynthesis.getVoices();
+      if (!all.length) return;
+      const ja = all.filter(v => v.lang.startsWith('ja'));
+      const rest = all.filter(v => !v.lang.startsWith('ja'));
+      const sorted = [...ja, ...rest];
+      setVoices(sorted);
+      setSelectedVoice(prev => prev || (sorted[0]?.name ?? ''));
+    };
+    load();
+    window.speechSynthesis.addEventListener('voiceschanged', load);
+    return () => window.speechSynthesis.removeEventListener('voiceschanged', load);
+  }, []);
+
+  const speak = () => {
+    if (!text.trim() || speaking) return;
+    window.speechSynthesis.cancel();
+    const utter = new SpeechSynthesisUtterance(text);
+    const voice = voices.find(v => v.name === selectedVoice);
+    if (voice) { utter.voice = voice; utter.lang = voice.lang; }
+    utter.rate = rate;
+    utter.onstart = () => setSpeaking(true);
+    utter.onend   = () => setSpeaking(false);
+    utter.onerror = () => setSpeaking(false);
+    window.speechSynthesis.speak(utter);
+  };
+
+  const stop = () => { window.speechSynthesis.cancel(); setSpeaking(false); };
+
+  const rateLabel = rate === 0.5 ? '很慢' : rate === 0.75 ? '慢' : rate === 1 ? '正常' : rate === 1.25 ? '稍快' : rate === 1.5 ? '快' : '很快';
+
+  if (!supported) return (
+    <div className="max-w-2xl mx-auto">
+      <h2 className="text-xl font-bold text-gray-800 mb-6">🔊 文字转语音</h2>
+      <Card className="text-center py-10 text-gray-400">
+        <p className="text-base">你的浏览器不支持语音合成</p>
+        <p className="text-sm mt-1">请使用 Chrome、Safari 或 Edge</p>
+      </Card>
+    </div>
+  );
+
+  return (
+    <div className="max-w-2xl mx-auto">
+      <h2 className="text-xl font-bold text-gray-800 mb-6">🔊 文字转语音</h2>
+      <Card className="space-y-5">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">输入文字</label>
+          <textarea
+            value={text}
+            onChange={e => setText(e.target.value)}
+            placeholder="在此输入日语文字…"
+            rows={6}
+            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 resize-y"
+          />
+          <p className="text-right text-xs text-gray-400 mt-0.5">{text.length} 字</p>
+        </div>
+
+        {voices.length > 0 && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">语音</label>
+            <select
+              value={selectedVoice}
+              onChange={e => setSelectedVoice(e.target.value)}
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 bg-white"
+            >
+              {voices.map(v => (
+                <option key={v.name} value={v.name}>{v.name} ({v.lang})</option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            速度：<span className="text-indigo-600 font-semibold">{rate}× {rateLabel}</span>
+          </label>
+          <input
+            type="range" min="0.5" max="2" step="0.25"
+            value={rate}
+            onChange={e => setRate(parseFloat(e.target.value))}
+            className="w-full accent-indigo-600"
+          />
+          <div className="flex justify-between text-xs text-gray-400 mt-0.5">
+            <span>0.5×</span><span>1×</span><span>2×</span>
+          </div>
+        </div>
+
+        <div className="flex gap-3 pt-1">
+          {!speaking ? (
+            <Btn variant="primary" size="lg" onClick={speak} disabled={!text.trim()} className="flex-1 text-base">
+              ▶ 播放
+            </Btn>
+          ) : (
+            <Btn variant="danger" size="lg" onClick={stop} className="flex-1 text-base">
+              ■ 停止
+            </Btn>
+          )}
+          <Btn variant="secondary" size="lg" onClick={() => { stop(); setText(''); }}>清空</Btn>
+        </div>
+
+        {speaking && <p className="text-center text-sm text-indigo-500 animate-pulse">正在播放…</p>}
+      </Card>
+      <p className="text-xs text-gray-400 mt-4 text-center">使用浏览器内置语音合成，语音质量因设备而异</p>
+    </div>
+  );
+};
+
 // ─── APP SHELL ────────────────────────────────────────────────────────────────
 const PAGES = [
   { id: 'dashboard',  label: '总览',     icon: '🏠' },
@@ -2237,6 +2355,7 @@ const PAGES = [
   { id: 'homework',   label: '功课',     icon: '📋' },
   { id: 'pdf',        label: 'PDF 导入', icon: '📄' },
   { id: 'ai',         label: 'AI 练习',  icon: '🤖' },
+  { id: 'tts',        label: '文字转语音', icon: '🔊' },
   { id: 'settings',   label: '设置',     icon: '⚙️' },
 ];
 
@@ -2364,6 +2483,7 @@ const App = ({ user }) => {
           {page==='homework'   && <HomeworkTracker homework={homework} setHomework={setHomework} uid={user.uid} isOnline={isOnline} />}
           {page==='pdf'        && <PDFImport setNotes={setNotes} setFlashcards={setFlash} uid={user.uid} isOnline={isOnline} notes={notes} flashcards={flashcards} setPage={setPage} setImportedNoteIds={setImportedNoteIds} />}
           {page==='ai'         && <AIPractice notes={notes} allTags={allTags} setPage={setPage} />}
+          {page==='tts'        && <TextToSpeech />}
           {page==='settings'   && <Settings uid={user.uid} />}
         </main>
       </div>
