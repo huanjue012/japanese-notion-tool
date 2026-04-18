@@ -1756,6 +1756,8 @@ const Settings = ({ uid }) => {
   const [usedBytes, setUsedBytes] = React.useState(() => parseInt(localStorage.getItem('jp_storageUsed') || '0'));
   const [geminiKey, setGeminiKey] = React.useState(() => localStorage.getItem('gemini_api_key') || '');
   const [keySaved, setKeySaved] = React.useState(false);
+  const [googleTtsKey, setGoogleTtsKey] = React.useState(() => localStorage.getItem('google_tts_key') || '');
+  const [ttsSaved, setTtsSaved] = React.useState(false);
 
   // Sync settings from Firestore on mount (picks up changes from other devices)
   React.useEffect(() => {
@@ -1763,11 +1765,19 @@ const Settings = ({ uid }) => {
     fbDb.collection('users').doc(uid).get().then(doc => {
       if (!doc.exists) return;
       const d = doc.data();
-      if (d.geminiApiKey !== undefined) { localStorage.setItem('gemini_api_key', d.geminiApiKey); setGeminiKey(d.geminiApiKey); }
+      if (d.geminiApiKey  !== undefined) { localStorage.setItem('gemini_api_key', d.geminiApiKey); setGeminiKey(d.geminiApiKey); }
+      if (d.googleTtsKey  !== undefined) { localStorage.setItem('google_tts_key', d.googleTtsKey); setGoogleTtsKey(d.googleTtsKey); }
       if (d.storageLimit  !== undefined) { localStorage.setItem('jp_storageLimit', String(d.storageLimit)); setLimitGb((d.storageLimit / 1073741824).toFixed(1)); }
       if (d.userName      !== undefined) { localStorage.setItem('jp_userName', d.userName); setUserName(d.userName); }
     }).catch(() => {});
   }, [uid]);
+
+  const saveGoogleTtsKey = () => {
+    localStorage.setItem('google_tts_key', googleTtsKey.trim());
+    fbDb.collection('users').doc(uid).set({ googleTtsKey: googleTtsKey.trim() }, { merge: true }).catch(() => {});
+    setTtsSaved(true);
+    setTimeout(() => setTtsSaved(false), 2000);
+  };
 
   const saveGeminiKey = () => {
     localStorage.setItem('gemini_api_key', geminiKey.trim());
@@ -1910,6 +1920,28 @@ const Settings = ({ uid }) => {
           <Btn onClick={saveGeminiKey}>{keySaved ? '✅ 已保存' : '保存'}</Btn>
         </div>
         {geminiKey && <p className="text-xs text-emerald-600 mt-2">✓ 已配置 API Key</p>}
+      </Card>
+      <Card className="mb-4">
+        <h2 className="font-semibold text-gray-700 mb-1">文字转语音设置</h2>
+        <p className="text-xs text-gray-400 mb-3">
+          用于「文字转语音」模块（Google Cloud Neural2 日语语音）。需在
+          <a href="https://console.cloud.google.com" target="_blank" rel="noopener noreferrer" className="text-indigo-500 underline mx-1">Google Cloud Console</a>
+          开启 Cloud Text-to-Speech API 后创建 API Key。
+        </p>
+        <div className="flex gap-2 items-end">
+          <div className="flex-1">
+            <label className="block text-xs text-gray-500 mb-1">Google Cloud TTS API Key</label>
+            <input
+              type="password"
+              value={googleTtsKey}
+              onChange={e => setGoogleTtsKey(e.target.value)}
+              placeholder="AIza..."
+              className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+            />
+          </div>
+          <Btn onClick={saveGoogleTtsKey}>{ttsSaved ? '✅ 已保存' : '保存'}</Btn>
+        </div>
+        {googleTtsKey && <p className="text-xs text-emerald-600 mt-2">✓ 已配置 API Key</p>}
       </Card>
     </div>
   );
@@ -2230,53 +2262,73 @@ ${context}
 };
 
 // ─── TEXT TO SPEECH ───────────────────────────────────────────────────────────
-const TextToSpeech = () => {
+const TTS_VOICES = [
+  { name: 'ja-JP-Neural2-B', label: 'Neural2 女声 B（推荐）' },
+  { name: 'ja-JP-Neural2-C', label: 'Neural2 男声 C' },
+  { name: 'ja-JP-Neural2-D', label: 'Neural2 女声 D' },
+  { name: 'ja-JP-Standard-A', label: 'Standard 女声 A' },
+  { name: 'ja-JP-Standard-B', label: 'Standard 男声 B' },
+  { name: 'ja-JP-Standard-C', label: 'Standard 男声 C' },
+  { name: 'ja-JP-Standard-D', label: 'Standard 女声 D' },
+];
+
+const TextToSpeech = ({ setPage }) => {
   const [text, setText] = useState('');
-  const [voices, setVoices] = useState([]);
-  const [selectedVoice, setSelectedVoice] = useState('');
+  const [voice, setVoice] = useState('ja-JP-Neural2-B');
   const [rate, setRate] = useState(1);
-  const [speaking, setSpeaking] = useState(false);
-  const [supported] = useState(!!window.speechSynthesis);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const audioRef = useRef(null);
+  const [playing, setPlaying] = useState(false);
 
-  useEffect(() => {
-    if (!window.speechSynthesis) return;
-    const load = () => {
-      const all = window.speechSynthesis.getVoices();
-      if (!all.length) return;
-      const ja = all.filter(v => v.lang.startsWith('ja'));
-      const rest = all.filter(v => !v.lang.startsWith('ja'));
-      const sorted = [...ja, ...rest];
-      setVoices(sorted);
-      setSelectedVoice(prev => prev || (sorted[0]?.name ?? ''));
-    };
-    load();
-    window.speechSynthesis.addEventListener('voiceschanged', load);
-    return () => window.speechSynthesis.removeEventListener('voiceschanged', load);
-  }, []);
+  const apiKey = localStorage.getItem('google_tts_key');
 
-  const speak = () => {
-    if (!text.trim() || speaking) return;
-    window.speechSynthesis.cancel();
-    const utter = new SpeechSynthesisUtterance(text);
-    const voice = voices.find(v => v.name === selectedVoice);
-    if (voice) { utter.voice = voice; utter.lang = voice.lang; }
-    utter.rate = rate;
-    utter.onstart = () => setSpeaking(true);
-    utter.onend   = () => setSpeaking(false);
-    utter.onerror = () => setSpeaking(false);
-    window.speechSynthesis.speak(utter);
+  const stop = () => {
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+    setPlaying(false);
   };
 
-  const stop = () => { window.speechSynthesis.cancel(); setSpeaking(false); };
+  const speak = async () => {
+    if (!text.trim() || loading) return;
+    stop();
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch(
+        `https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            input: { text: text.trim() },
+            voice: { languageCode: 'ja-JP', name: voice },
+            audioConfig: { audioEncoding: 'MP3', speakingRate: rate },
+          }),
+        }
+      );
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error?.message || '请求失败');
+      const audio = new Audio(`data:audio/mp3;base64,${data.audioContent}`);
+      audioRef.current = audio;
+      audio.onended = () => setPlaying(false);
+      audio.onerror = () => { setPlaying(false); setError('播放失败'); };
+      await audio.play();
+      setPlaying(true);
+    } catch (e) {
+      setError(e.message || '发生错误');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const rateLabel = rate === 0.5 ? '很慢' : rate === 0.75 ? '慢' : rate === 1 ? '正常' : rate === 1.25 ? '稍快' : rate === 1.5 ? '快' : '很快';
 
-  if (!supported) return (
+  if (!apiKey) return (
     <div className="max-w-2xl mx-auto">
       <h2 className="text-xl font-bold text-gray-800 mb-6">🔊 文字转语音</h2>
-      <Card className="text-center py-10 text-gray-400">
-        <p className="text-base">你的浏览器不支持语音合成</p>
-        <p className="text-sm mt-1">请使用 Chrome、Safari 或 Edge</p>
+      <Card className="text-center py-10 space-y-3">
+        <p className="text-gray-500">使用前请先配置 Google Cloud TTS API Key</p>
+        <Btn variant="primary" onClick={() => setPage('settings')}>前往设置</Btn>
       </Card>
     </div>
   );
@@ -2297,20 +2349,18 @@ const TextToSpeech = () => {
           <p className="text-right text-xs text-gray-400 mt-0.5">{text.length} 字</p>
         </div>
 
-        {voices.length > 0 && (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">语音</label>
-            <select
-              value={selectedVoice}
-              onChange={e => setSelectedVoice(e.target.value)}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 bg-white"
-            >
-              {voices.map(v => (
-                <option key={v.name} value={v.name}>{v.name} ({v.lang})</option>
-              ))}
-            </select>
-          </div>
-        )}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">语音</label>
+          <select
+            value={voice}
+            onChange={e => setVoice(e.target.value)}
+            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 bg-white"
+          >
+            {TTS_VOICES.map(v => (
+              <option key={v.name} value={v.name}>{v.label}</option>
+            ))}
+          </select>
+        </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -2327,10 +2377,12 @@ const TextToSpeech = () => {
           </div>
         </div>
 
+        {error && <p className="text-sm text-red-500 bg-red-50 rounded-lg px-3 py-2">{error}</p>}
+
         <div className="flex gap-3 pt-1">
-          {!speaking ? (
-            <Btn variant="primary" size="lg" onClick={speak} disabled={!text.trim()} className="flex-1 text-base">
-              ▶ 播放
+          {!playing ? (
+            <Btn variant="primary" size="lg" onClick={speak} disabled={!text.trim() || loading} className="flex-1 text-base">
+              {loading ? '生成中…' : '▶ 播放'}
             </Btn>
           ) : (
             <Btn variant="danger" size="lg" onClick={stop} className="flex-1 text-base">
@@ -2340,9 +2392,9 @@ const TextToSpeech = () => {
           <Btn variant="secondary" size="lg" onClick={() => { stop(); setText(''); }}>清空</Btn>
         </div>
 
-        {speaking && <p className="text-center text-sm text-indigo-500 animate-pulse">正在播放…</p>}
+        {playing && <p className="text-center text-sm text-indigo-500 animate-pulse">正在播放…</p>}
       </Card>
-      <p className="text-xs text-gray-400 mt-4 text-center">使用浏览器内置语音合成，语音质量因设备而异</p>
+      <p className="text-xs text-gray-400 mt-4 text-center">Google Cloud Neural2 日语语音 · 按用量计费</p>
     </div>
   );
 };
@@ -2386,6 +2438,7 @@ const App = ({ user }) => {
       if (!doc.exists) return;
       const d = doc.data();
       if (d.geminiApiKey !== undefined) localStorage.setItem('gemini_api_key', d.geminiApiKey);
+      if (d.googleTtsKey !== undefined) localStorage.setItem('google_tts_key', d.googleTtsKey);
       if (d.storageLimit  !== undefined) localStorage.setItem('jp_storageLimit', String(d.storageLimit));
       if (d.userName      !== undefined) { localStorage.setItem('jp_userName', d.userName); setUserNameState(d.userName); }
     }).catch(() => {});
@@ -2483,7 +2536,7 @@ const App = ({ user }) => {
           {page==='homework'   && <HomeworkTracker homework={homework} setHomework={setHomework} uid={user.uid} isOnline={isOnline} />}
           {page==='pdf'        && <PDFImport setNotes={setNotes} setFlashcards={setFlash} uid={user.uid} isOnline={isOnline} notes={notes} flashcards={flashcards} setPage={setPage} setImportedNoteIds={setImportedNoteIds} />}
           {page==='ai'         && <AIPractice notes={notes} allTags={allTags} setPage={setPage} />}
-          {page==='tts'        && <TextToSpeech />}
+          {page==='tts'        && <TextToSpeech setPage={setPage} />}
           {page==='settings'   && <Settings uid={user.uid} />}
         </main>
       </div>
