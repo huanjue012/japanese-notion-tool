@@ -593,9 +593,10 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteId
   const computeHiragana = async (text) => {
     setTransHiraLoading(true);
     try {
-      const hira = await callGemini(`将以下日文转换为全假名（平假名）读法，只输出假名，不加任何其他文字：\n${text}`);
-      setTransHiragana(hira.trim());
-    } catch { setTransHiragana(''); }
+      const raw = await callGemini(`将以下日文转换为全假名（平假名）读法，只输出假名，不加任何其他文字：\n${text}`);
+      const hira = raw.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+      setTransHiragana(hira);
+    } catch (e) { console.error('hiragana error:', e); setTransHiragana(''); }
     finally { setTransHiraLoading(false); }
   };
 
