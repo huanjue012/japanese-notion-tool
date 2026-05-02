@@ -615,7 +615,7 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteId
       setTransResult(result || '');
       setTransSource('flashcard');
       setTransLoading(false);
-      if (transDir === 'ja|zh') computeHiragana(q);
+      computeHiragana(transDir === 'ja|zh' ? q : result);
       return;
     }
 
@@ -625,8 +625,9 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteId
       const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sl}&tl=${tl}&dt=t&q=${encodeURIComponent(q)}`;
       const res = await fetch(url);
       const data = await res.json();
-      setTransResult(data[0]?.map(x => x?.[0] || '').join('') || '翻译失败');
-      if (transDir === 'ja|zh') computeHiragana(q);
+      const apiResult = data[0]?.map(x => x?.[0] || '').join('') || '翻译失败';
+      setTransResult(apiResult);
+      computeHiragana(transDir === 'ja|zh' ? q : apiResult);
     } catch { setTransResult('翻译失败，请检查网络'); }
     finally { setTransLoading(false); }
   };
@@ -803,7 +804,7 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteId
                 {transSource === 'flashcard' && <span className="ml-2 text-emerald-600">✓ 来自闪卡</span>}
               </p>
               <p className="text-sm text-gray-700">{transResult}</p>
-              {transDir === 'ja|zh' && (transHiraLoading || transHiragana) && (
+              {(transHiraLoading || transHiragana) && (
                 <p className="text-xs text-gray-500 mt-2 leading-relaxed">
                   {transHiraLoading ? '⏳ 正在生成假名…' : `🔊 ${transHiragana}`}
                 </p>
