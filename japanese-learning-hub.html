@@ -1397,6 +1397,8 @@ const PDFImport = ({ setNotes, setFlashcards, uid, isOnline, notes, flashcards, 
   const [pdfFile, setPdfFile] = useState(null);
   const [pdfPages, setPdfPages] = useState(0);
   const [extracting, setExtracting] = useState(false);
+  const [pdfProgress, setPdfProgress] = useState({ phase: 'idle', current: 0, total: 0 });
+  const [pdfSlowWarning, setPdfSlowWarning] = useState(false);
   const [extractedText, setExtractedText] = useState('');
   const [rawText, setRawText] = useState('');
   const [aiMode, setAiMode] = useState('all');
@@ -1428,25 +1430,41 @@ const PDFImport = ({ setNotes, setFlashcards, uid, isOnline, notes, flashcards, 
     setAiResult('');
     setAiErr('');
     setImportOk('');
+    setPdfSlowWarning(false);
+    setPdfProgress({ phase: 'init', current: 0, total: 0 });
     setExtracting(true);
+    let url = null;
+    let loadingTask = null;
+    const slowTimer = setTimeout(() => setPdfSlowWarning(true), 18000);
     try {
       if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
       }
-      const url = URL.createObjectURL(file);
-      const pdf = await pdfjsLib.getDocument(url).promise;
+      url = URL.createObjectURL(file);
+      setPdfProgress(p => ({ ...p, phase: 'load' }));
+      loadingTask = pdfjsLib.getDocument(url);
+      const pdf = await Promise.race([
+        loadingTask.promise,
+        new Promise((_, rej) => setTimeout(() => rej(new Error('PDF 解析器加载超时（45s），可能是网络较慢或 CDN 不可达')), 45000))
+      ]);
+      setPdfProgress({ phase: 'extract', current: 0, total: pdf.numPages });
       let text = '';
       for (let i = 1; i <= pdf.numPages; i++) {
         const page = await pdf.getPage(i);
         const content = await page.getTextContent();
         text += content.items.map(item => item.str).join(' ') + '\n\n';
+        setPdfProgress(p => ({ ...p, current: i }));
       }
-      URL.revokeObjectURL(url);
       setPdfPages(pdf.numPages);
       setExtractedText(text.trim());
-    } catch(e) {
-      setAiErr('PDF 提取失败：' + e.message);
+      setPdfProgress(p => ({ ...p, phase: 'done' }));
+    } catch(err) {
+      setAiErr('PDF 提取失败：' + err.message);
+      setPdfProgress(p => ({ ...p, phase: 'error' }));
+      try { loadingTask && loadingTask.destroy && loadingTask.destroy(); } catch(_) {}
     } finally {
+      clearTimeout(slowTimer);
+      if (url) URL.revokeObjectURL(url);
       setExtracting(false);
     }
   };
@@ -1605,7 +1623,30 @@ const PDFImport = ({ setNotes, setFlashcards, uid, isOnline, notes, flashcards, 
                   <input type="file" accept="application/pdf" disabled={!isOnline || extracting} className="hidden" onChange={handlePdfSelect} />
                 </label>
                 {extracting && (
-                  <p className="text-sm text-indigo-600 mt-3">⏳ 正在提取文字…</p>
+                  <div className="mt-3 space-y-2">
+                    <div className="flex items-center gap-2 text-sm text-indigo-600">
+                      <div className="w-4 h-4 border-2 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
+                      <span>
+                        {pdfProgress.phase === 'extract'
+                          ? `正在提取 ${pdfProgress.current}/${pdfProgress.total} 页`
+                          : '正在初始化 PDF 解析器…（首次加载需从 CDN 下载，网络慢可能耗时较长）'}
+                      </span>
+                    </div>
+                    {pdfFile && <p className="text-xs text-gray-400 truncate">{pdfFile.name}</p>}
+                    <div className="w-full bg-gray-100 rounded-full h-1.5">
+                      {pdfProgress.phase === 'extract' && pdfProgress.total > 0 ? (
+                        <div className="bg-indigo-500 h-1.5 rounded-full transition-all duration-500" style={{ width: `${(pdfProgress.current / pdfProgress.total) * 100}%` }} />
+                      ) : (
+                        <div className="bg-indigo-500 h-1.5 rounded-full w-1/4 animate-pulse" />
+                      )}
+                    </div>
+                    {pdfSlowWarning && (
+                      <p className="text-xs text-amber-600">⚠️ 网络较慢，PDF 解析器加载耗时较长，请检查网络或稍候…</p>
+                    )}
+                  </div>
+                )}
+                {!extracting && pdfProgress.phase === 'error' && aiErr && (
+                  <p className="text-red-500 text-sm mt-3">⚠️ {aiErr}</p>
                 )}
                 {pdfFile && !extracting && extractedText && (
                   <div className="mt-3 p-3 bg-green-50 rounded-xl border border-green-100 flex items-center gap-3">
