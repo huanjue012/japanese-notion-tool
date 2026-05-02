@@ -460,7 +460,7 @@ const useClaudeExport = ({ items, mapExport, filename, claudePrompt, matchKey, i
 };
 
 // ─── KNOWLEDGE BASE ────────────────────────────────────────────────────────────
-const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteIds, setImportedNoteIds, setCards, cards, setPage }) => {
+const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteIds, setImportedNoteIds, setCards, cards, setPage, onNav }) => {
   const [search, setSearch] = useState('');
   const [activeTag, setActiveTag] = useState(null);
   const [modal, setModal] = useState(null);
@@ -803,6 +803,29 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteId
           )}
         </div>
         <TagSelector selected={form.tags} onChange={tags => setForm(p => ({...p, tags}))} pool={allTags} />
+        {onNav && form.tags?.length > 0 && (
+          <div className="mt-3 p-3 bg-indigo-50/50 border border-indigo-100 rounded-xl">
+            <p className="text-xs font-semibold text-gray-500 mb-2">🔗 相关练习</p>
+            <div className="flex flex-col gap-1.5">
+              {form.tags.map(tag => {
+                const cardCount = (cards || []).filter(c => c.tags?.includes(tag)).length;
+                return (
+                  <div key={tag} className="flex items-center gap-2 flex-wrap">
+                    <Badge>#{tag}</Badge>
+                    <button onClick={() => { setModal(null); onNav('flashcards', { tag }); }}
+                      className="text-xs px-2 py-1 rounded-lg border border-indigo-200 bg-white text-indigo-700 hover:bg-indigo-100 transition-colors">
+                      🃏 闪卡{cardCount > 0 ? `（${cardCount}）` : ''}
+                    </button>
+                    <button onClick={() => { setModal(null); onNav('ai', { tab: 'quiz', tags: [tag] }); }}
+                      className="text-xs px-2 py-1 rounded-lg border border-indigo-200 bg-white text-indigo-700 hover:bg-indigo-100 transition-colors">
+                      ✍ AI 出题
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
         <div className="mt-3">
           <p className="text-xs font-semibold text-gray-500 mb-1.5">附件（图片 / PDF）</p>
           <div className="flex flex-wrap gap-2 mb-2">
@@ -870,12 +893,21 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteId
 // ─── FLASHCARDS ───────────────────────────────────────────────────────────────
 const INTERVALS = { 1: 1, 2: 3, 3: 7, 4: 14 };
 
-const Flashcards = ({ cards, setCards, allTags, onNav, notes = [] }) => {
+const Flashcards = ({ cards, setCards, allTags, onNav, notes = [], navCtx, clearNavCtx }) => {
   const [view, setView] = useState('list'); // list | review | form
   const [editId, setEditId] = useState(null);
   const [form, setForm] = useState({ front: '', back: '', tags: [] });
   const [filterMode, setFilterMode] = useState('due');
   const [activeTag, setActiveTag] = useState(null);
+
+  useEffect(() => {
+    if (navCtx?.tag) {
+      setActiveTag(navCtx.tag);
+      setView('list');
+      setFilterMode('all');
+      clearNavCtx?.();
+    }
+  }, [navCtx]);
   const [search, setSearch] = useState('');
   const [idx, setIdx] = useState(0);
   const [flipped, setFlipped] = useState(false);
@@ -1962,11 +1994,20 @@ const StorageBanner = () => {
 };
 
 // ─── AI PRACTICE ──────────────────────────────────────────────────────────────
-const AIPractice = ({ notes, allTags, setPage }) => {
+const AIPractice = ({ notes, allTags, setPage, navCtx, clearNavCtx }) => {
   const [tab, setTab] = React.useState('correct');
   const [noKey, setNoKey] = React.useState(false);
+  const [quizInitialTags, setQuizInitialTags] = React.useState(null);
 
   const handleNoKey = () => setNoKey(true);
+
+  React.useEffect(() => {
+    if (navCtx?.tab === 'quiz') {
+      setTab('quiz');
+      setQuizInitialTags(navCtx.tags || []);
+      clearNavCtx?.();
+    }
+  }, [navCtx]);
 
   const tabs = [
     { id: 'correct', label: '批改造句' },
@@ -1995,7 +2036,7 @@ const AIPractice = ({ notes, allTags, setPage }) => {
       </div>
 
       {tab === 'correct' && <CorrectTab onNoKey={handleNoKey} />}
-      {tab === 'quiz' && <QuizTab notes={notes} allTags={allTags} onNoKey={handleNoKey} />}
+      {tab === 'quiz' && <QuizTab notes={notes} allTags={allTags} onNoKey={handleNoKey} initialTags={quizInitialTags} consumeInitialTags={() => setQuizInitialTags(null)} />}
     </div>
   );
 };
@@ -2052,17 +2093,26 @@ const CorrectTab = ({ onNoKey }) => {
 };
 
 
-const QuizTab = ({ notes, allTags, onNoKey }) => {
+const QuizTab = ({ notes, allTags, onNoKey, initialTags, consumeInitialTags }) => {
   const [scopeMode, setScopeMode] = React.useState('tags');
   const [selectedTags, setSelectedTags] = React.useState([]);
   const [selectedNotes, setSelectedNotes] = React.useState([]);
   const [customScope, setCustomScope] = React.useState('');
   const [quizType, setQuizType] = React.useState('choice');
+  const [focusMode, setFocusMode] = React.useState('mixed'); // 'mixed' | 'grammar'
   const [questions, setQuestions] = React.useState([]);
   const [answers, setAnswers] = React.useState({});
   const [revealed, setRevealed] = React.useState({});
   const [loading, setLoading] = React.useState(false);
   const [started, setStarted] = React.useState(false);
+
+  React.useEffect(() => {
+    if (initialTags && initialTags.length > 0) {
+      setScopeMode('tags');
+      setSelectedTags(initialTags);
+      consumeInitialTags?.();
+    }
+  }, [initialTags]);
 
   const toggleTag = (tag) => {
     setSelectedTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]);
@@ -2097,13 +2147,24 @@ const QuizTab = ({ notes, allTags, onNoKey }) => {
       }
 
       const typeDesc = quizType === 'choice' ? '单选题（4个选项，标明正确答案）' : '填空题（用___标注空格位置）';
+      const focusLabel = focusMode === 'grammar' ? `${scopeLabel}（仅文法）` : scopeLabel;
 
-      const prompt = `你是日语老师，请根据以下内容出${typeDesc}5道，测试对「${scopeLabel}」的掌握。
+      const grammarRules = `
+本次出题为「文法专项」，特别要求：
+- 只考语法点：助词选择、动词/形容词活用、句式、时态、敬语等。**不要**考词汇含义。
+- 题面里所有非考点的日文实词，必须在紧邻的括号里附中文释义，例：「先生（老师）に本（书）を___」。
+- 选项中的日文实词同样要附中文括注；考点本身（即被考的助词/活用形/句式）不要附释义。
+- explanation 必须解释考点对应的语法规则，而不是单词意思。
+- 目标：学生即使不认识题中任何单词，也能完全靠语法知识答对。`;
 
+      const baseRules = `
 要求：
 - 每题单独用 JSON 格式输出，整体包在一个 JSON 数组里
 - 每道题包含字段：q（题目）、options（选项数组，填空题为空数组[]）、answer（正确答案）、explanation（中文解析）
-- 题目用中日混合，日文作为考核内容
+- 题目用中日混合，日文作为考核内容`;
+
+      const prompt = `你是日语老师，请根据以下内容出${typeDesc}5道，测试对「${focusLabel}」的掌握。
+${baseRules}${focusMode === 'grammar' ? grammarRules : ''}
 
 参考内容：
 ${context}
@@ -2193,13 +2254,27 @@ ${context}
             </div>
           )}
 
-          <div className="flex gap-3 mb-4">
+          <div className="flex gap-3 mb-3">
             {[['choice', '选择题'], ['fill', '填空题']].map(([v, l]) => (
               <label key={v} className="flex items-center gap-2 cursor-pointer text-sm text-gray-600">
                 <input type="radio" value={v} checked={quizType === v} onChange={() => setQuizType(v)} />
                 {l}
               </label>
             ))}
+          </div>
+          <div className="mb-4">
+            <p className="text-xs text-gray-400 mb-1.5">测试重点</p>
+            <div className="flex gap-3 flex-wrap">
+              {[['mixed', '综合'], ['grammar', '文法（不考词汇）']].map(([v, l]) => (
+                <label key={v} className="flex items-center gap-2 cursor-pointer text-sm text-gray-600">
+                  <input type="radio" value={v} checked={focusMode === v} onChange={() => setFocusMode(v)} />
+                  {l}
+                </label>
+              ))}
+            </div>
+            {focusMode === 'grammar' && (
+              <p className="text-xs text-indigo-500 mt-1.5">题面会在生词后附中文释义，让你只需靠文法答题。</p>
+            )}
           </div>
           <Btn onClick={generate} disabled={loading}>
             {loading ? '出题中…' : '出题（5道）'}
@@ -2414,6 +2489,7 @@ const PAGES = [
 const App = ({ user }) => {
   const isOnline = useOnlineStatus();
   const [page, setPage] = useState('dashboard');
+  const [navCtx, setNavCtx] = useState(null);
   const [sideOpen, setSideOpen] = useState(false);
   const [notes, setNotes]         = useFirestoreCollection('notes',      user.uid);
   const [flashcards, setFlash]    = useFirestoreCollection('flashcards', user.uid);
@@ -2473,7 +2549,8 @@ const App = ({ user }) => {
     }
   }, [vocab.length]);
 
-  const nav = (id) => { setPage(id); setSideOpen(false); };
+  const nav = (id, ctx = null) => { setPage(id); setNavCtx(ctx); setSideOpen(false); };
+  const clearNavCtx = () => setNavCtx(null);
 
   const SideNav = () => (
     <div className="flex flex-col h-full">
@@ -2531,11 +2608,11 @@ const App = ({ user }) => {
         <StorageBanner />
         <main className="flex-1 overflow-y-auto p-4 md:p-8">
           {page==='dashboard'  && <Dashboard notes={notes} homework={homework} flashcards={flashcards} onNav={nav} userName={userName} />}
-          {page==='knowledge'  && <KnowledgeBase notes={notes} setNotes={setNotes} allTags={allTags} uid={user.uid} isOnline={isOnline} importedNoteIds={importedNoteIds} setImportedNoteIds={setImportedNoteIds} setCards={setFlash} cards={flashcards} setPage={setPage} />}
-          {page==='flashcards' && <Flashcards cards={flashcards} setCards={setFlash} allTags={allTags} onNav={nav} notes={notes} />}
+          {page==='knowledge'  && <KnowledgeBase notes={notes} setNotes={setNotes} allTags={allTags} uid={user.uid} isOnline={isOnline} importedNoteIds={importedNoteIds} setImportedNoteIds={setImportedNoteIds} setCards={setFlash} cards={flashcards} setPage={setPage} onNav={nav} />}
+          {page==='flashcards' && <Flashcards cards={flashcards} setCards={setFlash} allTags={allTags} onNav={nav} notes={notes} navCtx={navCtx} clearNavCtx={clearNavCtx} />}
           {page==='homework'   && <HomeworkTracker homework={homework} setHomework={setHomework} uid={user.uid} isOnline={isOnline} />}
           {page==='pdf'        && <PDFImport setNotes={setNotes} setFlashcards={setFlash} uid={user.uid} isOnline={isOnline} notes={notes} flashcards={flashcards} setPage={setPage} setImportedNoteIds={setImportedNoteIds} />}
-          {page==='ai'         && <AIPractice notes={notes} allTags={allTags} setPage={setPage} />}
+          {page==='ai'         && <AIPractice notes={notes} allTags={allTags} setPage={setPage} navCtx={navCtx} clearNavCtx={clearNavCtx} />}
           {page==='tts'        && <TextToSpeech setPage={setPage} />}
           {page==='settings'   && <Settings uid={user.uid} />}
         </main>
