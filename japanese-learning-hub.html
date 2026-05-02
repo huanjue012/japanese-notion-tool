@@ -593,8 +593,8 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteId
   const computeHiragana = async (text) => {
     setTransHiraLoading(true);
     try {
-      const hira = await toHiragana(text);
-      setTransHiragana(hira);
+      const hira = await callGemini(`将以下日文转换为全假名（平假名）读法，只输出假名，不加任何其他文字：\n${text}`);
+      setTransHiragana(hira.trim());
     } catch { setTransHiragana(''); }
     finally { setTransHiraLoading(false); }
   };
@@ -833,6 +833,7 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteId
             rows={1}
             className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-transparent resize-none overflow-hidden"
             style={{ minHeight: '38px' }}
+            ref={el => { if (el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; } }}
             onInput={e => { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; }}
           />
         </div>
