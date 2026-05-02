@@ -15,6 +15,8 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/kuroshiro@1.2.0/dist/kuroshiro.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/kuroshiro-analyzer-kuromoji@1.1.0/dist/kuroshiro-analyzer-kuromoji.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&display=swap" rel="stylesheet">
@@ -184,6 +186,21 @@ const useOnlineStatus = () => {
 const fmt = (iso) => iso ? new Date(iso).toLocaleDateString('zh-CN') : '—';
 const isOverdue = (hw) => hw.status === 'pending' && hw.dueDate && new Date(hw.dueDate) < new Date();
 
+let _kuroshiroPromise = null;
+const getKuroshiro = () => {
+  if (_kuroshiroPromise) return _kuroshiroPromise;
+  _kuroshiroPromise = (async () => {
+    const k = new Kuroshiro();
+    await k.init(new KuromojiAnalyzer({ dictPath: 'https://cdn.jsdelivr.net/npm/kuromoji@0.1.2/dict/' }));
+    return k;
+  })();
+  return _kuroshiroPromise;
+};
+const toHiragana = async (text) => {
+  const k = await getKuroshiro();
+  return k.convert(text, { to: 'hiragana' });
+};
+
 // ─── UI PRIMITIVES ─────────────────────────────────────────────────────────────
 const Badge = ({ children, color = 'bg-indigo-100 text-indigo-700', onClick, onRemove, className = '' }) => (
   <span onClick={onClick} className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${color} ${onClick ? 'cursor-pointer hover:opacity-75' : ''} ${className}`}>
@@ -324,7 +341,7 @@ const Dashboard = ({ notes, homework, flashcards, onNav, userName }) => {
             ? <p className="text-gray-300 text-sm text-center py-4">本周没有截止的功课 🎉</p>
             : thisWeek.map(h => (
               <div key={h.id} className="flex items-center justify-between py-2 border-b last:border-0">
-                <span className="text-sm text-gray-700 truncate flex-1 mr-2">{h.title}</span>
+                <span className="text-sm text-gray-700 break-words flex-1 mr-2">{h.title}</span>
                 <span className="text-xs text-gray-400 shrink-0">{h.dueDate}</span>
               </div>
             ))
@@ -336,7 +353,7 @@ const Dashboard = ({ notes, homework, flashcards, onNav, userName }) => {
             ? <p className="text-gray-300 text-sm text-center py-4">还没有笔记，快去添加吧！</p>
             : [...notes].reverse().slice(0, 5).map(n => (
               <div key={n.id} className="py-2 border-b last:border-0">
-                <p className="text-sm font-medium text-gray-700 truncate">{n.title}</p>
+                <p className="text-sm font-medium text-gray-700 break-words">{n.title}</p>
                 <div className="flex flex-wrap gap-1 mt-1">{n.tags?.slice(0,3).map(t => <Badge key={t}>{t}</Badge>)}</div>
               </div>
             ))
@@ -472,6 +489,9 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteId
   const [transDir, setTransDir] = useState('ja|zh'); // 'ja|zh' or 'zh|ja'
   const [transLoading, setTransLoading] = useState(false);
   const [transAdded, setTransAdded] = useState(false);
+  const [transSource, setTransSource] = useState('');     // '' | 'flashcard' | 'api'
+  const [transHiragana, setTransHiragana] = useState('');
+  const [transHiraLoading, setTransHiraLoading] = useState(false);
   const [contentExpanded, setContentExpanded] = useState(false);
   const [imagePreview, setImagePreview] = useState(null); // { url, name }
   const [pdfPreview, setPdfPreview] = useState(null); // { url, name }
@@ -570,15 +590,41 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteId
     setItems: setNotes,
   });
 
+  const computeHiragana = async (text) => {
+    setTransHiraLoading(true);
+    try {
+      const hira = await toHiragana(text);
+      setTransHiragana(hira);
+    } catch { setTransHiragana(''); }
+    finally { setTransHiraLoading(false); }
+  };
+
   const translate = async () => {
-    if (!transInput.trim()) return;
+    const q = transInput.trim();
+    if (!q) return;
     setTransLoading(true); setTransResult(''); setTransAdded(false);
+    setTransSource(''); setTransHiragana(''); setTransHiraLoading(false);
+
+    const matched = cards.find(c => transDir === 'ja|zh'
+      ? c.front?.trim() === q
+      : c.back?.trim() === q);
+    if (matched) {
+      const result = transDir === 'ja|zh' ? matched.back : matched.front;
+      setTransResult(result || '');
+      setTransSource('flashcard');
+      setTransLoading(false);
+      if (transDir === 'ja|zh') computeHiragana(q);
+      return;
+    }
+
+    setTransSource('api');
     try {
       const [sl, tl] = transDir === 'ja|zh' ? ['ja', 'zh-CN'] : ['zh-CN', 'ja'];
-      const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sl}&tl=${tl}&dt=t&q=${encodeURIComponent(transInput.trim())}`;
+      const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sl}&tl=${tl}&dt=t&q=${encodeURIComponent(q)}`;
       const res = await fetch(url);
       const data = await res.json();
       setTransResult(data[0]?.map(x => x?.[0] || '').join('') || '翻译失败');
+      if (transDir === 'ja|zh') computeHiragana(q);
     } catch { setTransResult('翻译失败，请检查网络'); }
     finally { setTransLoading(false); }
   };
@@ -731,7 +777,7 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteId
           </div>
           <textarea
             value={transInput}
-            onChange={e => { setTransInput(e.target.value); setTransResult(''); setTransAdded(false); }}
+            onChange={e => { setTransInput(e.target.value); setTransResult(''); setTransAdded(false); setTransSource(''); setTransHiragana(''); setTransHiraLoading(false); }}
             placeholder={transDir === 'ja|zh' ? '输入日语...' : '输入中文...'}
             rows={4}
             className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 resize-none mb-3"
@@ -742,8 +788,16 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteId
           </button>
           {transResult && (
             <div className="bg-gray-50 rounded-lg p-3 mb-3">
-              <p className="text-xs text-gray-400 mb-1">{transDir === 'ja|zh' ? '中文翻译' : '日语翻译'}</p>
+              <p className="text-xs text-gray-400 mb-1">
+                {transDir === 'ja|zh' ? '中文翻译' : '日语翻译'}
+                {transSource === 'flashcard' && <span className="ml-2 text-emerald-600">✓ 来自闪卡</span>}
+              </p>
               <p className="text-sm text-gray-700">{transResult}</p>
+              {transDir === 'ja|zh' && (transHiraLoading || transHiragana) && (
+                <p className="text-xs text-gray-500 mt-2 leading-relaxed">
+                  {transHiraLoading ? '⏳ 正在生成假名…' : `🔊 ${transHiragana}`}
+                </p>
+              )}
             </div>
           )}
           {transResult && (
@@ -2231,7 +2285,7 @@ ${context}
                       <input type="checkbox" checked={selectedNotes.includes(n.id)}
                         onChange={() => toggleNote(n.id)} className="mt-0.5 shrink-0" />
                       <div className="min-w-0">
-                        <p className="text-sm font-medium text-gray-700 truncate">{n.title}</p>
+                        <p className="text-sm font-medium text-gray-700 break-words">{n.title}</p>
                         <p className="text-xs text-gray-400 line-clamp-1">{n.content.slice(0, 60)}…</p>
                       </div>
                     </label>
