@@ -366,10 +366,10 @@ const Dashboard = ({ notes, homework, flashcards, onNav, userName }) => {
 };
 
 // ─── SHARED UTILITIES ─────────────────────────────────────────────────────────
-const CollapsibleTagFilter = ({ tagCounts, total, activeTag, setActiveTag, defaultExpanded = false }) => {
+const CollapsibleTagFilter = ({ tagCounts, total, activeTag, setActiveTag, defaultExpanded = false, noTagCount = 0 }) => {
   const [expanded, setExpanded] = useState(defaultExpanded);
   const [tagSearch, setTagSearch] = useState('');
-  if (Object.keys(tagCounts).length === 0) return null;
+  if (Object.keys(tagCounts).length === 0 && noTagCount === 0) return null;
   return (
     <div className="mb-4">
       <div className="flex items-center justify-between mb-1.5">
@@ -386,6 +386,9 @@ const CollapsibleTagFilter = ({ tagCounts, total, activeTag, setActiveTag, defau
           )}
           <div className="flex flex-wrap gap-1.5">
             <Badge onClick={() => setActiveTag(null)} color={!activeTag ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600'}>全部 ({total})</Badge>
+            {noTagCount > 0 && (
+              <Badge onClick={() => setActiveTag(activeTag === '__no_tag__' ? null : '__no_tag__')} color={activeTag === '__no_tag__' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600'}>无标签 ({noTagCount})</Badge>
+            )}
             {Object.entries(tagCounts).filter(([tag]) => !tagSearch || tag.toLowerCase().includes(tagSearch.toLowerCase())).sort((a,b) => b[1]-a[1]).map(([tag, cnt]) => (
               <Badge key={tag} onClick={() => setActiveTag(activeTag === tag ? null : tag)} color={activeTag === tag ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600'}>{tag} ({cnt})</Badge>
             ))}
@@ -1006,7 +1009,11 @@ const Flashcards = ({ cards, setCards, allTags, onNav, notes = [], navCtx, clear
     if (filterMode === 'due') base = dueCards;
     else if (filterMode === 'completed') base = cards.filter(c => c.completed);
     else base = cards.filter(c => !c.completed);
-    return activeTag ? base.filter(c => c.tags?.includes(activeTag)) : base;
+    return activeTag === '__no_tag__'
+      ? base.filter(c => !c.tags?.length)
+      : activeTag
+        ? base.filter(c => c.tags?.includes(activeTag))
+        : base;
   }, [filterMode, dueCards, cards, activeTag]);
 
   const relatedNotes = useMemo(() => {
@@ -1182,13 +1189,18 @@ const Flashcards = ({ cards, setCards, allTags, onNav, notes = [], navCtx, clear
         const searchFiltered = search ? baseList.filter(c => { const q = search.toLowerCase(); return c.front?.toLowerCase().includes(q) || c.back?.toLowerCase().includes(q); }) : baseList;
         const tagCounts = {};
         searchFiltered.forEach(c => c.tags?.forEach(t => tagCounts[t] = (tagCounts[t]||0)+1));
-        const displayList = activeTag ? searchFiltered.filter(c => c.tags?.includes(activeTag)) : searchFiltered;
+        const noTagCount = searchFiltered.filter(c => !c.tags?.length).length;
+        const displayList = activeTag === '__no_tag__'
+          ? searchFiltered.filter(c => !c.tags?.length)
+          : activeTag
+            ? searchFiltered.filter(c => c.tags?.includes(activeTag))
+            : searchFiltered;
         return <>
-          <CollapsibleTagFilter tagCounts={tagCounts} total={searchFiltered.length} activeTag={activeTag} setActiveTag={setActiveTag} />
+          <CollapsibleTagFilter tagCounts={tagCounts} total={searchFiltered.length} activeTag={activeTag} setActiveTag={setActiveTag} noTagCount={noTagCount} />
           {displayList.length === 0 ? (
             <Card className="text-center py-16">
               <p className="text-4xl mb-3">{filterMode==='due'?'🎉':'🃏'}</p>
-              <p className="text-gray-400">{search ? `没有匹配「${search}」的闪卡` : activeTag ? `没有含「${activeTag}」标签的闪卡` : filterMode==='due'?'今天没有需要复习的闪卡！':filterMode==='completed'?'还没有已完成的闪卡':'还没有闪卡'}</p>
+              <p className="text-gray-400">{search ? `没有匹配「${search}」的闪卡` : activeTag === '__no_tag__' ? '没有无标签的闪卡' : activeTag ? `没有含「${activeTag}」标签的闪卡` : filterMode==='due'?'今天没有需要复习的闪卡！':filterMode==='completed'?'还没有已完成的闪卡':'还没有闪卡'}</p>
               <Btn onClick={openNew} className="mt-4">创建第一张闪卡</Btn>
             </Card>
           ) : (
