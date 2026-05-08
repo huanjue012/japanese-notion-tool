@@ -1155,6 +1155,13 @@ const Flashcards = ({ cards, setCards, allTags, onNav, notes = [], navCtx, clear
     );
   };
 
+  const removeFromGroup = (key, cardId) => {
+    setMergeGroups(prev => prev
+      .map(g => g.key === key ? { ...g, cards: g.cards.filter(c => c.id !== cardId) } : g)
+      .filter(g => g.cards.length >= 2)
+    );
+  };
+
   if (view === 'review' && sessionCards.length > 0) {
     const card = sessionCards[idx] || sessionCards[0];
     return (
@@ -1376,7 +1383,7 @@ const Flashcards = ({ cards, setCards, allTags, onNav, notes = [], navCtx, clear
           </div>
         ) : (
           <>
-            <p className="text-xs text-gray-400 mb-1">共 {mergeGroups.length} 组（正面去除假名读音后相同）。点击「合并保留」保留一张并合并所有背面；点击「删除」移除该卡。</p>
+            <p className="text-xs text-gray-400 mb-1">共 {mergeGroups.length} 组（正面去除假名读音后相同）。「合并保留」保留该卡并合并所有背面；「删除」永久删除该卡；「移出此组」把该卡移出组但不删除，适合不想合并的情况。</p>
             <p className="text-xs text-amber-600 mb-3">⚠️ 每次操作前自动备份，可通过「删除重复」→「恢复备份」撤销。</p>
             <div className="space-y-4 max-h-[55vh] overflow-y-auto pr-1">
               {mergeGroups.map(group => (
@@ -1393,6 +1400,7 @@ const Flashcards = ({ cards, setCards, allTags, onNav, notes = [], navCtx, clear
                         <div className="flex flex-col gap-1 shrink-0">
                           <Btn variant="success" onClick={() => mergeGroup(group.key, card.id)}>合并保留</Btn>
                           <Btn variant="danger" onClick={() => deleteFromGroup(group.key, card.id)}>删除</Btn>
+                          <button className="text-xs text-gray-400 hover:text-gray-600 underline text-center" onClick={() => removeFromGroup(group.key, card.id)}>移出此组</button>
                         </div>
                       </div>
                     ))}
