@@ -477,7 +477,7 @@ const useClaudeExport = ({ items, mapExport, filename, claudePrompt, matchKey, i
     setTimeout(() => setExportToast(''), 3000);
   };
 
-  return { exportForClaude, applyDeleteList, restoreBackup, hasBackup, exportToast, deleteModal, setDeleteModal, deleteJson, setDeleteJson, exportModal, setExportModal, exportPromptText, copyPrompt, downloadJson };
+  return { exportForClaude, applyDeleteList, restoreBackup, hasBackup, setHasBackup, exportToast, deleteModal, setDeleteModal, deleteJson, setDeleteJson, exportModal, setExportModal, exportPromptText, copyPrompt, downloadJson };
 };
 
 // ─── KNOWLEDGE BASE ────────────────────────────────────────────────────────────
@@ -1061,7 +1061,7 @@ const Flashcards = ({ cards, setCards, allTags, onNav, notes = [], navCtx, clear
 
   const del = id => { if (confirm('删除此闪卡？')) setCards(p => p.filter(c => c.id !== id)); };
 
-  const { exportForClaude, applyDeleteList, restoreBackup, hasBackup, exportToast, deleteModal, setDeleteModal, deleteJson, setDeleteJson, exportModal, setExportModal, exportPromptText, copyPrompt, downloadJson } = useClaudeExport({
+  const { exportForClaude, applyDeleteList, restoreBackup, hasBackup, setHasBackup, exportToast, deleteModal, setDeleteModal, deleteJson, setDeleteJson, exportModal, setExportModal, exportPromptText, copyPrompt, downloadJson } = useClaudeExport({
     items: cards,
     mapExport: items => ({ flashcards: items.map(({ front, back, tags }) => ({ front, back, tags })) }),
     filename: 'flashcards-export',
@@ -1070,6 +1070,90 @@ const Flashcards = ({ cards, setCards, allTags, onNav, notes = [], navCtx, clear
     itemLabel: '闪卡',
     setItems: setCards,
   });
+
+  const READING_RE = /[（(][぀-ゟ]+[）)]/g;
+  const normalizeFront = f => f.replace(READING_RE, '').trim();
+
+  const [moveReadingsModal, setMoveReadingsModal] = useState(false);
+  const [moveReadingsPreview, setMoveReadingsPreview] = useState([]);
+  const [mergeModal, setMergeModal] = useState(false);
+  const [mergeGroups, setMergeGroups] = useState([]);
+  const [maintToast, setMaintToast] = useState('');
+
+  const duplicateGroupCount = useMemo(() => {
+    const seen = new Map();
+    for (const card of cards) {
+      const key = normalizeFront(card.front);
+      if (!key) continue;
+      seen.set(key, (seen.get(key) || 0) + 1);
+    }
+    return [...seen.values()].filter(n => n >= 2).length;
+  }, [cards]);
+
+  const openMoveReadingsPreview = () => {
+    const preview = [];
+    for (const card of cards) {
+      const matches = card.front.match(READING_RE);
+      if (!matches) continue;
+      const newFront = card.front.replace(READING_RE, '').trim();
+      if (!newFront) continue;
+      const readingStr = matches.join('');
+      preview.push({ id: card.id, oldFront: card.front, newFront, newBack: readingStr + '\n' + card.back });
+    }
+    setMoveReadingsPreview(preview);
+    setMoveReadingsModal(true);
+  };
+
+  const applyMoveReadings = () => {
+    if (!moveReadingsPreview.length) return;
+    localStorage.setItem('backup_flashcards-export', JSON.stringify(cards));
+    setHasBackup(true);
+    const map = new Map(moveReadingsPreview.map(p => [p.id, p]));
+    setCards(prev => prev.map(c => { const p = map.get(c.id); return p ? { ...c, front: p.newFront, back: p.newBack } : c; }));
+    setMoveReadingsModal(false);
+    setMoveReadingsPreview([]);
+    setMaintToast(`✅ 已整理 ${map.size} 张闪卡的读音`);
+    setTimeout(() => setMaintToast(''), 3000);
+  };
+
+  const openMergeDuplicates = () => {
+    const groups = new Map();
+    for (const card of cards) {
+      const key = normalizeFront(card.front);
+      if (!key) continue;
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(card);
+    }
+    const dupes = [...groups.entries()]
+      .filter(([, g]) => g.length >= 2)
+      .map(([key, cards]) => ({ key, cards }))
+      .sort((a, b) => b.cards.length - a.cards.length);
+    setMergeGroups(dupes);
+    setMergeModal(true);
+  };
+
+  const mergeGroup = (key, keepId) => {
+    const group = mergeGroups.find(g => g.key === key);
+    if (!group) return;
+    const keepCard = group.cards.find(c => c.id === keepId);
+    const others = group.cards.filter(c => c.id !== keepId);
+    localStorage.setItem('backup_flashcards-export', JSON.stringify(cards));
+    setHasBackup(true);
+    const mergedBack = [keepCard.back, ...others.map(c => c.back)].filter(Boolean).join('\n---\n');
+    const deleteIds = new Set(others.map(c => c.id));
+    setCards(prev => prev.filter(c => !deleteIds.has(c.id)).map(c => c.id === keepId ? { ...c, back: mergedBack } : c));
+    setMergeGroups(prev => prev.filter(g => g.key !== key));
+  };
+
+  const deleteFromGroup = (key, deleteId) => {
+    localStorage.setItem('backup_flashcards-export', JSON.stringify(cards));
+    setHasBackup(true);
+    setCards(prev => prev.filter(c => c.id !== deleteId));
+    setMergeGroups(prev => prev
+      .map(g => g.key === key ? { ...g, cards: g.cards.filter(c => c.id !== deleteId) } : g)
+      .filter(g => g.cards.length >= 2)
+    );
+  };
 
   if (view === 'review' && sessionCards.length > 0) {
     const card = sessionCards[idx] || sessionCards[0];
@@ -1167,6 +1251,8 @@ const Flashcards = ({ cards, setCards, allTags, onNav, notes = [], navCtx, clear
           {cards.length > 0 && <Btn variant="danger" onClick={() => { if (confirm(`删除全部 ${cards.length} 张闪卡？此操作不可恢复。`)) setCards([]); }}>🗑 全部删除</Btn>}
           {cards.length > 0 && <Btn variant="secondary" onClick={exportForClaude}>导出给 Claude</Btn>}
           {cards.length > 0 && <Btn variant="secondary" onClick={() => setDeleteModal(true)}>🗑 删除重复</Btn>}
+          {cards.length > 0 && <Btn variant="secondary" onClick={openMoveReadingsPreview}>📖 整理读音</Btn>}
+          {cards.length > 0 && <Btn variant="secondary" onClick={openMergeDuplicates}>🔀 合并重复{duplicateGroupCount > 0 && <span className="ml-1 bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 align-middle">{duplicateGroupCount}</span>}</Btn>}
           <Btn variant="secondary" onClick={openNew}>+ 新建</Btn>
           {cards.length > 0 && <Btn onClick={startReview}>开始复习 {dueCards.length > 0 && `(${dueCards.length} 到期)`}</Btn>}
         </div>
@@ -1254,6 +1340,71 @@ const Flashcards = ({ cards, setCards, allTags, onNav, notes = [], navCtx, clear
       </Modal>
     )}
     {exportToast && <div className="fixed bottom-4 right-4 bg-green-600 text-white px-4 py-2 rounded-xl shadow-lg z-50 text-sm">{exportToast}</div>}
+    {maintToast && <div className="fixed bottom-14 right-4 bg-green-600 text-white px-4 py-2 rounded-xl shadow-lg z-50 text-sm">{maintToast}</div>}
+    {moveReadingsModal && (
+      <Modal open={true} title="整理读音 — 预览" onClose={() => { setMoveReadingsModal(false); setMoveReadingsPreview([]); }} wide>
+        {moveReadingsPreview.length === 0 ? (
+          <p className="text-sm text-gray-500">没有找到含有假名读音的闪卡正面。</p>
+        ) : (
+          <>
+            <p className="text-sm text-gray-600 mb-3">将对 <strong>{moveReadingsPreview.length}</strong> 张闪卡进行整理：把正面的假名读音移至背面开头。</p>
+            <div className="max-h-72 overflow-y-auto border rounded-lg divide-y text-xs font-mono mb-4">
+              {moveReadingsPreview.slice(0, 20).map(p => (
+                <div key={p.id} className="px-3 py-2 space-y-1">
+                  <div><span className="text-red-400 line-through mr-2">{p.oldFront}</span><span className="text-green-600">→ {p.newFront}</span></div>
+                  <div className="text-gray-400">背面新增：<span className="text-indigo-500">{p.newBack.split('\n')[0]}</span></div>
+                </div>
+              ))}
+              {moveReadingsPreview.length > 20 && <p className="px-3 py-2 text-gray-400">…以及另外 {moveReadingsPreview.length - 20} 张</p>}
+            </div>
+            <p className="text-xs text-amber-600 mb-3">⚠️ 操作前将自动备份。可通过「删除重复」面板的「恢复备份」撤销。</p>
+            <div className="flex justify-end gap-2">
+              <Btn variant="secondary" onClick={() => { setMoveReadingsModal(false); setMoveReadingsPreview([]); }}>取消</Btn>
+              <Btn onClick={applyMoveReadings}>确认整理 {moveReadingsPreview.length} 张</Btn>
+            </div>
+          </>
+        )}
+      </Modal>
+    )}
+    {mergeModal && (
+      <Modal open={true} title={`合并相似闪卡 — ${mergeGroups.length} 组重复`} onClose={() => setMergeModal(false)} wide>
+        {mergeGroups.length === 0 ? (
+          <div className="text-center py-6">
+            <p className="text-2xl mb-2">🎉</p>
+            <p className="text-sm text-gray-500">没有找到重复的闪卡（正面归一化后均不同）。</p>
+            <div className="mt-4"><Btn variant="secondary" onClick={() => setMergeModal(false)}>关闭</Btn></div>
+          </div>
+        ) : (
+          <>
+            <p className="text-xs text-gray-400 mb-1">共 {mergeGroups.length} 组（正面去除假名读音后相同）。点击「合并保留」保留一张并合并所有背面；点击「删除」移除该卡。</p>
+            <p className="text-xs text-amber-600 mb-3">⚠️ 每次操作前自动备份，可通过「删除重复」→「恢复备份」撤销。</p>
+            <div className="space-y-4 max-h-[55vh] overflow-y-auto pr-1">
+              {mergeGroups.map(group => (
+                <div key={group.key} className="border border-gray-200 rounded-xl p-3">
+                  <p className="text-xs font-semibold text-gray-500 mb-2">归一化正面：<span className="text-indigo-600 font-normal">{group.key}</span><span className="ml-2 text-gray-300">({group.cards.length} 张)</span></p>
+                  <div className="space-y-2">
+                    {group.cards.map(card => (
+                      <div key={card.id} className="flex gap-2 items-start bg-gray-50 rounded-lg px-3 py-2">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-800 truncate">{card.front}</p>
+                          <p className="text-xs text-gray-400 mt-0.5 line-clamp-2">{card.back}</p>
+                          {card.tags?.length > 0 && <div className="flex flex-wrap gap-1 mt-1">{card.tags.map(t => <span key={t} className="px-1.5 py-0.5 bg-indigo-100 text-indigo-600 rounded text-xs">{t}</span>)}</div>}
+                        </div>
+                        <div className="flex flex-col gap-1 shrink-0">
+                          <Btn variant="success" onClick={() => mergeGroup(group.key, card.id)}>合并保留</Btn>
+                          <Btn variant="danger" onClick={() => deleteFromGroup(group.key, card.id)}>删除</Btn>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="flex justify-end mt-4"><Btn variant="secondary" onClick={() => setMergeModal(false)}>完成</Btn></div>
+          </>
+        )}
+      </Modal>
+    )}
     </>
   );
 };
