@@ -500,6 +500,8 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteId
   const [imagePreview, setImagePreview] = useState(null); // { url, name }
   const [pdfPreview, setPdfPreview] = useState(null); // { url, name }
   const [bookmarkFilter, setBookmarkFilter] = useState(false);
+  const [notesVisible, setNotesVisible] = useState(100);
+  const notesSentinel = useRef(null);
 
   const tagCounts = useMemo(() => {
     const c = {};
@@ -520,6 +522,14 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteId
     }
     return result.sort((a,b) => new Date(b.updatedAt||b.createdAt||0) - new Date(a.updatedAt||a.createdAt||0));
   }, [notes, search, activeTag, importedNoteIds, bookmarkFilter]);
+
+  useEffect(() => { setNotesVisible(100); }, [filtered]);
+  useEffect(() => {
+    if (!notesSentinel.current) return;
+    const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) setNotesVisible(v => v + 100); }, { threshold: 0 });
+    obs.observe(notesSentinel.current);
+    return () => obs.disconnect();
+  }, [notesVisible]);
 
   const toggleBookmark = id => setNotes(p => p.map(n => n.id === id ? { ...n, bookmarked: !n.bookmarked, updatedAt: new Date().toISOString() } : n));
   const openNew = () => { setForm({ title: '', content: '', tags: activeTag ? [activeTag] : [], images: [] }); setContentExpanded(false); setModal('new'); };
@@ -737,41 +747,46 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteId
         </Card>
       ) : (
         <div className="grid md:grid-cols-2 gap-3">
-          {filtered.map(n => (
-            <Card key={n.id} onClick={() => openEdit(n)}>
-              <div className="flex items-start justify-between mb-1">
-                <h3 className="font-semibold text-gray-800 text-sm leading-snug flex-1 pr-2">{n.title}</h3>
-                <div className="flex items-center gap-1 shrink-0">
-                  <button onClick={e => { e.stopPropagation(); toggleBookmark(n.id); }}
-                    className={`text-base leading-none transition-colors ${n.bookmarked ? 'text-yellow-400' : 'text-gray-200 hover:text-yellow-300'}`}>
-                    {n.bookmarked ? '★' : '☆'}
-                  </button>
-                  <button onClick={e => { e.stopPropagation(); del(n.id); }} className="text-gray-200 hover:text-red-400 text-base">🗑</button>
-                </div>
-              </div>
-              <div className="mb-3 text-xs text-gray-500 leading-relaxed"
-                style={{display:'-webkit-box',WebkitLineClamp:3,WebkitBoxOrient:'vertical',overflow:'hidden'}}>
-                {(n.content||'').replace(/#{1,6}\s/g,'').replace(/\*\*/g,'').replace(/\*/g,'').replace(/`/g,'').replace(/\[([^\]]+)\]\([^)]+\)/g,'$1').replace(/\n/g,' ').trim()}
-              </div>
-              {n.images?.length > 0 && (
-                <div className="flex flex-wrap gap-1 mb-2">
-                  {n.images.map((att, i) => att.type === 'pdf' ? (
-                    <button key={i} onClick={e => { e.stopPropagation(); setPdfPreview({ url: att.url, name: att.name }); }}
-                      className="w-14 h-14 border border-gray-100 rounded-lg bg-red-50 flex flex-col items-center justify-center hover:bg-red-100 transition-colors cursor-pointer">
-                      <span className="text-xl">📄</span>
-                      <span className="text-xs text-gray-400 truncate w-full text-center px-1">{att.name?.split('.')[0]?.slice(0,6)}</span>
+          {filtered.slice(0, notesVisible).map((n, i) => (
+            <React.Fragment key={n.id}>
+              <Card onClick={() => openEdit(n)}>
+                <div className="flex items-start justify-between mb-1">
+                  <h3 className="font-semibold text-gray-800 text-sm leading-snug flex-1 pr-2">{n.title}</h3>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button onClick={e => { e.stopPropagation(); toggleBookmark(n.id); }}
+                      className={`text-base leading-none transition-colors ${n.bookmarked ? 'text-yellow-400' : 'text-gray-200 hover:text-yellow-300'}`}>
+                      {n.bookmarked ? '★' : '☆'}
                     </button>
-                  ) : (
-                    <img key={i} src={att.url} onClick={e => { e.stopPropagation(); setImagePreview({ url: att.url, name: att.name }); }}
-                      className="w-14 h-14 object-cover rounded-lg border border-gray-100 cursor-pointer hover:opacity-80 transition-opacity" />
-                  ))}
+                    <button onClick={e => { e.stopPropagation(); del(n.id); }} className="text-gray-200 hover:text-red-400 text-base">🗑</button>
+                  </div>
                 </div>
+                <div className="mb-3 text-xs text-gray-500 leading-relaxed"
+                  style={{display:'-webkit-box',WebkitLineClamp:3,WebkitBoxOrient:'vertical',overflow:'hidden'}}>
+                  {(n.content||'').replace(/#{1,6}\s/g,'').replace(/\*\*/g,'').replace(/\*/g,'').replace(/`/g,'').replace(/\[([^\]]+)\]\([^)]+\)/g,'$1').replace(/\n/g,' ').trim()}
+                </div>
+                {n.images?.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mb-2">
+                    {n.images.map((att, i) => att.type === 'pdf' ? (
+                      <button key={i} onClick={e => { e.stopPropagation(); setPdfPreview({ url: att.url, name: att.name }); }}
+                        className="w-14 h-14 border border-gray-100 rounded-lg bg-red-50 flex flex-col items-center justify-center hover:bg-red-100 transition-colors cursor-pointer">
+                        <span className="text-xl">📄</span>
+                        <span className="text-xs text-gray-400 truncate w-full text-center px-1">{att.name?.split('.')[0]?.slice(0,6)}</span>
+                      </button>
+                    ) : (
+                      <img key={i} src={att.url} onClick={e => { e.stopPropagation(); setImagePreview({ url: att.url, name: att.name }); }}
+                        className="w-14 h-14 object-cover rounded-lg border border-gray-100 cursor-pointer hover:opacity-80 transition-opacity" />
+                    ))}
+                  </div>
+                )}
+                <div className="flex flex-wrap gap-1">
+                  {n.tags?.map(t => <Badge key={t}>{t}</Badge>)}
+                </div>
+                <p className="text-xs text-gray-300 mt-2">{fmt(n.updatedAt || n.createdAt)}</p>
+              </Card>
+              {i === Math.floor(notesVisible * 0.7) - 1 && (
+                <div ref={notesSentinel} style={{gridColumn:'1/-1',height:0}} />
               )}
-              <div className="flex flex-wrap gap-1">
-                {n.tags?.map(t => <Badge key={t}>{t}</Badge>)}
-              </div>
-              <p className="text-xs text-gray-300 mt-2">{fmt(n.updatedAt || n.createdAt)}</p>
-            </Card>
+            </React.Fragment>
           ))}
         </div>
       ))}
@@ -999,6 +1014,8 @@ const Flashcards = ({ cards, setCards, allTags, onNav, notes = [], navCtx, clear
     }
   }, [navCtx]);
   const [search, setSearch] = useState('');
+  const [cardsVisible, setCardsVisible] = useState(100);
+  const cardsSentinel = useRef(null);
   const [idx, setIdx] = useState(0);
   const [flipped, setFlipped] = useState(false);
   const [noteIdx, setNoteIdx] = useState(0);
@@ -1015,6 +1032,14 @@ const Flashcards = ({ cards, setCards, allTags, onNav, notes = [], navCtx, clear
         ? base.filter(c => c.tags?.includes(activeTag))
         : base;
   }, [filterMode, dueCards, cards, activeTag]);
+
+  useEffect(() => { setCardsVisible(100); }, [filterMode, activeTag, search]);
+  useEffect(() => {
+    if (!cardsSentinel.current) return;
+    const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) setCardsVisible(v => v + 100); }, { threshold: 0 });
+    obs.observe(cardsSentinel.current);
+    return () => obs.disconnect();
+  }, [cardsVisible]);
 
   const relatedNotes = useMemo(() => {
     if (!flipped || !sessionCards[idx]) return [];
@@ -1298,26 +1323,31 @@ const Flashcards = ({ cards, setCards, allTags, onNav, notes = [], navCtx, clear
             </Card>
           ) : (
             <div className="grid md:grid-cols-3 gap-3">
-              {displayList.map(c => (
-            <Card key={c.id}>
-              <div className="flex justify-between items-start mb-1">
-                <p className="text-sm font-semibold text-gray-800 flex-1 pr-2">{c.front}</p>
-                <div className="flex gap-1 shrink-0">
-                  {!c.completed && <button onClick={() => openEdit(c)} className="text-gray-200 hover:text-blue-400 text-sm">✏️</button>}
-                  <button onClick={() => del(c.id)} className="text-gray-200 hover:text-red-400 text-sm">🗑</button>
-                </div>
-              </div>
-              <p className="text-xs text-gray-400 border-t pt-2">{c.back}</p>
-              <div className="flex flex-wrap gap-1 mt-2">
-                {c.completed && <Badge color="bg-emerald-100 text-emerald-700">✓ 已完成</Badge>}
-                {c.tags?.map(t => <Badge key={t}>{t}</Badge>)}
-              </div>
-              {c.completed
-                ? <button onClick={() => toggleComplete(c.id)} className="text-xs text-gray-300 hover:text-indigo-400 mt-2 transition-colors">↩ 恢复复习</button>
-                : c.nextReview && <p className="text-xs text-gray-300 mt-2">下次复习：{fmt(c.nextReview)}</p>
-              }
-            </Card>
-          ))}
+              {displayList.slice(0, cardsVisible).map((c, i) => (
+                <React.Fragment key={c.id}>
+                  <Card>
+                    <div className="flex justify-between items-start mb-1">
+                      <p className="text-sm font-semibold text-gray-800 flex-1 pr-2">{c.front}</p>
+                      <div className="flex gap-1 shrink-0">
+                        {!c.completed && <button onClick={() => openEdit(c)} className="text-gray-200 hover:text-blue-400 text-sm">✏️</button>}
+                        <button onClick={() => del(c.id)} className="text-gray-200 hover:text-red-400 text-sm">🗑</button>
+                      </div>
+                    </div>
+                    <p className="text-xs text-gray-400 border-t pt-2">{c.back}</p>
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {c.completed && <Badge color="bg-emerald-100 text-emerald-700">✓ 已完成</Badge>}
+                      {c.tags?.map(t => <Badge key={t}>{t}</Badge>)}
+                    </div>
+                    {c.completed
+                      ? <button onClick={() => toggleComplete(c.id)} className="text-xs text-gray-300 hover:text-indigo-400 mt-2 transition-colors">↩ 恢复复习</button>
+                      : c.nextReview && <p className="text-xs text-gray-300 mt-2">下次复习：{fmt(c.nextReview)}</p>
+                    }
+                  </Card>
+                  {i === Math.floor(cardsVisible * 0.7) - 1 && (
+                    <div ref={cardsSentinel} style={{gridColumn:'1/-1',height:0}} />
+                  )}
+                </React.Fragment>
+              ))}
             </div>
           )}
         </>;
