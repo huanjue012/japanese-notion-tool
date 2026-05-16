@@ -1,0 +1,743 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"/><title>日语学习路线图</title><style>
+/* cspell:disable-file */
+/* webkit printing magic: print all background colors */
+html {
+	-webkit-print-color-adjust: exact;
+}
+* {
+	box-sizing: border-box;
+	-webkit-print-color-adjust: exact;
+}
+
+html,
+body {
+	margin: 0;
+	padding: 0;
+}
+@media only screen {
+	body {
+		margin: 2em auto;
+		max-width: 900px;
+		color: rgb(55, 53, 47);
+	}
+}
+
+body {
+	line-height: 1.5;
+	white-space: pre-wrap;
+}
+
+a,
+a.visited {
+	color: inherit;
+	text-decoration: underline;
+}
+
+.pdf-relative-link-path {
+	font-size: 80%;
+	color: #444;
+}
+
+h1,
+h2,
+h3 {
+	letter-spacing: -0.01em;
+	line-height: 1.2;
+	font-weight: 600;
+	margin-bottom: 0;
+}
+
+/* Override strong tags inside headings to maintain consistent weight */
+h1 strong,
+h2 strong,
+h3 strong {
+	font-weight: 600;
+}
+
+.page-title {
+	font-size: 2.5rem;
+	font-weight: 700;
+	margin-top: 0;
+	margin-bottom: 0.75em;
+}
+
+h1 {
+	font-size: 1.875rem;
+	margin-top: 1.875rem;
+}
+
+h2 {
+	font-size: 1.5rem;
+	margin-top: 1.5rem;
+}
+
+h3 {
+	font-size: 1.25rem;
+	margin-top: 1.25rem;
+}
+
+.source {
+	border: 1px solid #ddd;
+	border-radius: 3px;
+	padding: 1.5em;
+	word-break: break-all;
+}
+
+.callout {
+	border-radius: 10px;
+	padding: 1rem;
+}
+
+figure {
+	margin: 1.25em 0;
+	page-break-inside: avoid;
+}
+
+figcaption {
+	opacity: 0.5;
+	font-size: 85%;
+	margin-top: 0.5em;
+}
+
+mark {
+	background-color: transparent;
+}
+
+.indented {
+	padding-left: 1.5em;
+}
+
+hr {
+	background: transparent;
+	display: block;
+	width: 100%;
+	height: 1px;
+	visibility: visible;
+	border: none;
+	border-bottom: 1px solid rgba(55, 53, 47, 0.09);
+}
+
+img {
+	max-width: 100%;
+}
+
+@media only print {
+	img {
+		max-height: 100vh;
+		object-fit: contain;
+	}
+
+	table.collection-content {
+		width: 100%;
+		table-layout: fixed;
+	}
+
+	table.collection-content th,
+	table.collection-content td {
+		overflow-wrap: anywhere;
+	}
+
+	table.collection-content td > .user,
+	table.collection-content td > time {
+		white-space: pre-wrap;
+	}
+}
+
+@page {
+	margin: 1in;
+}
+
+.collection-content-wrapper {
+	overflow-x: auto;
+}
+
+@media only print {
+	.collection-content-wrapper {
+		overflow-x: visible;
+	}
+}
+
+.collection-content {
+	font-size: 0.875rem;
+}
+
+.collection-content td {
+	white-space: pre-wrap;
+	word-break: break-word;
+}
+
+.column-list {
+	display: flex;
+	gap: 46px;
+}
+
+.column {
+	min-width: 0;
+	overflow: hidden;
+}
+
+.column > *:first-child {
+	margin-top: 0;
+}
+
+.table_of_contents-item {
+	display: block;
+	font-size: 0.875rem;
+	line-height: 1.3;
+	padding: 0.125rem;
+}
+
+.table_of_contents-indent-1 {
+	margin-left: 1.5rem;
+}
+
+.table_of_contents-indent-2 {
+	margin-left: 3rem;
+}
+
+.table_of_contents-indent-3 {
+	margin-left: 4.5rem;
+}
+
+.table_of_contents-link {
+	text-decoration: none;
+	opacity: 0.7;
+	border-bottom: 1px solid rgba(55, 53, 47, 0.18);
+}
+
+table,
+th,
+td {
+	border: 1px solid rgba(55, 53, 47, 0.09);
+}
+
+table {
+	border-collapse: collapse;
+	border-left: none;
+	border-right: none;
+}
+
+th,
+td {
+	font-weight: normal;
+	padding: 0.25em 0.5em;
+	line-height: 1.5;
+	min-height: 1.5em;
+	text-align: left;
+}
+
+th {
+	color: rgba(55, 53, 47, 0.6);
+}
+
+ol,
+ul {
+	margin: 0;
+	margin-block-start: 0.6em;
+	margin-block-end: 0.6em;
+}
+
+li > ol:first-child,
+li > ul:first-child {
+	margin-block-start: 0.6em;
+}
+
+ul > li {
+	list-style: disc;
+}
+
+ul.to-do-list {
+	padding-inline-start: 0;
+}
+
+ul.to-do-list > li {
+	list-style: none;
+}
+
+.to-do-children-checked {
+	text-decoration: line-through;
+	opacity: 0.375;
+}
+
+ul.toggle > li {
+	list-style: none;
+}
+
+ul {
+	padding-inline-start: 1.7em;
+}
+
+ul > li {
+	padding-left: 0.1em;
+}
+
+ol {
+	padding-inline-start: 1.6em;
+}
+
+ol.numbered-list.numbered-list-digits-2 {
+	padding-inline-start: 2em;
+}
+
+ol.numbered-list.numbered-list-digits-3plus {
+	padding-inline-start: 2.4em;
+}
+
+ol > li {
+	padding-left: 0.2em;
+}
+
+.mono ol {
+	padding-inline-start: 2em;
+}
+
+.mono ol > li {
+	text-indent: -0.4em;
+}
+
+.toggle {
+	padding-inline-start: 0em;
+	list-style-type: none;
+}
+
+/* Indent toggle children */
+.toggle > li > details {
+	padding-left: 1.7em;
+}
+
+.toggle > li > details > summary {
+	margin-left: -1.1em;
+}
+
+.selected-value {
+	display: inline-block;
+	padding: 0 0.5em;
+	background: rgba(206, 205, 202, 0.5);
+	border-radius: 3px;
+	margin-right: 0.5em;
+	margin-top: 0.3em;
+	margin-bottom: 0.3em;
+	white-space: nowrap;
+}
+
+.collection-title {
+	display: inline-block;
+	margin-right: 1em;
+}
+
+.page-description {
+	margin-bottom: 2em;
+}
+
+.simple-table {
+	margin-top: 1em;
+	font-size: 0.875rem;
+	empty-cells: show;
+}
+.simple-table td {
+	height: 29px;
+	min-width: 120px;
+}
+
+.simple-table th {
+	height: 29px;
+	min-width: 120px;
+}
+
+.simple-table-header-color {
+	background: rgb(247, 246, 243);
+	color: black;
+}
+.simple-table-header {
+	font-weight: 500;
+}
+
+time {
+	opacity: 0.5;
+}
+
+.icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	max-width: 1.2em;
+	max-height: 1.2em;
+	text-decoration: none;
+	vertical-align: text-bottom;
+	margin-right: 0.5em;
+}
+
+img.icon {
+	border-radius: 3px;
+}
+
+.callout img.notion-static-icon {
+	width: 1em;
+	height: 1em;
+}
+
+.callout p {
+	margin: 0;
+}
+
+.callout h1,
+.callout h2,
+.callout h3 {
+	margin: 0 0 0.6rem;
+}
+
+.user-icon {
+	width: 1.5em;
+	height: 1.5em;
+	border-radius: 100%;
+	margin-right: 0.5rem;
+}
+
+.user-icon-inner {
+	font-size: 0.8em;
+}
+
+.text-icon {
+	border: 1px solid #000;
+	text-align: center;
+}
+
+.page-cover-image {
+	display: block;
+	object-fit: cover;
+	width: 100%;
+	max-height: 30vh;
+}
+
+.page-header-icon {
+	font-size: 3rem;
+	margin-bottom: 1rem;
+}
+
+.page-header-icon-with-cover {
+	margin-top: -0.72em;
+	margin-left: 0.07em;
+}
+
+.page-header-icon img {
+	border-radius: 3px;
+}
+
+.link-to-page {
+	margin: 1em 0;
+	padding: 0;
+	border: none;
+	font-weight: 500;
+}
+
+p > .user {
+	opacity: 0.5;
+}
+
+td > .user,
+td > time {
+	white-space: nowrap;
+}
+
+input[type="checkbox"] {
+	transform: scale(1.5);
+	margin-right: 0.6em;
+	vertical-align: middle;
+}
+
+p {
+	margin-top: 0.5em;
+	margin-bottom: 0.5em;
+}
+
+.image {
+	border: none;
+	margin: 1.5em 0;
+	padding: 0;
+	border-radius: 0;
+	text-align: center;
+}
+
+.code,
+code {
+	background: rgba(135, 131, 120, 0.15);
+	border-radius: 3px;
+	padding: 0.2em 0.4em;
+	border-radius: 3px;
+	font-size: 85%;
+	tab-size: 2;
+}
+
+code {
+	color: #eb5757;
+}
+
+.code {
+	padding: 1.5em 1em;
+}
+
+.code-wrap {
+	white-space: pre-wrap;
+	word-break: break-all;
+}
+
+.code > code {
+	background: none;
+	padding: 0;
+	font-size: 100%;
+	color: inherit;
+}
+
+blockquote {
+	font-size: 1em;
+	margin: 1em 0;
+	padding-left: 1em;
+	border-left: 3px solid rgb(55, 53, 47);
+}
+
+blockquote.quote-large {
+	font-size: 1.25em;
+}
+
+.bookmark {
+	text-decoration: none;
+	max-height: 8em;
+	padding: 0;
+	display: flex;
+	width: 100%;
+	align-items: stretch;
+}
+
+.bookmark-title {
+	font-size: 0.85em;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	height: 1.75em;
+	white-space: nowrap;
+}
+
+.bookmark-text {
+	display: flex;
+	flex-direction: column;
+}
+
+.bookmark-info {
+	flex: 4 1 180px;
+	padding: 12px 14px 14px;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+}
+
+.bookmark-image {
+	width: 33%;
+	flex: 1 1 180px;
+	display: block;
+	position: relative;
+	object-fit: cover;
+	border-radius: 1px;
+}
+
+.bookmark-description {
+	color: rgba(55, 53, 47, 0.6);
+	font-size: 0.75em;
+	overflow: hidden;
+	max-height: 4.5em;
+	word-break: break-word;
+}
+
+.bookmark-href {
+	font-size: 0.75em;
+	margin-top: 0.25em;
+}
+
+.sans { font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", "Noto Sans Arabic", "Noto Sans Hebrew", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol"; }
+.code { font-family: "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace; }
+.serif { font-family: Lyon-Text, Georgia, ui-serif, serif; }
+.mono { font-family: iawriter-mono, Nitti, Menlo, Courier, monospace; }
+.pdf .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", "Noto Sans Arabic", "Noto Sans Hebrew", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK JP'; }
+.pdf:lang(zh-CN) .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", "Noto Sans Arabic", "Noto Sans Hebrew", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK SC'; }
+.pdf:lang(zh-TW) .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", "Noto Sans Arabic", "Noto Sans Hebrew", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK TC'; }
+.pdf:lang(ko-KR) .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", "Noto Sans Arabic", "Noto Sans Hebrew", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK KR'; }
+.pdf .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK JP'; }
+.pdf:lang(zh-CN) .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK SC'; }
+.pdf:lang(zh-TW) .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK TC'; }
+.pdf:lang(ko-KR) .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK KR'; }
+.pdf .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK JP'; }
+.pdf:lang(zh-CN) .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK SC'; }
+.pdf:lang(zh-TW) .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK TC'; }
+.pdf:lang(ko-KR) .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK KR'; }
+.pdf .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK JP'; }
+.pdf:lang(zh-CN) .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK SC'; }
+.pdf:lang(zh-TW) .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK TC'; }
+.pdf:lang(ko-KR) .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK KR'; }
+.highlight-default {
+	color: rgba(44, 44, 43, 1);
+}
+.highlight-gray {
+	color: rgba(125, 122, 117, 1);
+	fill: rgba(125, 122, 117, 1);
+}
+.highlight-brown {
+	color: rgba(159, 118, 90, 1);
+	fill: rgba(159, 118, 90, 1);
+}
+.highlight-orange {
+	color: rgba(210, 123, 45, 1);
+	fill: rgba(210, 123, 45, 1);
+}
+.highlight-yellow {
+	color: rgba(203, 148, 52, 1);
+	fill: rgba(203, 148, 52, 1);
+}
+.highlight-teal {
+	color: rgba(80, 148, 110, 1);
+	fill: rgba(80, 148, 110, 1);
+}
+.highlight-blue {
+	color: rgba(56, 125, 201, 1);
+	fill: rgba(56, 125, 201, 1);
+}
+.highlight-purple {
+	color: rgba(154, 107, 180, 1);
+	fill: rgba(154, 107, 180, 1);
+}
+.highlight-pink {
+	color: rgba(193, 76, 138, 1);
+	fill: rgba(193, 76, 138, 1);
+}
+.highlight-red {
+	color: rgba(207, 81, 72, 1);
+	fill: rgba(207, 81, 72, 1);
+}
+.highlight-default_background {
+	color: rgba(44, 44, 43, 1);
+}
+.highlight-gray_background {
+	background: rgba(42, 28, 0, 0.07);
+}
+.highlight-brown_background {
+	background: rgba(139, 46, 0, 0.086);
+}
+.highlight-orange_background {
+	background: rgba(224, 101, 1, 0.129);
+}
+.highlight-yellow_background {
+	background: rgba(211, 168, 0, 0.137);
+}
+.highlight-teal_background {
+	background: rgba(0, 100, 45, 0.09);
+}
+.highlight-blue_background {
+	background: rgba(0, 124, 215, 0.094);
+}
+.highlight-purple_background {
+	background: rgba(102, 0, 178, 0.078);
+}
+.highlight-pink_background {
+	background: rgba(197, 0, 93, 0.086);
+}
+.highlight-red_background {
+	background: rgba(223, 22, 0, 0.094);
+}
+.block-color-default {
+	color: inherit;
+	fill: inherit;
+}
+.block-color-gray {
+	color: rgba(125, 122, 117, 1);
+	fill: rgba(125, 122, 117, 1);
+}
+.block-color-brown {
+	color: rgba(159, 118, 90, 1);
+	fill: rgba(159, 118, 90, 1);
+}
+.block-color-orange {
+	color: rgba(210, 123, 45, 1);
+	fill: rgba(210, 123, 45, 1);
+}
+.block-color-yellow {
+	color: rgba(203, 148, 52, 1);
+	fill: rgba(203, 148, 52, 1);
+}
+.block-color-teal {
+	color: rgba(80, 148, 110, 1);
+	fill: rgba(80, 148, 110, 1);
+}
+.block-color-blue {
+	color: rgba(56, 125, 201, 1);
+	fill: rgba(56, 125, 201, 1);
+}
+.block-color-purple {
+	color: rgba(154, 107, 180, 1);
+	fill: rgba(154, 107, 180, 1);
+}
+.block-color-pink {
+	color: rgba(193, 76, 138, 1);
+	fill: rgba(193, 76, 138, 1);
+}
+.block-color-red {
+	color: rgba(207, 81, 72, 1);
+	fill: rgba(207, 81, 72, 1);
+}
+.block-color-default_background {
+	color: inherit;
+	fill: inherit;
+}
+.block-color-gray_background {
+	background: rgba(240, 239, 237, 1);
+}
+.block-color-brown_background {
+	background: rgba(245, 237, 233, 1);
+}
+.block-color-orange_background {
+	background: rgba(251, 235, 222, 1);
+}
+.block-color-yellow_background {
+	background: rgba(249, 243, 220, 1);
+}
+.block-color-teal_background {
+	background: rgba(232, 241, 236, 1);
+}
+.block-color-blue_background {
+	background: rgba(229, 242, 252, 1);
+}
+.block-color-purple_background {
+	background: rgba(243, 235, 249, 1);
+}
+.block-color-pink_background {
+	background: rgba(250, 233, 241, 1);
+}
+.block-color-red_background {
+	background: rgba(252, 233, 231, 1);
+}
+.select-value-color-default { background-color: rgba(42, 28, 0, 0.07); }
+.select-value-color-gray { background-color: rgba(28, 19, 1, 0.11); }
+.select-value-color-brown { background-color: rgba(127, 51, 0, 0.156); }
+.select-value-color-orange { background-color: rgba(196, 88, 0, 0.203); }
+.select-value-color-yellow { background-color: rgba(209, 156, 0, 0.282); }
+.select-value-color-green { background-color: rgba(0, 96, 38, 0.156); }
+.select-value-color-blue { background-color: rgba(0, 118, 217, 0.203); }
+.select-value-color-purple { background-color: rgba(92, 0, 163, 0.141); }
+.select-value-color-pink { background-color: rgba(183, 0, 78, 0.152); }
+.select-value-color-red { background-color: rgba(206, 24, 0, 0.164); }
+
+.checkbox {
+	display: inline-flex;
+	vertical-align: text-bottom;
+	width: 16;
+	height: 16;
+	background-size: 16px;
+	margin-left: 2px;
+	margin-right: 5px;
+}
+
+.checkbox-on {
+	background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%0A%3Crect%20width%3D%2216%22%20height%3D%2216%22%20fill%3D%22%2358A9D7%22%2F%3E%0A%3Cpath%20d%3D%22M6.71429%2012.2852L14%204.9995L12.7143%203.71436L6.71429%209.71378L3.28571%206.2831L2%207.57092L6.71429%2012.2852Z%22%20fill%3D%22white%22%2F%3E%0A%3C%2Fsvg%3E");
+}
+
+.checkbox-off {
+	background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%0A%3Crect%20x%3D%220.75%22%20y%3D%220.75%22%20width%3D%2214.5%22%20height%3D%2214.5%22%20fill%3D%22white%22%20stroke%3D%22%2336352F%22%20stroke-width%3D%221.5%22%2F%3E%0A%3C%2Fsvg%3E");
+}
+	
+</style></head><body><article id="3627ca8b-1873-8132-86ed-ea79ed4d1e93" class="page sans"><header><div class="page-header-icon undefined"><span class="icon">🌸</span></div><h1 class="page-title" dir="auto">日语学习路线图</h1><p class="page-description" dir="auto"></p></header><div class="page-body"><div style="display:contents" dir="auto"><p id="1c47b4c2-acc8-4464-bcf0-09202b910796" class=""><strong>创建日期</strong>：2026-05-16  </p></div><div style="display:contents" dir="auto"><p id="d733dcac-1576-4803-ba96-d1f162a43331" class=""><strong>初始评估起点</strong>：《大家的日本语》第 18 课 / N5 中段</p></div><div style="display:contents" dir="auto"><blockquote id="52993f95-0d32-48ff-92d2-08d0c0548bc3" class="">这是你现在的状态 + 18 个月路线图。下个月同一天重看这个页，填「进度对比」部分。</blockquote></div><div style="display:contents" dir="auto"><hr id="e48bdde5-5cad-4a8c-b052-3bc2a94a5a4a"/></div><div style="display:contents" dir="auto"><h2 id="3aecd7fd-aac5-4e05-93fa-d35b01f2dee9" class="">📊 当前能力评估（2026-05-16 基线）</h2></div><div style="display:contents" dir="ltr"><table id="db131ea9-ba0c-4615-8924-ca4b7369eeaa" class="simple-table"><thead class="simple-table-header"><div style="display:contents" dir="ltr"><tr id="df03534c-0190-4dcc-ab23-476461180721"><th id="qHkL" class="simple-table-header-color simple-table-header">能力</th><th id="AxPH" class="simple-table-header-color simple-table-header">等级</th><th id="oD[Q" class="simple-table-header-color simple-table-header">说明</th></tr></div></thead><tbody><div style="display:contents" dir="ltr"><tr id="20cafdd3-08e3-4bcd-ae22-e2321ebf9fd2"><td id="qHkL" class="">五十音</td><td id="AxPH" class="">✅ 熟练</td><td id="oD[Q" class="">平假名都能认</td></tr></div><div style="display:contents" dir="ltr"><tr id="183beb92-d5fa-4c62-80dc-33ef2a156d23"><td id="qHkL" class="">基础语法</td><td id="AxPH" class="">🟡 N5 进度 70%</td><td id="oD[Q" class="">学到第 18 课</td></tr></div><div style="display:contents" dir="ltr"><tr id="710581f8-70f2-4327-97df-cff046d8f3ba"><td id="qHkL" class="">汉字阅读</td><td id="AxPH" class="">🟢 不错</td><td id="oD[Q" class="">中文母语天然优势</td></tr></div><div style="display:contents" dir="ltr"><tr id="1b8df2ca-e988-4160-a074-a4bf3169498b"><td id="qHkL" class="">词汇量</td><td id="AxPH" class="">🔴 ~300 词</td><td id="oD[Q" class=""><strong>最大短板</strong></td></tr></div><div style="display:contents" dir="ltr"><tr id="448ce357-3cbd-45ea-8522-fa7dc8eb0aaf"><td id="qHkL" class="">听力</td><td id="AxPH" class="">🔴 几乎为零</td><td id="oD[Q" class=""><strong>未开始训练</strong></td></tr></div><div style="display:contents" dir="ltr"><tr id="61fb2498-9ffd-47d9-9b8e-7489bf460761"><td id="qHkL" class="">口语</td><td id="AxPH" class="">🔴 几乎为零</td><td id="oD[Q" class="">不是目标，可暂缓</td></tr></div><div style="display:contents" dir="ltr"><tr id="d34bf507-78d4-4df1-87eb-fb87024ab3e2"><td id="qHkL" class="">写作</td><td id="AxPH" class="">🟡 能套句型</td><td id="oD[Q" class="">词汇限制了表达</td></tr></div></tbody></table></div><div style="display:contents" dir="auto"><p id="36bd68d3-0142-4176-b2a5-c5b5c30b53c5" class=""><strong>总体定位</strong>：N5 中后段，指向 N4</p></div><div style="display:contents" dir="auto"><hr id="93a99f62-396e-4bac-9b1d-eec3762f711f"/></div><div style="display:contents" dir="auto"><h2 id="12a359dc-b26d-4bb2-a249-2b5526b1de16" class="">🎯 最终目标与拆解</h2></div><div style="display:contents" dir="auto"><h3 id="5020ca3d-36b7-42d8-8120-baa7c55341c1" class="">你的三个目标</h3></div><div style="display:contents" dir="auto"><ol type="1" id="2fee64f4-ec29-4ad0-bd65-1c5e7355c4e7" class="numbered-list" start="1"><li>看懂漫画</li></ol></div><div style="display:contents" dir="auto"><ol type="1" id="3627d012-4e53-4a7e-8ec6-dd9779a8dca3" class="numbered-list" start="2"><li>看懂日剧</li></ol></div><div style="display:contents" dir="auto"><ol type="1" id="d5819731-fe9b-4deb-aa17-a3bc921fdd3d" class="numbered-list" start="3"><li>听懂演唱会 + 歌词表达</li></ol></div><div style="display:contents" dir="auto"><h3 id="ce2ef40c-0c22-4849-9813-a1a46d7dfb6a" class="">对应能力需求</h3></div><div style="display:contents" dir="ltr"><table id="a1cb2d6d-3b54-415b-9f0b-c460e62632d2" class="simple-table"><thead class="simple-table-header"><div style="display:contents" dir="ltr"><tr id="5f68d29f-345e-4444-8bec-2141772b7523"><th id="A=RB" class="simple-table-header-color simple-table-header">目标</th><th id="ECQ{" class="simple-table-header-color simple-table-header">需要能力</th><th id="GVg[" class="simple-table-header-color simple-table-header">JLPT 等级</th></tr></div></thead><tbody><div style="display:contents" dir="ltr"><tr id="e4079fd7-e586-4380-9a28-872576c5c5e6"><td id="A=RB" class="">看懂简单漫画（生活向）</td><td id="ECQ{" class="">阅读 + 词汇</td><td id="GVg[" class="">N4 后期</td></tr></div><div style="display:contents" dir="ltr"><tr id="b4b5a813-a0b9-40a9-b9c2-bad3b16cf744"><td id="A=RB" class="">看懂慕后日剧</td><td id="ECQ{" class="">听力 + 词汇</td><td id="GVg[" class="">N3</td></tr></div><div style="display:contents" dir="ltr"><tr id="b08498ef-bf19-46a6-8469-c74152e50c37"><td id="A=RB" class="">裸看日剧 / 看懂演唱会</td><td id="ECQ{" class="">听力高阶</td><td id="GVg[" class="">N3 后期 - N2</td></tr></div><div style="display:contents" dir="ltr"><tr id="0a08061e-08b3-4888-9476-03ec0dcbad31"><td id="A=RB" class="">听懂歌词</td><td id="ECQ{" class="">语感 + 词汇</td><td id="GVg[" class="">N2+（歌词难度不与日常同）</td></tr></div></tbody></table></div><div style="display:contents" dir="auto"><p id="715f2ad5-4bb0-46a0-acdc-0a9f00d4d1fd" class=""><strong>现实预期</strong>：从现在到能&quot;看懂漫画/日剧&quot; ≈ <strong>12-18 个月</strong>（按每周 5-7 小时自学计算）</p></div><div style="display:contents" dir="auto"><hr id="9018d874-a596-44d0-9a8c-05f03e18e877"/></div><div style="display:contents" dir="auto"><h2 id="cce9a0c3-af8d-4c48-bc7e-bc778eb060b6" class="">📦 N5 剩余进度明细</h2></div><div style="display:contents" dir="auto"><h3 id="3644c596-2e7d-4061-a090-bb39702ce3da" class="">语法（《大家的日本语》第 19-25 课）</h3></div><div style="display:contents" dir="ltr"><table id="b7d9cd34-039b-4a29-8ec7-031f8d440326" class="simple-table"><thead class="simple-table-header"><div style="display:contents" dir="ltr"><tr id="d246e701-aafc-4061-8d51-d449a9d131a4"><th id="mXK_" class="simple-table-header-color simple-table-header">课</th><th id="WXnH" class="simple-table-header-color simple-table-header">主要语法点</th></tr></div></thead><tbody><div style="display:contents" dir="ltr"><tr id="7b105d7a-4ac8-4bba-a94c-a00899dfb756"><td id="mXK_" class="">19</td><td id="WXnH" class="">动词た形、、たり、たり（列举）、たことがあります（曾经）</td></tr></div><div style="display:contents" dir="ltr"><tr id="046d0984-ca0f-4ce1-b0d1-c9b9bbe84e08"><td id="mXK_" class="">20</td><td id="WXnH" class="">普通形（简体）、と思います、と言いました</td></tr></div><div style="display:contents" dir="ltr"><tr id="7f301775-8d69-4837-b42a-460875013b23"><td id="mXK_" class="">21</td><td id="WXnH" class="">でしょう（推测）</td></tr></div><div style="display:contents" dir="ltr"><tr id="463425f6-08f0-4e71-a7ce-58bd8ad23d36"><td id="mXK_" class="">22</td><td id="WXnH" class="">名词修饰、とき、たら/なら/との区别</td></tr></div><div style="display:contents" dir="ltr"><tr id="6cb29e89-5fb3-4cbf-9589-99c5861e4fe4"><td id="mXK_" class="">23</td><td id="WXnH" class="">と（条件）、とき进阶</td></tr></div><div style="display:contents" dir="ltr"><tr id="8fbf2796-c250-45aa-98f1-9ea465b738d1"><td id="mXK_" class="">24</td><td id="WXnH" class=""><strong>授受动词</strong>（あげる/くれる/もらう）—难点</td></tr></div><div style="display:contents" dir="ltr"><tr id="71ddef8c-5a28-422c-87a5-088d0dd02b97"><td id="mXK_" class="">25</td><td id="WXnH" class="">たら、ても</td></tr></div></tbody></table></div><div style="display:contents" dir="auto"><p id="f27bed59-865e-4b0f-bced-13b883808f9f" class=""><strong>预计</strong>：7 周× 1 课 = 2 个月学完语法部分</p></div><div style="display:contents" dir="auto"><h3 id="c70e736a-4b5b-41df-8353-93b6a777f192" class="">词汇缺口</h3></div><div style="display:contents" dir="auto"><ul id="51af1d5b-4143-4383-9651-5d141ae02775" class="bulleted-list"><li style="list-style-type:disc">现在：~300</li></ul></div><div style="display:contents" dir="auto"><ul id="a80ca663-1631-4dbe-abe1-f23a4f1206cc" class="bulleted-list"><li style="list-style-type:disc">N5 要求：~800</li></ul></div><div style="display:contents" dir="auto"><ul id="3e6e57b4-e624-414e-a579-47476c038d4d" class="bulleted-list"><li style="list-style-type:disc"><strong>要补 ~500 词</strong></li></ul></div><div style="display:contents" dir="auto"><ul id="ce28ae4d-6265-4b79-bf5d-8789e28ae057" class="bulleted-list"><li style="list-style-type:disc">论可行性：每天 20 个词 × 25 天 = 补完</li></ul></div><div style="display:contents" dir="auto"><h3 id="d2786908-b959-45fa-9e66-d67178e6807e" class="">听力</h3></div><div style="display:contents" dir="auto"><ul id="feef724b-f719-4109-a750-f89cce7998d9" class="bulleted-list"><li style="list-style-type:disc">现在：0</li></ul></div><div style="display:contents" dir="auto"><ul id="18bf0343-2237-461a-b4d5-e8c39f6315a3" class="bulleted-list"><li style="list-style-type:disc">N5 要求：能听懂语速 100-120 字/分钟的简单对话</li></ul></div><div style="display:contents" dir="auto"><ul id="363dbf08-61e4-41db-aad6-15813d329537" class="bulleted-list"><li style="list-style-type:disc"><strong>本月必须启动</strong>。推荐：Nihongo con Teppei（10分钟/集，超慢语速）</li></ul></div><div style="display:contents" dir="auto"><hr id="93f4afe3-55aa-4a07-83c4-ebf0962cc56b"/></div><div style="display:contents" dir="auto"><h2 id="5a8f3eae-9937-407d-8a35-5a957b45515b" class="">🗺️ 完整学习路线（3 个阶段）</h2></div><div style="display:contents" dir="auto"><h3 id="09d6ff4c-515a-4de8-965e-c23d2bc1fccf" class="">阶段 1：补齐 N5（今天 - 2026/08）</h3></div><div style="display:contents" dir="auto"><p id="8c0ca28c-675c-4ff9-9e9d-554ddab52737" class=""><strong>主要任务</strong></p></div><div style="display:contents" dir="auto"><ul id="de9c6119-24ea-49ed-b372-f732a2328830" class="bulleted-list"><li style="list-style-type:disc">每天 Anki 20 个新词（N5 词汇包）</li></ul></div><div style="display:contents" dir="auto"><ul id="da282fc7-d5f7-4b2d-a607-bc8b5af5f995" class="bulleted-list"><li style="list-style-type:disc">每天 Nihongo con Teppei 1 集</li></ul></div><div style="display:contents" dir="auto"><ul id="a31c1313-a28b-4463-bd3e-a59a4f2206ee" class="bulleted-list"><li style="list-style-type:disc">每周推进教材 1 课（目标：8 月底学到第 25 课）</li></ul></div><div style="display:contents" dir="auto"><ul id="d4724967-1ae7-4326-bc55-9c9ed6a0015e" class="bulleted-list"><li style="list-style-type:disc">6 月底做一次 N5 模拟题自测</li></ul></div><div style="display:contents" dir="auto"><p id="49e95b8e-30fa-4768-b05a-350251fd0229" class=""><strong>每周时间投入</strong>：~5 小时（每天 40-45 分钟）</p></div><div style="display:contents" dir="auto"><p id="c2442ed9-30f8-4c7c-9c4d-e8e8889fee7a" class=""><strong>阶段末期验收标准</strong></p></div><div style="display:contents" dir="auto"><ul id="e9605202-3192-483e-893f-36d00f141b23" class="bulleted-list"><li style="list-style-type:disc">能看懂《よつばと!》大部分内容</li></ul></div><div style="display:contents" dir="auto"><ul id="0f36265a-3899-4a80-bb21-ffd3de6b05d4" class="bulleted-list"><li style="list-style-type:disc">N5 模拟题能达 70%+</li></ul></div><div style="display:contents" dir="auto"><ul id="36a16754-1276-49de-bf1e-37c00018186f" class="bulleted-list"><li style="list-style-type:disc">听 Nihongo con Teppei 可以听懂大意</li></ul></div><div style="display:contents" dir="auto"><h3 id="f07adb9c-6d4d-495b-9b15-096e33a94692" class="">阶段 2：N4 + 真材料介入（2026/09 - 2027/01）</h3></div><div style="display:contents" dir="auto"><p id="381a2f2e-27fa-47f1-b3a2-ffa51609dbea" class=""><strong>主要任务</strong></p></div><div style="display:contents" dir="auto"><ul id="6aad86f1-4c2c-4501-be99-eb933df8cea9" class="bulleted-list"><li style="list-style-type:disc">教材：《大家的日本语》初级 II（第 26-50 课）</li></ul></div><div style="display:contents" dir="auto"><ul id="c8b4757a-355b-4e65-8752-e6b6088beb7d" class="bulleted-list"><li style="list-style-type:disc">Anki 换为 N4 词汇包（1500 词总量）</li></ul></div><div style="display:contents" dir="auto"><ul id="75897a00-b504-4af2-affc-a9d72ab108f8" class="bulleted-list"><li style="list-style-type:disc">开始读简单漫画：《よつばと!》《しろくまカフェ》</li></ul></div><div style="display:contents" dir="auto"><ul id="31b009f9-211b-4d13-89f9-0309be171fe9" class="bulleted-list"><li style="list-style-type:disc">听力升级：「日本語の森」YouTube、《深夜食堂》《孤独的美食家》</li></ul></div><div style="display:contents" dir="auto"><ul id="17625d7b-98f7-46bc-9901-d616665de68c" class="bulleted-list"><li style="list-style-type:disc">听你喜欢的歌手，带歌词看</li></ul></div><div style="display:contents" dir="auto"><p id="ad2acdf0-cba2-4dc8-9782-4bfba3848d2c" class=""><strong>阶段末期验收标准</strong></p></div><div style="display:contents" dir="auto"><ul id="7f17029e-2b54-4a68-a102-048bfb890306" class="bulleted-list"><li style="list-style-type:disc">N4 模拟题 70%+</li></ul></div><div style="display:contents" dir="auto"><ul id="28c0599f-26f4-40f1-99c9-0b7106239c59" class="bulleted-list"><li style="list-style-type:disc">能独立读完一本生活向漫画（偶尔查词）</li></ul></div><div style="display:contents" dir="auto"><ul id="cc1d71e8-9c7b-4e6e-ab57-90e02db2ecc5" class="bulleted-list"><li style="list-style-type:disc">看《孤独的美食家》能听懂 30-40%</li></ul></div><div style="display:contents" dir="auto"><h3 id="b9131862-eb8c-4a0e-8fb2-b75784697555" class="">阶段 3：N3 + 大量沉浸（2027/02 - 2027/10）</h3></div><div style="display:contents" dir="auto"><p id="175906cd-59f8-45e4-9517-747b369b1dea" class=""><strong>主要任务</strong></p></div><div style="display:contents" dir="auto"><ul id="fec03b68-f80b-47c3-94c5-5ca9dbf29be3" class="bulleted-list"><li style="list-style-type:disc">教材：《新完全マスター N3》系列（词汇/语法/读解/听解）</li></ul></div><div style="display:contents" dir="auto"><ul id="89e2bd83-d8e7-4e7f-a8cd-79e1374246fc" class="bulleted-list"><li style="list-style-type:disc">Anki：N3 词汇包（3000 词总量）</li></ul></div><div style="display:contents" dir="auto"><ul id="361bd128-966c-4d33-afe1-1993c4bbf71e" class="bulleted-list"><li style="list-style-type:disc">开始看你喜欢的题材动漫/日剧（日语字幕）</li></ul></div><div style="display:contents" dir="auto"><ul id="58d83331-b4fc-4c2b-bb49-7fef1ea7f016" class="bulleted-list"><li style="list-style-type:disc">演唱会：能听懂大部分日常对话与歌词主旨</li></ul></div><div style="display:contents" dir="auto"><p id="ea48470e-ede7-4707-ac9c-37cfe1088e29" class=""><strong>阶段末期验收标准（= 你的最终目标）</strong></p></div><div style="display:contents" dir="auto"><ul id="5e788a89-9397-405c-9e78-c523eb943503" class="bulleted-list"><li style="list-style-type:disc">看漫画：能享受（不需要频繁查词）</li></ul></div><div style="display:contents" dir="auto"><ul id="d79c0989-4578-4b21-b5a3-fa2ba510b3f0" class="bulleted-list"><li style="list-style-type:disc">看日剧：日语字幕下能跟上，部分可裸听</li></ul></div><div style="display:contents" dir="auto"><ul id="fa187565-72a2-4340-9665-7cd2f7dd6888" class="bulleted-list"><li style="list-style-type:disc">演唱会：列表中间环节大致听懂歌手在表达什么</li></ul></div><div style="display:contents" dir="auto"><hr id="122a9d46-1bd6-4a7c-9f5d-991541c46323"/></div><div style="display:contents" dir="auto"><h2 id="4e081fa3-c036-4d70-a2d3-8304a458dd13" class="">🛠️ 工具清单</h2></div><div style="display:contents" dir="ltr"><table id="a3eb4d8d-6017-4684-b55e-ab84667f70c9" class="simple-table"><thead class="simple-table-header"><div style="display:contents" dir="ltr"><tr id="405731b8-bb49-436b-9216-0dc2f8c82e8c"><th id="woA:" class="simple-table-header-color simple-table-header">用途</th><th id="QKD`" class="simple-table-header-color simple-table-header">推荐</th><th id="^Fbe" class="simple-table-header-color simple-table-header">优先级</th></tr></div></thead><tbody><div style="display:contents" dir="ltr"><tr id="39b773df-a36b-4ff1-88ae-046a2cbd222f"><td id="woA:" class="">词汇背诵</td><td id="QKD`" class="">Anki + JLPT Tango 牌组</td><td id="^Fbe" class="">🔴 立刻开始</td></tr></div><div style="display:contents" dir="ltr"><tr id="a87d7809-0b0c-4f7a-b782-64a05c631117"><td id="woA:" class="">字典</td><td id="QKD`" class="">MOJi 辞書</td><td id="^Fbe" class="">🔴 立刻下载</td></tr></div><div style="display:contents" dir="ltr"><tr id="6fb85793-6257-40df-bcab-f4bdcb870e44"><td id="woA:" class="">入门听力</td><td id="QKD`" class="">Nihongo con Teppei</td><td id="^Fbe" class="">🔴 立刻订阅</td></tr></div><div style="display:contents" dir="ltr"><tr id="f7bb405f-f4b2-4367-bcb2-f355eb964d51"><td id="woA:" class="">进阶听力</td><td id="QKD`" class="">YouTube 「日本語の森」</td><td id="^Fbe" class="">🟡 阶段 2 开始</td></tr></div><div style="display:contents" dir="ltr"><tr id="91d9f535-e0ab-4665-8187-072d99c64819"><td id="woA:" class="">看动漫学习</td><td id="QKD`" class="">Language Reactor 插件</td><td id="^Fbe" class="">🟡 阶段 2 开始</td></tr></div><div style="display:contents" dir="ltr"><tr id="b948b29c-84bd-4cc9-9782-f45887db3be8"><td id="woA:" class="">语法参考</td><td id="QKD`" class="">Tae Kim&#x27;s Guide（免费网站）</td><td id="^Fbe" class="">🟡 遇到问题时查</td></tr></div><div style="display:contents" dir="ltr"><tr id="ed7c5585-237d-4609-b7bf-c42e56145739"><td id="woA:" class="">水平测试</td><td id="QKD`" class=""><a href="http://jlptsensei.com">jlptsensei.com</a></td><td id="^Fbe" class="">🟡 每 3 个月一次</td></tr></div></tbody></table></div><div style="display:contents" dir="auto"><hr id="b8fb2ac1-3fc9-49f8-89d3-6459969e2f8c"/></div><div style="display:contents" dir="auto"><h2 id="84bb5b3c-7317-40f5-8c25-84c6e4e47366" class="">⚠️ 重要提醒</h2></div><div style="display:contents" dir="auto"><h3 id="e3d0c781-71df-4b7b-af5f-14b0462e0155" class="">你现在最大的问题不是语法，是<strong>词汇 + 听力</strong></h3></div><div style="display:contents" dir="auto"><p id="fb031fbc-ca29-4175-9456-3965523b2bc1" class="">不要被“教材到哪一课”迫惑。即使你明天学完第 25 课，如果词汇量还是 300、听力还是零，你还是什么也看不懂。<strong>语法是骨架，词汇是肉，听力是血液。</strong></p></div><div style="display:contents" dir="auto"><h3 id="695dd72c-66cc-4f29-a4c7-4b830e12e07e" class="">不要等“准备好了”才看漫画/日剧</h3></div><div style="display:contents" dir="auto"><p id="8537beda-374c-4fea-8135-e591609fb9fc" class="">今天就说可以开始看。看不懂也看，<strong>目的不是看懂，是保持兴趣 + 熟悉语言节奋</strong>。等你“学完 N4”再看，可能你已经放弃了。</p></div><div style="display:contents" dir="auto"><h3 id="71588eb6-f063-42d9-97e1-4e33807ebf8b" class="">演唱会和歌词是最难的，别拿它当试金石</h3></div><div style="display:contents" dir="auto"><p id="fe093f98-b49c-421c-994d-58c15b21d864" class="">歌词充斥口语、古语、文学修辞、甚至生造词。即使 N3 水平也可能被一句歌词难住。这个目标考验的不是你学得多好，是你坚持多久。</p></div><div style="display:contents" dir="auto"><h3 id="e2b3d42b-6108-4650-bdb3-2d8d0a58fdca" class="">每天 30 分钟 &gt; 每周 3.5 小时</h3></div><div style="display:contents" dir="auto"><p id="4ce36b0c-6ef5-493b-b32f-9feca86f5a2e" class="">语言学习是复利的，连续性比总时长重要得多。宁愿每天 30 分钟，不要周末一次填 5 小时。</p></div><div style="display:contents" dir="auto"><hr id="3fd1ccf3-bfec-4be6-a5ae-7a4a0edad958"/></div><div style="display:contents" dir="auto"><h2 id="f0be285b-9e5a-428b-871d-aadb37c32afd" class="">📅 下个月进度对比（2026-06-16 填写）</h2></div><div style="display:contents" dir="auto"><blockquote id="ca14ec97-ac9f-40ab-a2ff-a8613e766dda" class="">一个月后回到这里，填下面的表格。都不填也没关系，可以打问号。</blockquote></div><div style="display:contents" dir="ltr"><table id="b2696289-488b-4d7e-b95e-03ddf139bf23" class="simple-table"><thead class="simple-table-header"><div style="display:contents" dir="ltr"><tr id="02764e1f-af80-4b94-8fba-004e6979eae3"><th id="GPLw" class="simple-table-header-color simple-table-header">能力</th><th id="S\t;" class="simple-table-header-color simple-table-header">5月16日</th><th id="A;Kd" class="simple-table-header-color simple-table-header">6月16日</th><th id="GLcA" class="simple-table-header-color simple-table-header">变化</th></tr></div></thead><tbody><div style="display:contents" dir="ltr"><tr id="b566a1a2-2178-4977-aa5f-513f6d67a61a"><td id="GPLw" class="">教材进度</td><td id="S\t;" class="">第 18 课</td><td id="A;Kd" class=""></td><td id="GLcA" class=""></td></tr></div><div style="display:contents" dir="ltr"><tr id="72f4dcef-b755-46e9-9ab1-89007ac9b8af"><td id="GPLw" class="">词汇量估计</td><td id="S\t;" class="">~300</td><td id="A;Kd" class=""></td><td id="GLcA" class=""></td></tr></div><div style="display:contents" dir="ltr"><tr id="aab2602a-e626-4e97-aea1-0bdd44f55ffe"><td id="GPLw" class="">Anki 累计学习天数</td><td id="S\t;" class="">0</td><td id="A;Kd" class=""></td><td id="GLcA" class=""></td></tr></div><div style="display:contents" dir="ltr"><tr id="b3d0da42-d227-401d-b3b7-54a65c02895f"><td id="GPLw" class="">听力（听懂 Teppei 程度）</td><td id="S\t;" class="">0%</td><td id="A;Kd" class=""></td><td id="GLcA" class=""></td></tr></div><div style="display:contents" dir="ltr"><tr id="33ce8163-cf68-4927-95bf-12d43bceb268"><td id="GPLw" class="">看过的漫画集数</td><td id="S\t;" class="">0</td><td id="A;Kd" class=""></td><td id="GLcA" class=""></td></tr></div><div style="display:contents" dir="ltr"><tr id="0db01184-ede9-471f-b0a3-d0160dc8f3a6"><td id="GPLw" class="">看过的日剧集数</td><td id="S\t;" class="">0</td><td id="A;Kd" class=""></td><td id="GLcA" class=""></td></tr></div><div style="display:contents" dir="ltr"><tr id="0385053e-099b-4803-8466-321fc44de009"><td id="GPLw" class="">N5 模拟题分数</td><td id="S\t;" class="">未测</td><td id="A;Kd" class=""></td><td id="GLcA" class=""></td></tr></div></tbody></table></div><div style="display:contents" dir="auto"><h3 id="1e5ec2de-95bf-475a-9585-5e8ae3dfed00" class="">心得与调整</h3></div><div style="display:contents" dir="auto"><p id="b87e0d1c-715b-48dd-a559-4841d3226c1c" class=""><em>（6月16日填）</em></p></div><div style="display:contents" dir="auto"><ul id="bfeb1637-58d4-4877-945b-168a17e4ce75" class="bulleted-list"><li style="list-style-type:disc">哪些方法有效？</li></ul></div><div style="display:contents" dir="auto"><ul id="32848745-f89e-4266-8e8c-e3851d7ef7c4" class="bulleted-list"><li style="list-style-type:disc">哪些方法坚持不下去？为什么？</li></ul></div><div style="display:contents" dir="auto"><ul id="8c6f7130-2dbf-433f-b463-c3a0250186fd" class="bulleted-list"><li style="list-style-type:disc">需要调整什么？</li></ul></div><div style="display:contents" dir="auto"><hr id="c8d4acf3-4c4d-46a6-8235-ac6b6e01ca5a"/></div><div style="display:contents" dir="auto"><h2 id="7c4bfd1b-52a9-4d23-a785-552a55fbb29a" class="">🔗 相关页面</h2></div><div style="display:contents" dir="auto"><ul id="cfaa2e78-f5c9-459b-967b-feada8999ad3" class="bulleted-list"><li style="list-style-type:disc">返回 <a href="https://www.notion.so/Life-OS-3627ca8b1873814f942dfca443d48546?pvs=21">🎯 Life OS 主页</a></li></ul></div><div style="display:contents" dir="auto"><ul id="ee1cd694-921c-462a-8f13-81ab7bd545fe" class="bulleted-list"><li style="list-style-type:disc">查看 <a href="https://www.notion.so/3627ca8b1873814cb97ff2f9c3c96327?pvs=21">🔄 每周任务模板</a></li></ul></div></div></article><span class="sans" style="font-size:14px;padding-top:2em"></span></body></html>
