@@ -288,7 +288,7 @@ const TagSelector = ({ selected = [], onChange, pool = [] }) => {
 const DEFAULT_TAGS = ['文法','词汇','助词','动词','形容词','打招呼','数字','时间','N5','第1课','第2课','第3课'];
 
 // ─── DASHBOARD ────────────────────────────────────────────────────────────────
-const Dashboard = ({ notes, homework, flashcards, onNav, userName }) => {
+const Dashboard = ({ notes, homework, flashcards, questions = [], onNav, userName }) => {
   const pending = homework.filter(h => h.status === 'pending');
   const overdue = homework.filter(isOverdue);
   const thisWeek = homework.filter(h => {
@@ -297,12 +297,14 @@ const Dashboard = ({ notes, homework, flashcards, onNav, userName }) => {
     return d >= 0 && d <= 7;
   });
   const dueCards = flashcards.filter(c => !c.completed && (!c.nextReview || new Date(c.nextReview) <= new Date())).length;
+  const openQ = questions.filter(q => q.status !== 'resolved').length;
 
   const stats = [
     { label: '笔记', value: notes.length, icon: '📝', grad: 'from-violet-500 to-indigo-600', page: 'knowledge' },
     { label: '闪卡', value: flashcards.length, icon: '🃏', grad: 'from-cyan-500 to-blue-600', page: 'flashcards' },
     { label: '今日复习', value: dueCards, icon: '🔔', grad: 'from-emerald-500 to-teal-600', page: 'flashcards' },
     { label: '待交功课', value: pending.length, icon: '📋', grad: 'from-orange-500 to-red-500', page: 'homework' },
+    { label: '未解答疑问', value: openQ, icon: '❓', grad: 'from-fuchsia-500 to-purple-600', page: 'questions' },
   ];
 
   return (
@@ -325,7 +327,7 @@ const Dashboard = ({ notes, homework, flashcards, onNav, userName }) => {
         </div>
       )}
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
         {stats.map(s => (
           <div key={s.label} onClick={() => onNav(s.page)} className={`bg-gradient-to-br ${s.grad} rounded-xl p-4 text-white cursor-pointer hover:opacity-90 transition-opacity`}>
             <div className="text-2xl mb-1">{s.icon}</div>
@@ -1480,11 +1482,54 @@ const HW_STATUS = {
   done:      { label: '已整理', color: 'bg-green-100 text-green-700', dot: '🟢' },
 };
 
-const HomeworkTracker = ({ homework, setHomework, uid, isOnline }) => {
+const HomeworkTracker = ({ homework, setHomework, uid, isOnline, templates = [], setTemplates }) => {
   const [filter, setFilter] = useState('all');
   const [modal, setModal] = useState(null);
   const [form, setForm] = useState({ title: '', lessonNumber: '', dueDate: '', submittedDate: '', status: 'pending', teacherFeedback: '', notes: '', attachments: [] });
   const [uploadingAtt, setUploadingAtt] = useState(false);
+  const [tplOpen, setTplOpen] = useState(false);
+  const [tplForm, setTplForm] = useState(null); // { id?, title, defaultLessonNumber, defaultNotes }
+  const [copyFor, setCopyFor] = useState(null); // template being copied
+  const [copyDates, setCopyDates] = useState(['']);
+  const [toast, setToast] = useState('');
+
+  const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(''), 2500); };
+
+  const openTplNew = () => setTplForm({ title: '', defaultLessonNumber: '', defaultNotes: '' });
+  const openTplEdit = (t) => setTplForm({ ...t });
+  const saveTpl = () => {
+    if (!tplForm.title.trim()) return;
+    if (tplForm.id) {
+      setTemplates(p => p.map(t => t.id === tplForm.id ? { ...t, ...tplForm } : t));
+    } else {
+      setTemplates(p => [...p, { ...tplForm, id: genId(), createdAt: new Date().toISOString() }]);
+    }
+    setTplForm(null);
+  };
+  const delTpl = (id) => { if (confirm('删除此模板？已生成的功课不受影响。')) setTemplates(p => p.filter(t => t.id !== id)); };
+
+  const openCopy = (t) => { setCopyFor(t); setCopyDates(['']); };
+  const doCopy = () => {
+    const dates = copyDates.map(d => d.trim()).filter(Boolean);
+    if (dates.length === 0) { alert('请至少选择一个日期'); return; }
+    const newOnes = dates.map(d => ({
+      id: genId(),
+      title: copyFor.title,
+      lessonNumber: copyFor.defaultLessonNumber || '',
+      notes: copyFor.defaultNotes || '',
+      dueDate: d,
+      submittedDate: '',
+      status: 'pending',
+      teacherFeedback: '',
+      attachments: [],
+      sourceTemplateId: copyFor.id,
+      createdAt: new Date().toISOString(),
+    }));
+    setHomework(p => [...p, ...newOnes]);
+    setCopyFor(null);
+    setCopyDates(['']);
+    showToast(`已添加 ${newOnes.length} 条功课`);
+  };
 
   const counts = useMemo(() => {
     const c = { all: homework.length };
@@ -1532,8 +1577,9 @@ const HomeworkTracker = ({ homework, setHomework, uid, isOnline }) => {
     <div className="max-w-3xl mx-auto">
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-xl font-bold text-gray-800">📋 功课追踪</h1>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           {homework.length > 0 && <Btn variant="danger" onClick={() => { if (confirm(`删除全部 ${homework.length} 条功课记录？此操作不可恢复。`)) setHomework([]); }}>🗑 全部删除</Btn>}
+          <Btn variant="secondary" onClick={() => setTplOpen(true)}>📋 任务模板{templates.length > 0 ? ` (${templates.length})` : ''}</Btn>
           <Btn onClick={openNew}>+ 添加功课</Btn>
         </div>
       </div>
@@ -1621,6 +1667,302 @@ const HomeworkTracker = ({ homework, setHomework, uid, isOnline }) => {
           </label>
         </div>
         <Textarea label="自己的笔记" value={form.notes||''} onChange={e => setForm(p=>({...p,notes:e.target.value}))} placeholder="自己的反思，下次要注意的地方…" rows={3} />
+        <div className="flex justify-end gap-2 pt-2"><Btn variant="secondary" onClick={() => setModal(null)}>取消</Btn><Btn onClick={save}>保存</Btn></div>
+      </Modal>
+
+      {/* 模板清单 modal */}
+      <Modal open={tplOpen} onClose={() => setTplOpen(false)} title="📋 任务模板清单" wide>
+        <p className="text-xs text-gray-400 mb-3">把常做的任务（如「听 Teppei」「读教材 1 课」「复习 50 张闪卡」）存为模板，需要时手动选日期一键复制到功课。</p>
+        <div className="mb-4">
+          <Btn onClick={openTplNew}>+ 新建模板</Btn>
+        </div>
+        {templates.length === 0 ? (
+          <p className="text-center text-gray-300 py-8 text-sm">还没有模板，点上面按钮新建一个</p>
+        ) : (
+          <div className="space-y-2">
+            {templates.map(t => (
+              <div key={t.id} className="border border-gray-100 rounded-lg p-3">
+                <div className="flex items-start gap-2 justify-between">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-gray-800 text-sm">{t.title}</p>
+                    <div className="flex gap-3 text-xs text-gray-400 mt-0.5 flex-wrap">
+                      {t.defaultLessonNumber && <span>第 {t.defaultLessonNumber} 课</span>}
+                      {t.defaultNotes && <span className="truncate">📝 {t.defaultNotes}</span>}
+                    </div>
+                  </div>
+                  <div className="flex gap-1 shrink-0">
+                    <Btn size="sm" onClick={() => openCopy(t)}>📅 复制到日期</Btn>
+                    <Btn size="sm" variant="secondary" onClick={() => openTplEdit(t)}>✏</Btn>
+                    <Btn size="sm" variant="ghost" onClick={() => delTpl(t.id)}>🗑</Btn>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </Modal>
+
+      {/* 模板表单 modal */}
+      <Modal open={!!tplForm} onClose={() => setTplForm(null)} title={tplForm?.id ? '编辑模板' : '新建模板'}>
+        <Input label="任务标题" value={tplForm?.title || ''} onChange={e => setTplForm(p => ({ ...p, title: e.target.value }))} placeholder="例：听 Nihongo con Teppei 1 集" />
+        <Input label="默认课次（可选）" value={tplForm?.defaultLessonNumber || ''} onChange={e => setTplForm(p => ({ ...p, defaultLessonNumber: e.target.value }))} placeholder="例：19" />
+        <Textarea label="默认备注（可选）" value={tplForm?.defaultNotes || ''} onChange={e => setTplForm(p => ({ ...p, defaultNotes: e.target.value }))} rows={3} placeholder="复制功课时会带上这段备注…" />
+        <div className="flex justify-end gap-2 pt-2"><Btn variant="secondary" onClick={() => setTplForm(null)}>取消</Btn><Btn onClick={saveTpl}>保存</Btn></div>
+      </Modal>
+
+      {/* 复制到日期 modal */}
+      <Modal open={!!copyFor} onClose={() => setCopyFor(null)} title={`复制到日期：${copyFor?.title || ''}`}>
+        <p className="text-xs text-gray-400 mb-3">选择 1 个或多个日期，每个日期会生成一条独立的功课。</p>
+        <div className="space-y-2 mb-3">
+          {copyDates.map((d, i) => (
+            <div key={i} className="flex gap-2">
+              <input type="date" value={d} onChange={e => setCopyDates(p => p.map((x, j) => j === i ? e.target.value : x))}
+                className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+              {copyDates.length > 1 && (
+                <button onClick={() => setCopyDates(p => p.filter((_, j) => j !== i))} className="text-red-400 hover:text-red-600 px-2">×</button>
+              )}
+            </div>
+          ))}
+        </div>
+        <Btn size="sm" variant="secondary" onClick={() => setCopyDates(p => [...p, ''])}>+ 再加一个日期</Btn>
+        <div className="flex justify-end gap-2 pt-4"><Btn variant="secondary" onClick={() => setCopyFor(null)}>取消</Btn><Btn onClick={doCopy}>确认复制</Btn></div>
+      </Modal>
+
+      {toast && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-gray-800 text-white px-4 py-2 rounded-lg text-sm shadow-lg z-50">{toast}</div>
+      )}
+    </div>
+  );
+};
+
+
+// ─── QUESTIONS / 薄弱点 ─────────────────────────────────────────────────────
+const QuestionsView = ({ questions, setQuestions }) => {
+  const [quick, setQuick] = useState('');
+  const [modal, setModal] = useState(null); // question being edited (or 'new')
+  const [form, setForm] = useState({ title: '', content: '', answer: '', tags: [], status: 'open' });
+  const [activeTag, setActiveTag] = useState(null);
+  const [showResolved, setShowResolved] = useState(false);
+
+  const allTags = useMemo(() => {
+    const s = new Set();
+    questions.forEach(q => q.tags?.forEach(t => s.add(t)));
+    return Array.from(s);
+  }, [questions]);
+
+  const tagCounts = useMemo(() => {
+    const c = {};
+    questions.forEach(q => q.tags?.forEach(t => { c[t] = (c[t] || 0) + 1; }));
+    return c;
+  }, [questions]);
+
+  const filtered = activeTag ? questions.filter(q => q.tags?.includes(activeTag)) : questions;
+  const open = filtered.filter(q => q.status !== 'resolved').sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  const resolved = filtered.filter(q => q.status === 'resolved').sort((a, b) => new Date(b.resolvedAt || 0) - new Date(a.resolvedAt || 0));
+
+  const quickAdd = () => {
+    if (!quick.trim()) return;
+    setQuestions(p => [...p, { id: genId(), title: quick.trim(), content: '', answer: '', tags: [], status: 'open', createdAt: new Date().toISOString() }]);
+    setQuick('');
+  };
+
+  const openNew = () => { setForm({ title: '', content: '', answer: '', tags: [], status: 'open' }); setModal('new'); };
+  const openEdit = (q) => { setForm({ ...q, tags: q.tags || [] }); setModal(q.id); };
+  const save = () => {
+    if (!form.title.trim()) return;
+    const patch = { ...form };
+    if (patch.status === 'resolved' && !patch.resolvedAt) patch.resolvedAt = new Date().toISOString();
+    if (patch.status !== 'resolved') patch.resolvedAt = '';
+    if (modal === 'new') setQuestions(p => [...p, { ...patch, id: genId(), createdAt: new Date().toISOString() }]);
+    else setQuestions(p => p.map(q => q.id === modal ? { ...q, ...patch } : q));
+    setModal(null);
+  };
+  const del = (id) => { if (confirm('删除此疑问？')) setQuestions(p => p.filter(q => q.id !== id)); };
+  const toggleResolve = (e, q) => {
+    e.stopPropagation();
+    setQuestions(p => p.map(x => x.id === q.id ? { ...x, status: x.status === 'resolved' ? 'open' : 'resolved', resolvedAt: x.status === 'resolved' ? '' : new Date().toISOString() } : x));
+  };
+
+  const renderCard = (q, isResolved) => (
+    <Card key={q.id} onClick={() => openEdit(q)} className={isResolved ? 'opacity-60' : ''}>
+      <div className="flex items-start gap-3">
+        <span className="text-lg shrink-0 mt-0.5">{isResolved ? '✅' : '❓'}</span>
+        <div className="flex-1 min-w-0">
+          <p className={`font-semibold text-sm break-words ${isResolved ? 'line-through text-gray-500' : 'text-gray-800'}`}>{q.title}</p>
+          {q.content && <p className="text-xs text-gray-500 mt-1 line-clamp-2">{q.content}</p>}
+          {isResolved && q.answer && <p className="text-xs text-emerald-600 mt-1 line-clamp-2">💡 {q.answer}</p>}
+          <div className="flex flex-wrap gap-1 mt-1.5">
+            {q.tags?.map(t => <Badge key={t}>{t}</Badge>)}
+            <span className="text-xs text-gray-300 ml-1">{fmt(q.createdAt)}</span>
+          </div>
+        </div>
+        <div className="flex flex-col gap-1 shrink-0">
+          <button onClick={e => toggleResolve(e, q)} className={`text-xs px-2 py-0.5 rounded ${isResolved ? 'bg-gray-100 text-gray-500 hover:bg-gray-200' : 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'}`}>
+            {isResolved ? '↩ 重新打开' : '✓ 已解答'}
+          </button>
+          <button onClick={e => { e.stopPropagation(); del(q.id); }} className="text-gray-200 hover:text-red-400 text-sm">🗑</button>
+        </div>
+      </div>
+    </Card>
+  );
+
+  return (
+    <div className="max-w-3xl mx-auto">
+      <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+        <h1 className="text-xl font-bold text-gray-800">❓ 疑问 / 薄弱点</h1>
+        <div className="flex gap-2">
+          {questions.length > 0 && <Btn variant="danger" onClick={() => { if (confirm(`删除全部 ${questions.length} 条疑问？此操作不可恢复。`)) setQuestions([]); }}>🗑 全部删除</Btn>}
+          <Btn onClick={openNew}>+ 详细记录</Btn>
+        </div>
+      </div>
+
+      {/* 快速记一条 */}
+      <Card className="mb-4">
+        <p className="text-xs text-gray-400 mb-2">💡 顺手记下当前还没解答的问题（回车提交）</p>
+        <div className="flex gap-2">
+          <input value={quick} onChange={e => setQuick(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') quickAdd(); }}
+            placeholder="例：授受动词あげる/くれる/もらう怎么区分？"
+            className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+          <Btn onClick={quickAdd}>记一条</Btn>
+        </div>
+      </Card>
+
+      <CollapsibleTagFilter tagCounts={tagCounts} total={questions.length} activeTag={activeTag} setActiveTag={setActiveTag} />
+
+      <h2 className="text-sm font-semibold text-gray-500 mb-2 mt-4">未解答（{open.length}）</h2>
+      {open.length === 0 ? (
+        <Card className="text-center py-8"><p className="text-gray-300 text-sm">没有未解答的疑问 🎉</p></Card>
+      ) : (
+        <div className="space-y-2">{open.map(q => renderCard(q, false))}</div>
+      )}
+
+      {resolved.length > 0 && (
+        <>
+          <button onClick={() => setShowResolved(v => !v)} className="text-sm text-gray-400 hover:text-gray-600 mt-6 mb-2">
+            {showResolved ? '▼' : '▶'} 已解答（{resolved.length}）
+          </button>
+          {showResolved && <div className="space-y-2">{resolved.map(q => renderCard(q, true))}</div>}
+        </>
+      )}
+
+      <Modal open={!!modal} onClose={() => setModal(null)} title={modal === 'new' ? '详细记录疑问' : '编辑疑问'} wide>
+        <Input label="问题标题" value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} placeholder="例：授受动词怎么区分？" />
+        <Textarea label="详细描述（可选，支持 Markdown）" value={form.content} onChange={e => setForm(p => ({ ...p, content: e.target.value }))} rows={4} placeholder="问题背景、想不通的地方…" />
+        <Textarea label="解答（可选，想通了/老师答了就写在这里）" value={form.answer} onChange={e => setForm(p => ({ ...p, answer: e.target.value }))} rows={4} placeholder="..." />
+        <Select label="状态" value={form.status} onChange={e => setForm(p => ({ ...p, status: e.target.value }))} options={[{ value: 'open', label: '未解答' }, { value: 'resolved', label: '已解答' }]} />
+        <TagSelector selected={form.tags} onChange={tags => setForm(p => ({ ...p, tags }))} pool={[...new Set([...allTags, '语法', '词汇', '听力', '汉字', '薄弱点'])]} />
+        <div className="flex justify-end gap-2 pt-2"><Btn variant="secondary" onClick={() => setModal(null)}>取消</Btn><Btn onClick={save}>保存</Btn></div>
+      </Modal>
+    </div>
+  );
+};
+
+
+// ─── RESOURCES / 学习资源库 ──────────────────────────────────────────────────
+const RESOURCE_CATEGORIES = ['词汇', '语法', '听力', '其他'];
+const CAT_COLORS = {
+  '词汇': 'bg-cyan-100 text-cyan-700',
+  '语法': 'bg-violet-100 text-violet-700',
+  '听力': 'bg-emerald-100 text-emerald-700',
+  '其他': 'bg-gray-100 text-gray-600',
+};
+
+const ResourcesView = ({ resources, setResources }) => {
+  const [filter, setFilter] = useState('all');
+  const [modal, setModal] = useState(null);
+  const [form, setForm] = useState({ title: '', url: '', categories: [], notes: '', priority: 'normal' });
+
+  const counts = useMemo(() => {
+    const c = { all: resources.length };
+    RESOURCE_CATEGORIES.forEach(cat => { c[cat] = resources.filter(r => r.categories?.includes(cat)).length; });
+    return c;
+  }, [resources]);
+
+  const displayed = filter === 'all' ? resources : resources.filter(r => r.categories?.includes(filter));
+  const sorted = [...displayed].sort((a, b) => {
+    if (a.priority === 'high' && b.priority !== 'high') return -1;
+    if (b.priority === 'high' && a.priority !== 'high') return 1;
+    return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+  });
+
+  const openNew = () => { setForm({ title: '', url: '', categories: [], notes: '', priority: 'normal' }); setModal('new'); };
+  const openEdit = (r) => { setForm({ ...r, categories: r.categories || [] }); setModal(r.id); };
+  const save = () => {
+    if (!form.title.trim()) return;
+    if (modal === 'new') setResources(p => [...p, { ...form, id: genId(), createdAt: new Date().toISOString() }]);
+    else setResources(p => p.map(r => r.id === modal ? { ...r, ...form } : r));
+    setModal(null);
+  };
+  const del = (id) => { if (confirm('删除此资源？')) setResources(p => p.filter(r => r.id !== id)); };
+  const toggleCat = (cat) => setForm(p => ({ ...p, categories: p.categories.includes(cat) ? p.categories.filter(c => c !== cat) : [...p.categories, cat] }));
+
+  return (
+    <div className="max-w-3xl mx-auto">
+      <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+        <h1 className="text-xl font-bold text-gray-800">📚 学习资源库</h1>
+        <div className="flex gap-2">
+          {resources.length > 0 && <Btn variant="danger" onClick={() => { if (confirm(`删除全部 ${resources.length} 条资源？此操作不可恢复。`)) setResources([]); }}>🗑 全部删除</Btn>}
+          <Btn onClick={openNew}>+ 添加资源</Btn>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap gap-2 mb-5">
+        <button onClick={() => setFilter('all')} className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${filter === 'all' ? 'bg-indigo-600 text-white shadow' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
+          全部 ({counts.all})
+        </button>
+        {RESOURCE_CATEGORIES.map(cat => (
+          <button key={cat} onClick={() => setFilter(cat)} className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${filter === cat ? 'bg-indigo-600 text-white shadow' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
+            {cat} ({counts[cat] || 0})
+          </button>
+        ))}
+      </div>
+
+      {sorted.length === 0 ? (
+        <Card className="text-center py-16">
+          <p className="text-gray-300 text-4xl mb-3">📚</p>
+          <p className="text-gray-400 text-sm">还没有资源</p>
+          <Btn onClick={openNew} className="mt-4">添加第一个资源</Btn>
+        </Card>
+      ) : (
+        <div className="space-y-2">
+          {sorted.map(r => (
+            <Card key={r.id} onClick={() => openEdit(r)}>
+              <div className="flex items-start gap-3">
+                <span className="text-lg shrink-0 mt-0.5">{r.priority === 'high' ? '⭐' : '📌'}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="font-semibold text-gray-800 text-sm break-words">{r.title}</h3>
+                    {r.categories?.map(c => <Badge key={c} color={CAT_COLORS[c] || 'bg-gray-100 text-gray-600'}>{c}</Badge>)}
+                  </div>
+                  {r.url && (
+                    <a href={r.url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="text-xs text-indigo-500 hover:text-indigo-700 break-all">
+                      🔗 {r.url}
+                    </a>
+                  )}
+                  {r.notes && <p className="text-xs text-gray-500 mt-1 break-words whitespace-pre-wrap">{r.notes}</p>}
+                </div>
+                <button onClick={e => { e.stopPropagation(); del(r.id); }} className="text-gray-200 hover:text-red-400 shrink-0">🗑</button>
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      <Modal open={!!modal} onClose={() => setModal(null)} title={modal === 'new' ? '添加资源' : '编辑资源'}>
+        <Input label="标题" value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} placeholder="例：MOJi 辞書" />
+        <Input label="链接（可选）" value={form.url} onChange={e => setForm(p => ({ ...p, url: e.target.value }))} placeholder="https://..." />
+        <Field label="分类（可多选）">
+          <div className="flex flex-wrap gap-2">
+            {RESOURCE_CATEGORIES.map(cat => (
+              <button key={cat} type="button" onClick={() => toggleCat(cat)}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${form.categories.includes(cat) ? 'bg-indigo-600 text-white shadow' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
+                {cat}
+              </button>
+            ))}
+          </div>
+        </Field>
+        <Textarea label="备注" value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} rows={3} placeholder="什么场景下用、为什么推荐…" />
+        <Select label="优先级" value={form.priority} onChange={e => setForm(p => ({ ...p, priority: e.target.value }))} options={[{ value: 'normal', label: '普通' }, { value: 'high', label: '⭐ 重点' }]} />
         <div className="flex justify-end gap-2 pt-2"><Btn variant="secondary" onClick={() => setModal(null)}>取消</Btn><Btn onClick={save}>保存</Btn></div>
       </Modal>
     </div>
@@ -2872,6 +3214,8 @@ const PAGES = [
   { id: 'knowledge',  label: '知识库',   icon: '📝' },
   { id: 'flashcards', label: '闪卡',     icon: '🃏' },
   { id: 'homework',   label: '功课',     icon: '📋' },
+  { id: 'questions',  label: '疑问',     icon: '❓' },
+  { id: 'resources',  label: '资源',     icon: '📚' },
   { id: 'pdf',        label: 'PDF 导入', icon: '📄' },
   { id: 'ai',         label: 'AI 练习',  icon: '🤖' },
   { id: 'tts',        label: '文字转语音', icon: '🔊' },
@@ -2886,6 +3230,9 @@ const App = ({ user }) => {
   const [notes, setNotes]         = useFirestoreCollection('notes',      user.uid);
   const [flashcards, setFlash]    = useFirestoreCollection('flashcards', user.uid);
   const [homework, setHomework]   = useFirestoreCollection('homework',   user.uid);
+  const [taskTemplates, setTaskTemplates] = useFirestoreCollection('taskTemplates', user.uid);
+  const [questions, setQuestions] = useFirestoreCollection('questions',  user.uid);
+  const [resources, setResources] = useFirestoreCollection('resources',  user.uid);
   const [vocab, setVocab]         = useFirestoreCollection('vocab',      user.uid);
   const [importedNoteIds, setImportedNoteIds] = useState([]);
 
@@ -2897,6 +3244,7 @@ const App = ({ user }) => {
 
   const pendingHw = homework.filter(h => h.status === 'pending').length;
   const dueCards  = flashcards.filter(c => !c.completed && (!c.nextReview || new Date(c.nextReview) <= new Date())).length;
+  const openQuestions = questions.filter(q => q.status !== 'resolved').length;
 
   const [userName, setUserNameState] = React.useState(() => localStorage.getItem('jp_userName') || '');
 
@@ -2963,6 +3311,7 @@ const App = ({ user }) => {
             <span className="flex-1 text-left">{p.label}</span>
             {p.id==='homework' && pendingHw > 0 && <span className={`text-xs px-1.5 py-0.5 rounded-full font-bold ${page===p.id?'bg-white text-indigo-600':'bg-red-500 text-white'}`}>{pendingHw}</span>}
             {p.id==='flashcards' && dueCards > 0 && <span className={`text-xs px-1.5 py-0.5 rounded-full font-bold ${page===p.id?'bg-white text-indigo-600':'bg-amber-500 text-white'}`}>{dueCards}</span>}
+            {p.id==='questions' && openQuestions > 0 && <span className={`text-xs px-1.5 py-0.5 rounded-full font-bold ${page===p.id?'bg-white text-indigo-600':'bg-purple-500 text-white'}`}>{openQuestions}</span>}
           </button>
         ))}
       </nav>
@@ -2999,10 +3348,12 @@ const App = ({ user }) => {
         )}
         <StorageBanner />
         <main className="flex-1 overflow-y-auto p-4 md:p-8">
-          {page==='dashboard'  && <Dashboard notes={notes} homework={homework} flashcards={flashcards} onNav={nav} userName={userName} />}
+          {page==='dashboard'  && <Dashboard notes={notes} homework={homework} flashcards={flashcards} questions={questions} onNav={nav} userName={userName} />}
           {page==='knowledge'  && <KnowledgeBase notes={notes} setNotes={setNotes} allTags={allTags} uid={user.uid} isOnline={isOnline} importedNoteIds={importedNoteIds} setImportedNoteIds={setImportedNoteIds} setCards={setFlash} cards={flashcards} setPage={setPage} onNav={nav} navCtx={navCtx} clearNavCtx={clearNavCtx} />}
           {page==='flashcards' && <Flashcards cards={flashcards} setCards={setFlash} allTags={allTags} onNav={nav} notes={notes} navCtx={navCtx} clearNavCtx={clearNavCtx} />}
-          {page==='homework'   && <HomeworkTracker homework={homework} setHomework={setHomework} uid={user.uid} isOnline={isOnline} />}
+          {page==='homework'   && <HomeworkTracker homework={homework} setHomework={setHomework} uid={user.uid} isOnline={isOnline} templates={taskTemplates} setTemplates={setTaskTemplates} />}
+          {page==='questions'  && <QuestionsView questions={questions} setQuestions={setQuestions} />}
+          {page==='resources'  && <ResourcesView resources={resources} setResources={setResources} />}
           {page==='pdf'        && <PDFImport setNotes={setNotes} setFlashcards={setFlash} uid={user.uid} isOnline={isOnline} notes={notes} flashcards={flashcards} setPage={setPage} setImportedNoteIds={setImportedNoteIds} />}
           {page==='ai'         && <AIPractice notes={notes} allTags={allTags} setPage={setPage} navCtx={navCtx} clearNavCtx={clearNavCtx} />}
           {page==='tts'        && <TextToSpeech setPage={setPage} />}
