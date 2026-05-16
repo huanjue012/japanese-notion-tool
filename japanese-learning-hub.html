@@ -1104,6 +1104,17 @@ const Flashcards = ({ cards, setCards, allTags, onNav, notes = [], navCtx, clear
   const [mergeModal, setMergeModal] = useState(false);
   const [mergeGroups, setMergeGroups] = useState([]);
   const [maintToast, setMaintToast] = useState('');
+  const [moreMenuOpen, setMoreMenuOpen] = useState(false);
+  const moreMenuRef = useRef(null);
+
+  useEffect(() => {
+    if (!moreMenuOpen) return;
+    const handler = (e) => { if (moreMenuRef.current && !moreMenuRef.current.contains(e.target)) setMoreMenuOpen(false); };
+    const esc = (e) => { if (e.key === 'Escape') setMoreMenuOpen(false); };
+    document.addEventListener('mousedown', handler);
+    document.addEventListener('keydown', esc);
+    return () => { document.removeEventListener('mousedown', handler); document.removeEventListener('keydown', esc); };
+  }, [moreMenuOpen]);
 
   const duplicateGroupCount = useMemo(() => {
     const seen = new Map();
@@ -1281,10 +1292,24 @@ const Flashcards = ({ cards, setCards, allTags, onNav, notes = [], navCtx, clear
         <h1 className="text-xl font-bold text-gray-800">🃏 闪卡复习</h1>
         <div className="flex gap-2">
           {cards.length > 0 && <Btn variant="danger" onClick={() => { if (confirm(`删除全部 ${cards.length} 张闪卡？此操作不可恢复。`)) setCards([]); }}>🗑 全部删除</Btn>}
-          {cards.length > 0 && <Btn variant="secondary" onClick={exportForClaude}>导出给 Claude</Btn>}
-          {cards.length > 0 && <Btn variant="secondary" onClick={() => setDeleteModal(true)}>🗑 删除重复</Btn>}
-          {cards.length > 0 && <Btn variant="secondary" onClick={openMoveReadingsPreview}>📖 整理读音</Btn>}
-          {cards.length > 0 && <Btn variant="secondary" onClick={openMergeDuplicates}>🔀 合并重复{duplicateGroupCount > 0 && <span className="ml-1 bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 align-middle">{duplicateGroupCount}</span>}</Btn>}
+          {cards.length > 0 && (
+            <div className="relative" ref={moreMenuRef}>
+              <Btn variant="secondary" onClick={() => setMoreMenuOpen(o => !o)}>
+                更多 ▾{duplicateGroupCount > 0 && <span className="ml-1 bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 align-middle">{duplicateGroupCount}</span>}
+              </Btn>
+              {moreMenuOpen && (
+                <div className="absolute top-full right-0 bg-white border border-gray-200 rounded-lg shadow-lg mt-1 z-20 overflow-hidden min-w-[160px]">
+                  <div onClick={() => { setMoreMenuOpen(false); openMergeDuplicates(); }} className="px-3 py-2 text-sm hover:bg-indigo-50 cursor-pointer flex justify-between items-center gap-2">
+                    <span>🔀 合并重复</span>
+                    {duplicateGroupCount > 0 && <span className="bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5">{duplicateGroupCount}</span>}
+                  </div>
+                  <div onClick={() => { setMoreMenuOpen(false); setDeleteModal(true); }} className="px-3 py-2 text-sm hover:bg-indigo-50 cursor-pointer">🗑 删除重复</div>
+                  <div onClick={() => { setMoreMenuOpen(false); openMoveReadingsPreview(); }} className="px-3 py-2 text-sm hover:bg-indigo-50 cursor-pointer">📖 整理读音</div>
+                  <div onClick={() => { setMoreMenuOpen(false); exportForClaude(); }} className="px-3 py-2 text-sm hover:bg-indigo-50 cursor-pointer">导出给 Claude</div>
+                </div>
+              )}
+            </div>
+          )}
           <Btn variant="secondary" onClick={openNew}>+ 新建</Btn>
           {cards.length > 0 && <Btn onClick={startReview}>开始复习 {dueCards.length > 0 && `(${dueCards.length} 到期)`}</Btn>}
         </div>
