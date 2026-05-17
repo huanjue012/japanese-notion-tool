@@ -1,10 +1,17 @@
 # 日语学习助手 — 开发文档
 
 ## 网站
-- 文件：`japanese-learning-hub.html`（单一 HTML，React 18 + Tailwind + marked.js，CDN 加载）
+- 入口：`index.html` → loader 一次性 fetch + Babel.transform 所有 `src/**/*.js`
+- 结构：
+  - `src/shared/` — core（utils/Gemini/Firebase/hooks）, components（UI primitives）, helpers, tts, auth
+  - `src/modules/` — Dashboard, KnowledgeBase, Flashcards, Homework, Questions, Resources, PdfImport, Settings, AiPractice
+  - `src/app.js` — PAGES、路由（History API）、App、render
+- 路由（真实 URL，Firebase rewrites `**` → `/index.html`）：`/`, `/notes`, `/flashcards`, `/homework`, `/questions`, `/resources`, `/import`, `/practice`, `/tts`, `/settings`
+- 旧文件 `japanese-learning-hub.html` 保留作回滚备份，已不再被部署引用
 - 线上：`https://japaneseclass-8006f.web.app`
 - 部署：push 到 `main` → GitHub Actions 自动部署（约1分钟）
 - Repo：`huanjue012/japanese-notion-tool`
+- 本地测试：`npx serve -s -p 8000`（`-s` 启用 SPA fallback，深链接才能直接访问）
 
 ## 技术栈
 - React 18 + Tailwind CSS + marked.js（Markdown 渲染）+ pdf.js
