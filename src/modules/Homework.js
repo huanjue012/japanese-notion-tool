@@ -14,7 +14,12 @@ const HomeworkTracker = ({ homework, setHomework, uid, isOnline, templates = [],
   const [tplOpen, setTplOpen] = useState(false);
   const [tplForm, setTplForm] = useState(null); // { id?, title, defaultLessonNumber, defaultNotes }
   const [copyFor, setCopyFor] = useState(null); // template being copied
+  const [copyMode, setCopyMode] = useState('dates'); // 'dates' | 'range'
   const [copyDates, setCopyDates] = useState(['']);
+  const [rangeStart, setRangeStart] = useState('');
+  const [rangeEnd, setRangeEnd] = useState('');
+  const [view, setView] = useState('list'); // 'list' | 'calendar'
+  const [calMonth, setCalMonth] = useState(() => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1); });
   const [toast, setToast] = useState('');
 
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(''), 2500); };
@@ -32,10 +37,30 @@ const HomeworkTracker = ({ homework, setHomework, uid, isOnline, templates = [],
   };
   const delTpl = (id) => { if (confirm('删除此模板？已生成的功课不受影响。')) setTemplates(p => p.filter(t => t.id !== id)); };
 
-  const openCopy = (t) => { setCopyFor(t); setCopyDates(['']); };
+  const openCopy = (t) => { setCopyFor(t); setCopyMode('dates'); setCopyDates(['']); setRangeStart(''); setRangeEnd(''); };
+  const rangeDates = useMemo(() => {
+    if (!rangeStart || !rangeEnd) return [];
+    if (rangeStart > rangeEnd) return [];
+    const out = [];
+    const cur = new Date(rangeStart + 'T00:00:00');
+    const end = new Date(rangeEnd + 'T00:00:00');
+    while (cur <= end) {
+      const y = cur.getFullYear(), m = String(cur.getMonth()+1).padStart(2,'0'), d = String(cur.getDate()).padStart(2,'0');
+      out.push(`${y}-${m}-${d}`);
+      cur.setDate(cur.getDate() + 1);
+    }
+    return out;
+  }, [rangeStart, rangeEnd]);
   const doCopy = () => {
-    const dates = copyDates.map(d => d.trim()).filter(Boolean);
-    if (dates.length === 0) { alert('请至少选择一个日期'); return; }
+    let dates;
+    if (copyMode === 'range') {
+      if (!rangeStart || !rangeEnd) { alert('请选择开始和结束日期'); return; }
+      if (rangeStart > rangeEnd) { alert('开始日期不能晚于结束日期'); return; }
+      dates = rangeDates;
+    } else {
+      dates = copyDates.map(d => d.trim()).filter(Boolean);
+      if (dates.length === 0) { alert('请至少选择一个日期'); return; }
+    }
     const newOnes = dates.map(d => ({
       id: genId(),
       title: copyFor.title,
@@ -52,8 +77,39 @@ const HomeworkTracker = ({ homework, setHomework, uid, isOnline, templates = [],
     setHomework(p => [...p, ...newOnes]);
     setCopyFor(null);
     setCopyDates(['']);
+    setRangeStart(''); setRangeEnd(''); setCopyMode('dates');
     showToast(`已添加 ${newOnes.length} 条功课`);
   };
+
+  // 日历视图：按 dueDate 分组
+  const homeworkByDate = useMemo(() => {
+    const m = new Map();
+    homework.forEach(h => {
+      if (!h.dueDate) return;
+      if (!m.has(h.dueDate)) m.set(h.dueDate, []);
+      m.get(h.dueDate).push(h);
+    });
+    return m;
+  }, [homework]);
+  const todayStr = (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; })();
+  const calCells = useMemo(() => {
+    const y = calMonth.getFullYear(), m = calMonth.getMonth();
+    const firstDow = new Date(y, m, 1).getDay();
+    const daysInMonth = new Date(y, m+1, 0).getDate();
+    const prevDays = new Date(y, m, 0).getDate();
+    const cells = [];
+    for (let i = 0; i < 42; i++) {
+      const dayIdx = i - firstDow + 1; // 1-based day in this month
+      let cy = y, cm = m, cd;
+      let inMonth = true;
+      if (dayIdx < 1) { cm = m - 1; if (cm < 0) { cm = 11; cy = y - 1; } cd = prevDays + dayIdx; inMonth = false; }
+      else if (dayIdx > daysInMonth) { cm = m + 1; if (cm > 11) { cm = 0; cy = y + 1; } cd = dayIdx - daysInMonth; inMonth = false; }
+      else { cd = dayIdx; }
+      const key = `${cy}-${String(cm+1).padStart(2,'0')}-${String(cd).padStart(2,'0')}`;
+      cells.push({ key, day: cd, inMonth });
+    }
+    return cells;
+  }, [calMonth]);
 
   const counts = useMemo(() => {
     const c = { all: homework.length };
@@ -103,21 +159,62 @@ const HomeworkTracker = ({ homework, setHomework, uid, isOnline, templates = [],
         <h1 className="text-xl font-bold text-gray-800">📋 功课追踪</h1>
         <div className="flex gap-2 flex-wrap">
           {homework.length > 0 && <Btn variant="danger" onClick={() => { if (confirm(`删除全部 ${homework.length} 条功课记录？此操作不可恢复。`)) setHomework([]); }}>🗑 全部删除</Btn>}
+          <div className="inline-flex rounded-lg border border-gray-200 overflow-hidden">
+            <button onClick={() => setView('list')} className={`px-3 py-1.5 text-sm ${view==='list' ? 'bg-indigo-600 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}>📋 列表</button>
+            <button onClick={() => setView('calendar')} className={`px-3 py-1.5 text-sm ${view==='calendar' ? 'bg-indigo-600 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}>📅 日历</button>
+          </div>
           <Btn variant="secondary" onClick={() => setTplOpen(true)}>📋 任务模板{templates.length > 0 ? ` (${templates.length})` : ''}</Btn>
           <Btn onClick={openNew}>+ 添加功课</Btn>
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-2 mb-5">
+      {view === 'list' && <div className="flex flex-wrap gap-2 mb-5">
         {[['all','全部'],...Object.entries(HW_STATUS).map(([k,v])=>[k,v.label])].map(([k,l]) => (
           <button key={k} onClick={() => setFilter(k)}
             className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${filter===k?'bg-indigo-600 text-white shadow':'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
             {l} ({counts[k] || 0})
           </button>
         ))}
-      </div>
+      </div>}
 
-      {displayed.length === 0 ? (
+      {view === 'calendar' ? (
+        <div className="bg-white rounded-xl border border-gray-100 p-3">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-1">
+              <button onClick={() => setCalMonth(d => new Date(d.getFullYear(), d.getMonth()-1, 1))} className="px-2 py-1 rounded hover:bg-gray-100 text-gray-500">‹</button>
+              <span className="text-sm font-semibold text-gray-700 min-w-[8rem] text-center">{calMonth.getFullYear()} 年 {calMonth.getMonth()+1} 月</span>
+              <button onClick={() => setCalMonth(d => new Date(d.getFullYear(), d.getMonth()+1, 1))} className="px-2 py-1 rounded hover:bg-gray-100 text-gray-500">›</button>
+            </div>
+            <button onClick={() => { const d = new Date(); setCalMonth(new Date(d.getFullYear(), d.getMonth(), 1)); }} className="text-xs text-indigo-500 hover:text-indigo-700">回到本月</button>
+          </div>
+          <div className="grid grid-cols-7 gap-px bg-gray-100 border border-gray-100 rounded-lg overflow-hidden text-xs">
+            {['日','一','二','三','四','五','六'].map(w => (
+              <div key={w} className="bg-gray-50 text-gray-400 text-center py-1 font-medium">{w}</div>
+            ))}
+            {calCells.map(c => {
+              const items = homeworkByDate.get(c.key) || [];
+              const isToday = c.key === todayStr;
+              return (
+                <div key={c.key} className={`bg-white min-h-[5.5rem] p-1 ${c.inMonth ? '' : 'bg-gray-50/60'}`}>
+                  <div className={`text-[11px] mb-1 flex items-center justify-between ${isToday ? 'text-red-500 font-bold' : c.inMonth ? 'text-gray-500' : 'text-gray-300'}`}>
+                    <span>{c.day}</span>
+                    {items.length > 2 && <span className="text-[10px] text-gray-400">+{items.length-2}</span>}
+                  </div>
+                  <div className="space-y-0.5">
+                    {items.slice(0,2).map(h => (
+                      <button key={h.id} onClick={() => openEdit(h)}
+                        className={`w-full text-left text-[10px] leading-tight px-1 py-0.5 rounded truncate ${isOverdue(h) ? 'bg-red-50 text-red-600' : 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100'}`}
+                        title={h.title}>
+                        {HW_STATUS[h.status]?.dot} {h.title}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : displayed.length === 0 ? (
         <Card className="text-center py-16"><p className="text-gray-300 text-4xl mb-3">📭</p><p className="text-gray-400">暂无功课记录</p><Btn onClick={openNew} className="mt-4">添加第一份功课</Btn></Card>
       ) : (
         <div className="space-y-3">
@@ -236,19 +333,48 @@ const HomeworkTracker = ({ homework, setHomework, uid, isOnline, templates = [],
 
       {/* 复制到日期 modal */}
       <Modal open={!!copyFor} onClose={() => setCopyFor(null)} title={`复制到日期：${copyFor?.title || ''}`}>
-        <p className="text-xs text-gray-400 mb-3">选择 1 个或多个日期，每个日期会生成一条独立的功课。</p>
-        <div className="space-y-2 mb-3">
-          {copyDates.map((d, i) => (
-            <div key={i} className="flex gap-2">
-              <input type="date" value={d} onChange={e => setCopyDates(p => p.map((x, j) => j === i ? e.target.value : x))}
-                className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
-              {copyDates.length > 1 && (
-                <button onClick={() => setCopyDates(p => p.filter((_, j) => j !== i))} className="text-red-400 hover:text-red-600 px-2">×</button>
-              )}
-            </div>
-          ))}
+        <div className="inline-flex rounded-lg border border-gray-200 overflow-hidden mb-3">
+          <button onClick={() => setCopyMode('dates')} className={`px-3 py-1.5 text-sm ${copyMode==='dates' ? 'bg-indigo-600 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}>单独日期</button>
+          <button onClick={() => setCopyMode('range')} className={`px-3 py-1.5 text-sm ${copyMode==='range' ? 'bg-indigo-600 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}>日期范围</button>
         </div>
-        <Btn size="sm" variant="secondary" onClick={() => setCopyDates(p => [...p, ''])}>+ 再加一个日期</Btn>
+        {copyMode === 'dates' ? (
+          <>
+            <p className="text-xs text-gray-400 mb-3">选择 1 个或多个日期，每个日期会生成一条独立的功课。</p>
+            <div className="space-y-2 mb-3">
+              {copyDates.map((d, i) => (
+                <div key={i} className="flex gap-2">
+                  <input type="date" value={d} onChange={e => setCopyDates(p => p.map((x, j) => j === i ? e.target.value : x))}
+                    className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+                  {copyDates.length > 1 && (
+                    <button onClick={() => setCopyDates(p => p.filter((_, j) => j !== i))} className="text-red-400 hover:text-red-600 px-2">×</button>
+                  )}
+                </div>
+              ))}
+            </div>
+            <Btn size="sm" variant="secondary" onClick={() => setCopyDates(p => [...p, ''])}>+ 再加一个日期</Btn>
+          </>
+        ) : (
+          <>
+            <p className="text-xs text-gray-400 mb-3">选择开始和结束日期（含两端），范围内每一天都会生成一条独立的功课。</p>
+            <div className="grid grid-cols-2 gap-2 mb-2">
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">开始日期</label>
+                <input type="date" value={rangeStart} onChange={e => setRangeStart(e.target.value)}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">结束日期</label>
+                <input type="date" value={rangeEnd} onChange={e => setRangeEnd(e.target.value)}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+              </div>
+            </div>
+            <p className="text-xs text-indigo-500">
+              {rangeStart && rangeEnd
+                ? (rangeStart > rangeEnd ? '⚠ 开始日期不能晚于结束日期' : `将生成 ${rangeDates.length} 条功课`)
+                : '选完两端后这里会显示数量'}
+            </p>
+          </>
+        )}
         <div className="flex justify-end gap-2 pt-4"><Btn variant="secondary" onClick={() => setCopyFor(null)}>取消</Btn><Btn onClick={doCopy}>确认复制</Btn></div>
       </Modal>
 
