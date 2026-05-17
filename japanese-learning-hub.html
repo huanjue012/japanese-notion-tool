@@ -1022,6 +1022,30 @@ const Flashcards = ({ cards, setCards, allTags, onNav, notes = [], navCtx, clear
   const [flipped, setFlipped] = useState(false);
   const [noteIdx, setNoteIdx] = useState(0);
   const [sessionCards, setSessionCards] = useState([]);
+  const ttsAudioRef = useRef(null);
+  const [ttsLoading, setTtsLoading] = useState(false);
+  const [ttsError, setTtsError] = useState('');
+  const stopTTS = () => { if (ttsAudioRef.current) { ttsAudioRef.current.pause(); ttsAudioRef.current = null; } };
+  const speakCurrent = async () => {
+    const c = sessionCards[idx];
+    if (!c) return;
+    const text = flipped ? c.back : c.front;
+    if (!text || !text.trim()) return;
+    stopTTS();
+    setTtsError('');
+    setTtsLoading(true);
+    try {
+      const audio = await playJapaneseTTS(text);
+      ttsAudioRef.current = audio;
+      audio.onended = () => { if (ttsAudioRef.current === audio) ttsAudioRef.current = null; };
+    } catch (e) {
+      setTtsError(e.message || '朗读失败');
+      setTimeout(() => setTtsError(''), 3000);
+    } finally {
+      setTtsLoading(false);
+    }
+  };
+  useEffect(() => () => stopTTS(), []);
   const dueCards = useMemo(() => cards.filter(c => !c.completed && (!c.nextReview || new Date(c.nextReview) <= new Date())), [cards]);
   const reviewList = useMemo(() => {
     let base;
@@ -1069,6 +1093,7 @@ const Flashcards = ({ cards, setCards, allTags, onNav, notes = [], navCtx, clear
   };
 
   const markComplete = () => {
+    stopTTS();
     setCards(p => p.map(c => c.id === sessionCards[idx].id ? { ...c, completed: true, nextReview: null, lastReviewed: new Date().toISOString() } : c));
     if (idx < sessionCards.length - 1) { setIdx(i => i+1); setFlipped(false); setNoteIdx(0); }
     else setView('list');
@@ -1080,6 +1105,7 @@ const Flashcards = ({ cards, setCards, allTags, onNav, notes = [], navCtx, clear
 
   const rate = q => {
     if (q === 4 && sessionCards[idx].difficulty === 4) { markComplete(); return; }
+    stopTTS();
     const next = new Date(); next.setDate(next.getDate() + INTERVALS[q]);
     setCards(p => p.map(c => c.id === sessionCards[idx].id ? { ...c, nextReview: next.toISOString(), lastReviewed: new Date().toISOString(), reviewCount: (c.reviewCount||0)+1, difficulty: q } : c));
     if (idx < sessionCards.length - 1) { setIdx(i => i+1); setFlipped(false); setNoteIdx(0); }
@@ -1205,7 +1231,7 @@ const Flashcards = ({ cards, setCards, allTags, onNav, notes = [], navCtx, clear
     return (
       <div className="max-w-lg mx-auto">
         <div className="flex justify-between items-center mb-3">
-          <Btn variant="ghost" onClick={() => setView('list')}>← 返回</Btn>
+          <Btn variant="ghost" onClick={() => { stopTTS(); setView('list'); }}>← 返回</Btn>
           <div className="text-right">
             {activeTag && <p className="text-xs text-indigo-500 mb-0.5">#{activeTag}</p>}
             <span className="text-sm text-gray-400">{idx + 1} / {sessionCards.length}</span>
@@ -1216,10 +1242,19 @@ const Flashcards = ({ cards, setCards, allTags, onNav, notes = [], navCtx, clear
         </div>
         <div className="card-flip mb-6" style={{minHeight: '200px'}}>
           <div className={`card-flip-inner relative w-full`} style={{minHeight: '200px'}}>
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 text-center flex flex-col items-center justify-center cursor-pointer min-h-52 hover:shadow-xl transition-shadow" onClick={() => setFlipped(f => !f)} style={{minHeight: '200px'}}>
+            <div className="relative bg-white rounded-2xl shadow-lg border border-gray-100 p-8 text-center flex flex-col items-center justify-center cursor-pointer min-h-52 hover:shadow-xl transition-shadow" onClick={() => { stopTTS(); setFlipped(f => !f); }} style={{minHeight: '200px'}}>
+              <button
+                onClick={e => { e.stopPropagation(); speakCurrent(); }}
+                disabled={ttsLoading}
+                title="朗读（Google TTS）"
+                aria-label="朗读"
+                className="absolute top-3 right-3 w-9 h-9 rounded-full bg-gray-100 hover:bg-indigo-100 text-gray-500 hover:text-indigo-600 flex items-center justify-center transition-colors disabled:opacity-50">
+                {ttsLoading ? '⏳' : '🔊'}
+              </button>
               <p className="text-xs text-gray-300 mb-4 uppercase tracking-widest">{flipped ? '答案' : '点击翻转查看答案'}</p>
               <p className="text-2xl font-medium text-gray-800 leading-relaxed" style={{fontFamily:"'Noto Sans JP', 'Segoe UI', system-ui, sans-serif"}}>{flipped ? card.back : card.front}</p>
               {card.tags?.length > 0 && <div className="flex flex-wrap gap-1 mt-4 justify-center">{card.tags.map(t => <Badge key={t}>{t}</Badge>)}</div>}
+              {ttsError && <p className="absolute bottom-2 left-0 right-0 text-xs text-red-500">{ttsError}</p>}
             </div>
           </div>
         </div>
@@ -3127,6 +3162,30 @@ ${context}
 };
 
 // ─── TEXT TO SPEECH ───────────────────────────────────────────────────────────
+// Shared helper: 调用 Google Cloud TTS，返回 Audio 实例（已开始播放）。无 key 时抛错。
+const playJapaneseTTS = async (text, { voice = 'ja-JP-Neural2-B', rate = 1 } = {}) => {
+  const apiKey = localStorage.getItem('google_tts_key');
+  if (!apiKey) throw new Error('未配置 Google Cloud TTS API Key');
+  if (!text || !text.trim()) throw new Error('文本为空');
+  const res = await fetch(
+    `https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        input: { text: text.trim() },
+        voice: { languageCode: 'ja-JP', name: voice },
+        audioConfig: { audioEncoding: 'MP3', speakingRate: rate },
+      }),
+    }
+  );
+  const data = await res.json();
+  if (!res.ok) throw new Error(data?.error?.message || '请求失败');
+  const audio = new Audio(`data:audio/mp3;base64,${data.audioContent}`);
+  await audio.play();
+  return audio;
+};
+
 const TTS_VOICES = [
   { name: 'ja-JP-Neural2-B', label: 'Neural2 女声 B（推荐）' },
   { name: 'ja-JP-Neural2-C', label: 'Neural2 男声 C' },
@@ -3159,25 +3218,10 @@ const TextToSpeech = ({ setPage }) => {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch(
-        `https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            input: { text: text.trim() },
-            voice: { languageCode: 'ja-JP', name: voice },
-            audioConfig: { audioEncoding: 'MP3', speakingRate: rate },
-          }),
-        }
-      );
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.error?.message || '请求失败');
-      const audio = new Audio(`data:audio/mp3;base64,${data.audioContent}`);
+      const audio = await playJapaneseTTS(text, { voice, rate });
       audioRef.current = audio;
       audio.onended = () => setPlaying(false);
       audio.onerror = () => { setPlaying(false); setError('播放失败'); };
-      await audio.play();
       setPlaying(true);
     } catch (e) {
       setError(e.message || '发生错误');
