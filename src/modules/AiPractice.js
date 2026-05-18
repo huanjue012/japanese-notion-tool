@@ -103,6 +103,7 @@ const QuizTab = ({ notes, allTags, onNoKey, initialTags, consumeInitialTags }) =
   const [selectedTags, setSelectedTags] = React.useState([]);
   const [selectedNotes, setSelectedNotes] = React.useState([]);
   const [customScope, setCustomScope] = React.useState('');
+  const [scopeSearch, setScopeSearch] = React.useState('');
   const [quizType, setQuizType] = React.useState('choice');
   const [focusMode, setFocusMode] = React.useState('mixed'); // 'mixed' | 'grammar'
   const [questions, setQuestions] = React.useState([]);
@@ -180,7 +181,20 @@ ${context}
       const jsonMatch = res.match(/\[[\s\S]*\]/);
       if (!jsonMatch) throw new Error('格式错误，请重试');
       const parsed = JSON.parse(jsonMatch[0]);
-      setQuestions(parsed);
+      const normalized = (Array.isArray(parsed) ? parsed : []).map(q => ({
+        ...q,
+        q: typeof q.q === 'string' ? q.q : String(q.q ?? ''),
+        answer: typeof q.answer === 'string' ? q.answer : String(q.answer ?? ''),
+        options: Array.isArray(q.options)
+          ? q.options.map(o => {
+              if (typeof o === 'string') return o;
+              if (o && typeof o === 'object') return String(o.text ?? o.label ?? o.value ?? JSON.stringify(o));
+              return String(o ?? '');
+            })
+          : [],
+        explanation: typeof q.explanation === 'string' ? q.explanation : String(q.explanation ?? ''),
+      }));
+      setQuestions(normalized);
       setStarted(true);
     } catch (e) {
       if (e.message === 'NO_KEY') { onNoKey(); return; }
@@ -201,50 +215,90 @@ ${context}
           <h2 className="font-semibold text-gray-700 mb-3">选择测验范围</h2>
 
           {/* Scope mode switcher */}
-          <div className="flex gap-1 bg-gray-100 p-1 rounded-lg mb-4 w-fit">
+          <div className="flex gap-1 bg-gray-100 p-1 rounded-lg mb-3 w-fit">
             {scopeModes.map(([v, l]) => (
-              <button key={v} onClick={() => setScopeMode(v)}
+              <button key={v} onClick={() => { setScopeMode(v); setScopeSearch(''); }}
                 className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${scopeMode === v ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
                 {l}
               </button>
             ))}
           </div>
 
-          {scopeMode === 'tags' && (
-            <div className="mb-4">
-              <p className="text-xs text-gray-400 mb-2">选择标签（不选则出 N5 综合题）</p>
-              <div className="flex flex-wrap gap-2">
-                {allTags.map(tag => (
-                  <Badge key={tag} onClick={() => toggleTag(tag)}
-                    color={selectedTags.includes(tag) ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600'}>
-                    {tag}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {scopeMode === 'notes' && (
-            <div className="mb-4">
-              <p className="text-xs text-gray-400 mb-2">选择要考核的笔记（不选则出 N5 综合题）</p>
-              {notes.length === 0 ? (
-                <p className="text-sm text-gray-400 italic">暂无笔记</p>
-              ) : (
-                <div className="max-h-48 overflow-y-auto border border-gray-200 rounded-xl divide-y">
-                  {notes.map(n => (
-                    <label key={n.id} className="flex items-start gap-3 px-3 py-2 cursor-pointer hover:bg-gray-50">
-                      <input type="checkbox" checked={selectedNotes.includes(n.id)}
-                        onChange={() => toggleNote(n.id)} className="mt-0.5 shrink-0" />
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium text-gray-700 break-words">{n.title}</p>
-                        <p className="text-xs text-gray-400 line-clamp-1">{n.content.slice(0, 60)}…</p>
-                      </div>
-                    </label>
-                  ))}
-                </div>
+          {scopeMode !== 'custom' && (
+            <div className="relative mb-3">
+              <input
+                value={scopeSearch}
+                onChange={e => setScopeSearch(e.target.value)}
+                placeholder={scopeMode === 'tags' ? '搜索标签…' : '搜索笔记标题/内容…'}
+                className="w-full border border-gray-200 rounded-lg pl-3 pr-8 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+              />
+              {scopeSearch && (
+                <button
+                  onClick={() => setScopeSearch('')}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-sm"
+                  aria-label="清除搜索"
+                >×</button>
               )}
             </div>
           )}
+
+          {scopeMode === 'tags' && (() => {
+            const q = scopeSearch.trim().toLowerCase();
+            const matchSet = new Set(
+              q ? allTags.filter(t => t.toLowerCase().includes(q)) : allTags
+            );
+            selectedTags.forEach(t => matchSet.add(t));
+            const visible = allTags.filter(t => matchSet.has(t));
+            return (
+              <div className="mb-4">
+                <p className="text-xs text-gray-400 mb-2">选择标签（不选则出 N5 综合题）</p>
+                {visible.length === 0 ? (
+                  <p className="text-sm text-gray-400 italic">没有匹配的标签</p>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    {visible.map(tag => (
+                      <Badge key={tag} onClick={() => toggleTag(tag)}
+                        color={selectedTags.includes(tag) ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600'}>
+                        {tag}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+
+          {scopeMode === 'notes' && (() => {
+            const q = scopeSearch.trim().toLowerCase();
+            const matchIds = new Set(
+              (q ? notes.filter(n => n.title.toLowerCase().includes(q) || n.content.toLowerCase().includes(q)) : notes).map(n => n.id)
+            );
+            selectedNotes.forEach(id => matchIds.add(id));
+            const visible = notes.filter(n => matchIds.has(n.id));
+            return (
+              <div className="mb-4">
+                <p className="text-xs text-gray-400 mb-2">选择要考核的笔记（不选则出 N5 综合题）</p>
+                {notes.length === 0 ? (
+                  <p className="text-sm text-gray-400 italic">暂无笔记</p>
+                ) : visible.length === 0 ? (
+                  <p className="text-sm text-gray-400 italic">没有匹配的笔记</p>
+                ) : (
+                  <div className="max-h-48 overflow-y-auto border border-gray-200 rounded-xl divide-y">
+                    {visible.map(n => (
+                      <label key={n.id} className="flex items-start gap-3 px-3 py-2 cursor-pointer hover:bg-gray-50">
+                        <input type="checkbox" checked={selectedNotes.includes(n.id)}
+                          onChange={() => toggleNote(n.id)} className="mt-0.5 shrink-0" />
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-gray-700 break-words">{n.title}</p>
+                          <p className="text-xs text-gray-400 line-clamp-1">{n.content.slice(0, 60)}…</p>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
 
           {scopeMode === 'custom' && (
             <div className="mb-4">
@@ -293,7 +347,9 @@ ${context}
               {q.options && q.options.length > 0 ? (
                 <div className="space-y-2 mb-3">
                   {q.options.map((opt, oi) => {
-                    const isCorrect = opt === q.answer || opt.startsWith(q.answer);
+                    const optStr = String(opt ?? '');
+                    const ansStr = String(q.answer ?? '');
+                    const isCorrect = optStr === ansStr || optStr.startsWith(ansStr);
                     const isSelected = answers[idx] === opt;
                     let color = 'border-gray-200 text-gray-700';
                     if (revealed[idx]) {
