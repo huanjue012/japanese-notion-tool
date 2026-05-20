@@ -54,6 +54,8 @@ const PDFImport = ({ setNotes, setFlashcards, uid, isOnline, notes, flashcards, 
   const [mergeErr, setMergeErr] = useState('');
   const [mergeOk, setMergeOk] = useState('');
   const [mergeHasBackup, setMergeHasBackup] = useState(() => !!localStorage.getItem('backup_merge_flashcards') || !!localStorage.getItem('backup_merge_notes'));
+  const [insertUnmatchedFlash, setInsertUnmatchedFlash] = useState(false);
+  const [insertUnmatchedNotes, setInsertUnmatchedNotes] = useState(false);
 
   const mergePreview = useMemo(() => {
     if (!mergeJson.trim()) return null;
@@ -69,7 +71,7 @@ const PDFImport = ({ setNotes, setFlashcards, uid, isOnline, notes, flashcards, 
       const willUpdate = [], noMatch = [], noChange = [];
       for (const x of d.flashcards) {
         const existing = existingMap.get(x.front);
-        if (!existing) { noMatch.push(x.front); continue; }
+        if (!existing) { noMatch.push(x); continue; }
         const newBack = x.back ?? existing.back;
         const newTags = Array.isArray(x.tags) ? x.tags : existing.tags;
         if (newBack === existing.back && JSON.stringify(newTags) === JSON.stringify(existing.tags || [])) {
@@ -87,7 +89,7 @@ const PDFImport = ({ setNotes, setFlashcards, uid, isOnline, notes, flashcards, 
       const willUpdate = [], noMatch = [], noChange = [];
       for (const x of d.notes) {
         const existing = existingMap.get(x.title);
-        if (!existing) { noMatch.push(x.title); continue; }
+        if (!existing) { noMatch.push(x); continue; }
         const newContent = x.content ?? existing.content;
         const newTags = Array.isArray(x.tags) ? x.tags : existing.tags;
         if (newContent === existing.content && JSON.stringify(newTags) === JSON.stringify(existing.tags || [])) {
@@ -107,32 +109,48 @@ const PDFImport = ({ setNotes, setFlashcards, uid, isOnline, notes, flashcards, 
     if (!mergePreview || mergePreview.error) { setMergeErr(mergePreview?.error || 'JSON 无效'); return; }
     const flashUpdates = mergePreview.flashPart?.willUpdate || [];
     const noteUpdates = mergePreview.notePart?.willUpdate || [];
-    const totalUpdates = flashUpdates.length + noteUpdates.length;
-    if (totalUpdates === 0) { setMergeErr('没有需要更新的内容'); return; }
+    const flashInserts = insertUnmatchedFlash ? (mergePreview.flashPart?.noMatch || []) : [];
+    const noteInserts = insertUnmatchedNotes ? (mergePreview.notePart?.noMatch || []) : [];
+    const totalOps = flashUpdates.length + noteUpdates.length + flashInserts.length + noteInserts.length;
+    if (totalOps === 0) { setMergeErr('没有需要更新或新增的内容'); return; }
     const parts = [];
-    if (flashUpdates.length > 0) parts.push(`闪卡 ${flashUpdates.length} 张`);
-    if (noteUpdates.length > 0) parts.push(`笔记 ${noteUpdates.length} 条`);
-    if (!confirm(`将更新${parts.join('、')}的内容/tags。操作前会自动备份。\n确认？`)) return;
+    if (flashUpdates.length > 0) parts.push(`更新闪卡 ${flashUpdates.length} 张`);
+    if (flashInserts.length > 0) parts.push(`新增闪卡 ${flashInserts.length} 张`);
+    if (noteUpdates.length > 0) parts.push(`更新笔记 ${noteUpdates.length} 条`);
+    if (noteInserts.length > 0) parts.push(`新增笔记 ${noteInserts.length} 条`);
+    if (!confirm(`${parts.join('、')}。操作前会自动备份。\n确认？`)) return;
 
-    if (flashUpdates.length > 0) {
+    const now = new Date().toISOString();
+    if (flashUpdates.length > 0 || flashInserts.length > 0) {
       localStorage.setItem('backup_merge_flashcards', JSON.stringify(flashcards));
       const updateMap = new Map(flashUpdates.map(u => [u.id, u]));
-      setFlashcards(p => p.map(c => {
-        const u = updateMap.get(c.id);
-        return u ? { ...c, back: u.newBack, tags: u.newTags, updatedAt: new Date().toISOString() } : c;
-      }));
+      const newFlash = flashInserts.map(x => ({ ...x, id: genId(), createdAt: now, tags: Array.isArray(x.tags) ? x.tags : [] }));
+      setFlashcards(p => {
+        const updated = p.map(c => {
+          const u = updateMap.get(c.id);
+          return u ? { ...c, back: u.newBack, tags: u.newTags, updatedAt: now } : c;
+        });
+        return [...updated, ...newFlash];
+      });
     }
-    if (noteUpdates.length > 0) {
+    if (noteUpdates.length > 0 || noteInserts.length > 0) {
       localStorage.setItem('backup_merge_notes', JSON.stringify(notes));
       const updateMap = new Map(noteUpdates.map(u => [u.id, u]));
-      setNotes(p => p.map(n => {
-        const u = updateMap.get(n.id);
-        return u ? { ...n, content: u.newContent, tags: u.newTags, updatedAt: new Date().toISOString() } : n;
-      }));
+      const newNotes = noteInserts.map(x => ({ ...x, id: genId(), createdAt: now, images: Array.isArray(x.images) ? x.images : [], tags: Array.isArray(x.tags) ? x.tags : [] }));
+      setNotes(p => {
+        const updated = p.map(n => {
+          const u = updateMap.get(n.id);
+          return u ? { ...n, content: u.newContent, tags: u.newTags, updatedAt: now } : n;
+        });
+        return [...updated, ...newNotes];
+      });
+      if (newNotes.length > 0 && setImportedNoteIds) setImportedNoteIds(newNotes.map(x => x.id));
     }
     setMergeHasBackup(true);
-    setMergeOk(`✅ 已更新${parts.join('、')}`);
+    setMergeOk(`✅ ${parts.join('、')}`);
     setMergeJson('');
+    setInsertUnmatchedFlash(false);
+    setInsertUnmatchedNotes(false);
   };
 
   const restoreMergeBackup = () => {
@@ -605,7 +623,7 @@ const PDFImport = ({ setNotes, setFlashcards, uid, isOnline, notes, flashcards, 
             <p className="text-xs text-gray-500 leading-relaxed">把 Claude 返回的 JSON 粘在下面。规则：
               <br />• 闪卡按 <span className="font-semibold">front</span> 匹配，覆盖 <span className="font-semibold">back / tags</span>
               <br />• 笔记按 <span className="font-semibold">title</span> 匹配，覆盖 <span className="font-semibold">content / tags</span>
-              <br /><span className="font-semibold">不会新增、不会删除</span>。要新增请用「📥 JSON 导入」tab。</p>
+              <br />未匹配项默认不处理，可勾选「作为新笔记/闪卡插入」一次性新增；不会删除任何条目。</p>
             <pre className="text-xs text-gray-500 bg-gray-50 rounded-xl p-4 overflow-x-auto mt-2">{`{
   "flashcards": [{"front":"その","back":"那个\\n例：その本は私のです。","tags":["指示词"]}],
   "notes": [{"title":"指示代词","content":"...新内容...","tags":["语法"]}]
@@ -620,12 +638,21 @@ const PDFImport = ({ setNotes, setFlashcards, uid, isOnline, notes, flashcards, 
                     <p className="text-indigo-700">🃏 闪卡 共 <span className="font-semibold">{mergePreview.flashPart.total}</span>：
                       将更新 <span className="font-semibold text-green-700">{mergePreview.flashPart.willUpdate.length}</span> ·
                       无变化 <span className="text-gray-500">{mergePreview.flashPart.noChange.length}</span> ·
-                      未匹配 <span className="text-amber-600">{mergePreview.flashPart.noMatch.length}</span></p>
+                      {insertUnmatchedFlash
+                        ? <> 新增 <span className="font-semibold text-blue-700">{mergePreview.flashPart.noMatch.length}</span></>
+                        : <> 未匹配 <span className="text-amber-600">{mergePreview.flashPart.noMatch.length}</span></>}
+                    </p>
                     {mergePreview.flashPart.noMatch.length > 0 && (
-                      <details className="text-xs text-amber-700 mt-1">
-                        <summary className="cursor-pointer hover:underline">查看未匹配的 front（不会被处理）</summary>
-                        <div className="mt-1 max-h-32 overflow-auto bg-white rounded p-2">{mergePreview.flashPart.noMatch.slice(0, 50).join(' · ')}{mergePreview.flashPart.noMatch.length > 50 && ` ... 共 ${mergePreview.flashPart.noMatch.length} 条`}</div>
-                      </details>
+                      <>
+                        <label className="flex items-center gap-2 text-xs text-indigo-700 mt-2 cursor-pointer select-none">
+                          <input type="checkbox" checked={insertUnmatchedFlash} onChange={e => setInsertUnmatchedFlash(e.target.checked)} />
+                          未匹配的 {mergePreview.flashPart.noMatch.length} 张作为新闪卡插入
+                        </label>
+                        <details className="text-xs text-amber-700 mt-1">
+                          <summary className="cursor-pointer hover:underline">查看未匹配的 front</summary>
+                          <div className="mt-1 max-h-32 overflow-auto bg-white rounded p-2">{mergePreview.flashPart.noMatch.slice(0, 50).map(x => x.front).join(' · ')}{mergePreview.flashPart.noMatch.length > 50 && ` ... 共 ${mergePreview.flashPart.noMatch.length} 条`}</div>
+                        </details>
+                      </>
                     )}
                   </div>
                 )}
@@ -634,12 +661,21 @@ const PDFImport = ({ setNotes, setFlashcards, uid, isOnline, notes, flashcards, 
                     <p className="text-purple-700">📝 笔记 共 <span className="font-semibold">{mergePreview.notePart.total}</span>：
                       将更新 <span className="font-semibold text-green-700">{mergePreview.notePart.willUpdate.length}</span> ·
                       无变化 <span className="text-gray-500">{mergePreview.notePart.noChange.length}</span> ·
-                      未匹配 <span className="text-amber-600">{mergePreview.notePart.noMatch.length}</span></p>
+                      {insertUnmatchedNotes
+                        ? <> 新增 <span className="font-semibold text-blue-700">{mergePreview.notePart.noMatch.length}</span></>
+                        : <> 未匹配 <span className="text-amber-600">{mergePreview.notePart.noMatch.length}</span></>}
+                    </p>
                     {mergePreview.notePart.noMatch.length > 0 && (
-                      <details className="text-xs text-amber-700 mt-1">
-                        <summary className="cursor-pointer hover:underline">查看未匹配的 title（不会被处理）</summary>
-                        <div className="mt-1 max-h-32 overflow-auto bg-white rounded p-2">{mergePreview.notePart.noMatch.slice(0, 50).join(' · ')}{mergePreview.notePart.noMatch.length > 50 && ` ... 共 ${mergePreview.notePart.noMatch.length} 条`}</div>
-                      </details>
+                      <>
+                        <label className="flex items-center gap-2 text-xs text-purple-700 mt-2 cursor-pointer select-none">
+                          <input type="checkbox" checked={insertUnmatchedNotes} onChange={e => setInsertUnmatchedNotes(e.target.checked)} />
+                          未匹配的 {mergePreview.notePart.noMatch.length} 条作为新笔记插入
+                        </label>
+                        <details className="text-xs text-amber-700 mt-1">
+                          <summary className="cursor-pointer hover:underline">查看未匹配的 title</summary>
+                          <div className="mt-1 max-h-32 overflow-auto bg-white rounded p-2">{mergePreview.notePart.noMatch.slice(0, 50).map(x => x.title).join(' · ')}{mergePreview.notePart.noMatch.length > 50 && ` ... 共 ${mergePreview.notePart.noMatch.length} 条`}</div>
+                        </details>
+                      </>
                     )}
                   </div>
                 )}
@@ -650,7 +686,12 @@ const PDFImport = ({ setNotes, setFlashcards, uid, isOnline, notes, flashcards, 
             {mergeOk && <p className="text-green-600 text-sm font-medium mb-3">{mergeOk}</p>}
             <p className="text-xs text-amber-600 mb-3">⚠️ 操作前自动备份，可用「恢复备份」撤销最近一次合并。</p>
             <div className="flex gap-2">
-              <Btn onClick={applyMerge} disabled={!mergePreview || mergePreview.error || ((mergePreview.flashPart?.willUpdate.length || 0) + (mergePreview.notePart?.willUpdate.length || 0) === 0)}>合并更新</Btn>
+              <Btn onClick={applyMerge} disabled={!mergePreview || mergePreview.error || (
+                (mergePreview.flashPart?.willUpdate.length || 0)
+                + (mergePreview.notePart?.willUpdate.length || 0)
+                + (insertUnmatchedFlash ? (mergePreview.flashPart?.noMatch.length || 0) : 0)
+                + (insertUnmatchedNotes ? (mergePreview.notePart?.noMatch.length || 0) : 0)
+                === 0)}>合并更新</Btn>
               {mergeHasBackup && <Btn variant="secondary" onClick={restoreMergeBackup}>恢复备份</Btn>}
             </div>
           </Card>
