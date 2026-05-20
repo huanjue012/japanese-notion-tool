@@ -48,6 +48,61 @@ const PDFImport = ({ setNotes, setFlashcards, uid, isOnline, notes, flashcards, 
   const [json, setJson] = useState('');
   const [jsonErr, setJsonErr] = useState('');
   const [jsonOk, setJsonOk] = useState('');
+
+  // ── Merge tab ──
+  const [mergeJson, setMergeJson] = useState('');
+  const [mergeErr, setMergeErr] = useState('');
+  const [mergeOk, setMergeOk] = useState('');
+  const [mergeHasBackup, setMergeHasBackup] = useState(() => !!localStorage.getItem('backup_merge_flashcards'));
+
+  const mergePreview = useMemo(() => {
+    if (!mergeJson.trim()) return null;
+    let d;
+    try { d = JSON.parse(mergeJson); } catch { return { error: 'JSON 格式有误' }; }
+    if (!Array.isArray(d.flashcards)) return { error: '缺少 flashcards 数组' };
+    const existingMap = new Map(flashcards.map(c => [c.front, c]));
+    const willUpdate = [];
+    const noMatch = [];
+    const noChange = [];
+    for (const x of d.flashcards) {
+      const existing = existingMap.get(x.front);
+      if (!existing) { noMatch.push(x.front); continue; }
+      const newBack = x.back ?? existing.back;
+      const newTags = Array.isArray(x.tags) ? x.tags : existing.tags;
+      if (newBack === existing.back && JSON.stringify(newTags) === JSON.stringify(existing.tags || [])) {
+        noChange.push(x.front);
+      } else {
+        willUpdate.push({ id: existing.id, front: x.front, newBack, newTags });
+      }
+    }
+    return { willUpdate, noMatch, noChange, total: d.flashcards.length };
+  }, [mergeJson, flashcards]);
+
+  const applyMerge = () => {
+    setMergeErr(''); setMergeOk('');
+    if (!mergePreview || mergePreview.error) { setMergeErr(mergePreview?.error || 'JSON 无效'); return; }
+    if (mergePreview.willUpdate.length === 0) { setMergeErr('没有需要更新的闪卡'); return; }
+    if (!confirm(`将更新 ${mergePreview.willUpdate.length} 张闪卡的 back/tags。操作前会自动备份。\n确认？`)) return;
+    localStorage.setItem('backup_merge_flashcards', JSON.stringify(flashcards));
+    setMergeHasBackup(true);
+    const updateMap = new Map(mergePreview.willUpdate.map(u => [u.id, u]));
+    setFlashcards(p => p.map(c => {
+      const u = updateMap.get(c.id);
+      return u ? { ...c, back: u.newBack, tags: u.newTags, updatedAt: new Date().toISOString() } : c;
+    }));
+    setMergeOk(`✅ 已更新 ${mergePreview.willUpdate.length} 张闪卡`);
+    setMergeJson('');
+  };
+
+  const restoreMergeBackup = () => {
+    const raw = localStorage.getItem('backup_merge_flashcards');
+    if (!raw) { alert('没有找到备份'); return; }
+    let backup;
+    try { backup = JSON.parse(raw); } catch(e) { alert('备份数据损坏：' + e.message); return; }
+    if (!confirm('确认从备份恢复？当前闪卡数据将被替换。')) return;
+    setFlashcards(() => backup);
+    setMergeOk('✅ 已从备份恢复');
+  };
   const [lastImportedCount, setLastImportedCount] = useState(0);
   const [imgFiles, setImgFiles] = useState([]);
   const [jsonPdfFiles, setJsonPdfFiles] = useState([]);
@@ -251,7 +306,7 @@ const PDFImport = ({ setNotes, setFlashcards, uid, isOnline, notes, flashcards, 
       <p className="text-gray-400 text-sm mb-5">上传 PDF 或粘贴文字，AI 自动整理成笔记 / 闪卡后一键导入</p>
 
       <div className="flex gap-1 mb-5 bg-gray-100 rounded-xl p-1 w-fit">
-        {[['ai','🤖 AI 整理'],['json','📥 JSON 导入']].map(([k,l]) => (
+        {[['ai','🤖 AI 整理'],['json','📥 JSON 导入'],['merge','🔄 合并更新']].map(([k,l]) => (
           <button key={k} onClick={() => setTab(k)} className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${tab===k?'bg-white shadow text-gray-800':'text-gray-400 hover:text-gray-600'}`}>{l}</button>
         ))}
       </div>
@@ -493,6 +548,41 @@ const PDFImport = ({ setNotes, setFlashcards, uid, isOnline, notes, flashcards, 
               </div>
             )}
             <Btn onClick={importJSON} disabled={!json.trim() || uploading}>{uploading ? '上传中…' : '导入'}</Btn>
+          </Card>
+        </div>
+      )}
+
+      {tab === 'merge' && (
+        <div>
+          <Card className="mb-4">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">合并更新闪卡</p>
+            <p className="text-xs text-gray-500 leading-relaxed">把 Claude 返回的 JSON 粘在下面。规则：按 <span className="font-semibold">front</span> 匹配现有闪卡，用新的 <span className="font-semibold">back / tags</span> 覆盖原值。<span className="font-semibold">不会新增、不会删除</span>，front 不变的卡才会被更新。</p>
+            <pre className="text-xs text-gray-500 bg-gray-50 rounded-xl p-4 overflow-x-auto mt-2">{`{"flashcards": [{"front":"その","back":"那个\\n\\n例：その本は私のです。","tags":["指示词"]}]}`}</pre>
+          </Card>
+          <Card>
+            <Textarea label="粘贴 JSON" value={mergeJson} onChange={e => setMergeJson(e.target.value)} placeholder='{"flashcards":[...]}' rows={10} />
+            {mergePreview && !mergePreview.error && (
+              <div className="mb-3 p-3 bg-indigo-50 rounded-xl text-sm space-y-1">
+                <p className="text-indigo-700">📊 共 <span className="font-semibold">{mergePreview.total}</span> 张：
+                  将更新 <span className="font-semibold text-green-700">{mergePreview.willUpdate.length}</span> ·
+                  无变化 <span className="text-gray-500">{mergePreview.noChange.length}</span> ·
+                  未匹配 <span className="text-amber-600">{mergePreview.noMatch.length}</span></p>
+                {mergePreview.noMatch.length > 0 && (
+                  <details className="text-xs text-amber-700">
+                    <summary className="cursor-pointer hover:underline">查看未匹配的 front（这些卡不会被处理）</summary>
+                    <div className="mt-1 max-h-32 overflow-auto bg-white rounded p-2">{mergePreview.noMatch.slice(0, 50).join(' · ')}{mergePreview.noMatch.length > 50 && ` ... 共 ${mergePreview.noMatch.length} 条`}</div>
+                  </details>
+                )}
+              </div>
+            )}
+            {mergePreview?.error && <p className="text-red-500 text-sm mb-3">⚠️ {mergePreview.error}</p>}
+            {mergeErr && <p className="text-red-500 text-sm mb-3">⚠️ {mergeErr}</p>}
+            {mergeOk && <p className="text-green-600 text-sm font-medium mb-3">{mergeOk}</p>}
+            <p className="text-xs text-amber-600 mb-3">⚠️ 操作前自动备份，可用「恢复备份」撤销最近一次合并。</p>
+            <div className="flex gap-2">
+              <Btn onClick={applyMerge} disabled={!mergePreview || mergePreview.error || mergePreview.willUpdate.length === 0}>合并更新</Btn>
+              {mergeHasBackup && <Btn variant="secondary" onClick={restoreMergeBackup}>恢复备份</Btn>}
+            </div>
           </Card>
         </div>
       )}

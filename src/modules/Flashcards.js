@@ -52,6 +52,7 @@ const Flashcards = ({ cards, setCards, allTags, onNav, notes = [], navCtx, clear
     let base;
     if (filterMode === 'due') base = dueCards;
     else if (filterMode === 'completed') base = cards.filter(c => c.completed);
+    else if (filterMode === 'all') base = cards;
     else base = cards.filter(c => !c.completed);
     return activeTag === '__no_tag__'
       ? base.filter(c => !c.tags?.length)
@@ -115,11 +116,15 @@ const Flashcards = ({ cards, setCards, allTags, onNav, notes = [], navCtx, clear
 
   const del = id => { if (confirm('删除此闪卡？')) setCards(p => p.filter(c => c.id !== id)); };
 
-  const { exportForClaude, applyDeleteList, restoreBackup, hasBackup, setHasBackup, exportToast, deleteModal, setDeleteModal, deleteJson, setDeleteJson, exportModal, setExportModal, exportPromptText, copyPrompt, downloadJson, selectedTags, toggleTag, clearTags, availableTags, filteredCount, totalCount } = useClaudeExport({
+  const { exportForClaude, applyDeleteList, restoreBackup, hasBackup, setHasBackup, exportToast, deleteModal, setDeleteModal, deleteJson, setDeleteJson, exportModal, setExportModal, exportPromptText, copyPrompt, downloadJson, selectedTags, toggleTag, clearTags, availableTags, filteredCount, totalCount, promptList, selectedPromptIdx, setSelectedPromptIdx } = useClaudeExport({
     items: cards,
     mapExport: items => ({ flashcards: items.map(({ front, back, tags }) => ({ front, back, tags })) }),
     filename: 'flashcards-export',
-    claudePrompt: json => `请帮我检查以下日语闪卡，找出完全重复或高度相似的卡片（正面内容相同，或意思完全一样）。\n\n只返回以下格式的 JSON，不要包含任何其他文字或解释：\n{"delete_duplicates": ["重复卡片的front值1", "重复卡片的front值2"]}\n\n如果没有重复，返回 {"delete_duplicates": []}。每组重复中保留最好的一张，只列出应删除的那些。\n\n闪卡数据如下：\n\n${json}`,
+    claudePrompts: [
+      { label: '🔍 查找重复', build: json => `请帮我检查以下日语闪卡，找出完全重复或高度相似的卡片（正面内容相同，或意思完全一样）。\n\n只返回以下格式的 JSON，不要包含任何其他文字或解释：\n{"delete_duplicates": ["重复卡片的front值1", "重复卡片的front值2"]}\n\n如果没有重复，返回 {"delete_duplicates": []}。每组重复中保留最好的一张，只列出应删除的那些。\n\n闪卡数据如下：\n\n${json}` },
+      { label: '✨ 添加例句和读音', build: json => `请帮我给以下日语闪卡补充内容：在每张卡的 back 字段末尾追加 1 个简短例句（日中对照）+ 出现的汉字读音。保持 front 和 tags 不变，back 原内容保留，只在末尾追加。\n\n例句格式：\\n\\n例：日语例句。中文翻译。\\n汉字 - 读音\n\n只返回完整的 JSON（包含所有卡，未改动的也要原样返回），格式与输入相同：\n{"flashcards": [{"front":"...","back":"...","tags":[...]}]}\n\n闪卡数据：\n\n${json}` },
+      { label: '✏️ 自由修改 back', build: json => `请帮我审阅并改进以下日语闪卡的 back 字段（释义、解释、用法说明）。保持 front 和 tags 不变。返回完整 JSON（包含所有卡），与输入格式相同：\n{"flashcards": [{"front":"...","back":"...","tags":[...]}]}\n\n闪卡数据：\n\n${json}` },
+    ],
     matchKey: 'front',
     itemLabel: '闪卡',
     setItems: setCards,
@@ -357,7 +362,7 @@ const Flashcards = ({ cards, setCards, allTags, onNav, notes = [], navCtx, clear
         className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-300" />
 
       <div className="flex gap-1 mb-4 bg-gray-100 rounded-xl p-1 w-fit">
-        {[['due',`今日待复习 (${dueCards.length})`],['all',`全部 (${cards.filter(c=>!c.completed).length})`],['completed',`已完成 (${cards.filter(c=>c.completed).length})`]].map(([k,l]) => (
+        {[['due',`今日待复习 (${dueCards.length})`],['active',`学习中 (${cards.filter(c=>!c.completed).length})`],['completed',`已完成 (${cards.filter(c=>c.completed).length})`],['all',`全部 (${cards.length})`]].map(([k,l]) => (
           <button key={k} onClick={() => { setFilterMode(k); setActiveTag(null); setSearch(''); }} className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${filterMode===k?'bg-white shadow text-gray-800':'text-gray-400 hover:text-gray-600'}`}>{l}</button>
         ))}
       </div>
@@ -366,6 +371,7 @@ const Flashcards = ({ cards, setCards, allTags, onNav, notes = [], navCtx, clear
         let baseList;
         if (filterMode === 'due') baseList = dueCards;
         else if (filterMode === 'completed') baseList = cards.filter(c => c.completed);
+        else if (filterMode === 'all') baseList = cards;
         else baseList = cards.filter(c => !c.completed);
         const searchFiltered = search ? baseList.filter(c => { const q = search.toLowerCase(); return c.front?.toLowerCase().includes(q) || c.back?.toLowerCase().includes(q); }) : baseList;
         const tagCounts = {};
@@ -441,6 +447,14 @@ const Flashcards = ({ cards, setCards, allTags, onNav, notes = [], navCtx, clear
               ))}
             </div>
           )}
+        </div>
+        <div className="mb-3">
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">选择任务</p>
+          <div className="flex flex-wrap gap-1.5">
+            {promptList.map((p, i) => (
+              <Badge key={i} onClick={() => setSelectedPromptIdx(i)} color={selectedPromptIdx === i ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600'}>{p.label}</Badge>
+            ))}
+          </div>
         </div>
         <p className="text-sm text-gray-500 mb-2">以下 Prompt 包含你的数据，复制后粘贴给 Claude：</p>
         <textarea className="w-full border rounded-lg p-2 text-sm font-mono h-48 resize-none" readOnly value={exportPromptText} />

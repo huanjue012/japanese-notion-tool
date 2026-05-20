@@ -32,7 +32,8 @@ const CollapsibleTagFilter = ({ tagCounts, total, activeTag, setActiveTag, defau
   );
 };
 
-const useClaudeExport = ({ items, mapExport, filename, claudePrompt, matchKey, itemLabel, setItems }) => {
+const useClaudeExport = ({ items, mapExport, filename, claudePrompt, claudePrompts, matchKey, itemLabel, setItems }) => {
+  const promptList = claudePrompts || [{ label: '默认', build: claudePrompt }];
   const [exportToast, setExportToast] = useState('');
   const [deleteModal, setDeleteModal] = useState(false);
   const [deleteJson, setDeleteJson] = useState('');
@@ -40,6 +41,7 @@ const useClaudeExport = ({ items, mapExport, filename, claudePrompt, matchKey, i
   const [exportModal, setExportModal] = useState(false);
   const [exportFilename, setExportFilename] = useState('');
   const [selectedTags, setSelectedTags] = useState(() => new Set());
+  const [selectedPromptIdx, setSelectedPromptIdx] = useState(0);
 
   const filteredItems = useMemo(() => {
     if (selectedTags.size === 0) return items;
@@ -47,7 +49,10 @@ const useClaudeExport = ({ items, mapExport, filename, claudePrompt, matchKey, i
   }, [items, selectedTags]);
 
   const exportJsonString = useMemo(() => JSON.stringify(mapExport(filteredItems), null, 2), [filteredItems, mapExport]);
-  const exportPromptText = useMemo(() => claudePrompt(exportJsonString), [exportJsonString, claudePrompt]);
+  const exportPromptText = useMemo(() => {
+    const p = promptList[selectedPromptIdx] || promptList[0];
+    return p.build(exportJsonString);
+  }, [exportJsonString, selectedPromptIdx, promptList]);
 
   const availableTags = useMemo(() => {
     const counts = {};
@@ -134,5 +139,5 @@ const useClaudeExport = ({ items, mapExport, filename, claudePrompt, matchKey, i
     setTimeout(() => setExportToast(''), 3000);
   };
 
-  return { exportForClaude, applyDeleteList, restoreBackup, hasBackup, setHasBackup, exportToast, deleteModal, setDeleteModal, deleteJson, setDeleteJson, exportModal, setExportModal: openExportModal, exportPromptText, copyPrompt, downloadJson, selectedTags, toggleTag, clearTags, availableTags, filteredCount: filteredItems.length, totalCount: items.length };
+  return { exportForClaude, applyDeleteList, restoreBackup, hasBackup, setHasBackup, exportToast, deleteModal, setDeleteModal, deleteJson, setDeleteJson, exportModal, setExportModal: openExportModal, exportPromptText, copyPrompt, downloadJson, selectedTags, toggleTag, clearTags, availableTags, filteredCount: filteredItems.length, totalCount: items.length, promptList, selectedPromptIdx, setSelectedPromptIdx };
 };
