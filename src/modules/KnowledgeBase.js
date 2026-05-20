@@ -112,11 +112,15 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteId
   };
   const del = id => { if (confirm('确定删除此笔记？')) setNotes(p => p.filter(n => n.id !== id)); };
 
-  const { exportForClaude, applyDeleteList, restoreBackup, hasBackup, exportToast, deleteModal, setDeleteModal, deleteJson, setDeleteJson, exportModal, setExportModal, exportPromptText, copyPrompt, downloadJson } = useClaudeExport({
+  const { exportForClaude, applyDeleteList, restoreBackup, hasBackup, exportToast, deleteModal, setDeleteModal, deleteJson, setDeleteJson, exportModal, setExportModal, exportPromptText, copyPrompt, downloadJson, selectedTags: exportSelectedTags, toggleTag: exportToggleTag, clearTags: exportClearTags, availableTags: exportAvailableTags, filteredCount, totalCount, promptList, selectedPromptIdx, setSelectedPromptIdx } = useClaudeExport({
     items: notes,
     mapExport: items => ({ notes: items.map(({ title, content, tags }) => ({ title, content, tags })) }),
     filename: 'notes-export',
-    claudePrompt: json => `请帮我检查以下日语学习笔记，指出有误的内容、补充不完整的地方，并以相同JSON格式返回修正后的版本：\n\n${json}`,
+    claudePrompts: [
+      { label: '🔍 查找重复', build: json => `请帮我检查以下日语学习笔记，找出完全重复或高度相似的笔记（标题相同，或内容主旨完全一样）。\n\n只返回以下格式的 JSON，不要包含任何其他文字或解释：\n{"delete_duplicates": ["重复笔记的title1", "重复笔记的title2"]}\n\n如果没有重复，返回 {"delete_duplicates": []}。每组重复中保留最好的一条，只列出应删除的那些。\n\n笔记数据如下：\n\n${json}` },
+      { label: '✏️ 审阅并改进内容', build: json => `请帮我检查以下日语学习笔记，指出有误的内容、补充不完整的地方，并以相同JSON格式返回修正后的版本（包含所有笔记）：\n\n${json}` },
+      { label: '✨ 补充例句和读音', build: json => `请帮我给以下日语学习笔记补充内容：在每条笔记的 content 字段末尾追加 1-2 个简短例句（日中对照）+ 出现的汉字读音。保持 title 和 tags 不变，content 原内容保留，只在末尾追加。\n\n例句格式：\\n\\n例：日语例句。中文翻译。\\n汉字 - 读音\n\n只返回完整的 JSON（包含所有笔记，未改动的也要原样返回），格式与输入相同：\n{"notes": [{"title":"...","content":"...","tags":[...]}]}\n\n笔记数据：\n\n${json}` },
+    ],
     matchKey: 'title',
     itemLabel: '笔记',
     setItems: setNotes,
@@ -226,11 +230,30 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteId
 
       {exportModal && (
         <Modal open={true} title="导出给 Claude" onClose={() => setExportModal(false)}>
+          <div className="mb-3">
+            <p className="text-sm text-gray-600 mb-2">📤 将导出 <span className="font-semibold">{filteredCount}</span> / {totalCount} 条笔记{exportSelectedTags.size === 0 && '（全部）'}</p>
+            {exportAvailableTags.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                <Badge onClick={exportClearTags} color={exportSelectedTags.size === 0 ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600'}>全部</Badge>
+                {exportAvailableTags.map(([tag, cnt]) => (
+                  <Badge key={tag} onClick={() => exportToggleTag(tag)} color={exportSelectedTags.has(tag) ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600'}>{tag} ({cnt})</Badge>
+                ))}
+              </div>
+            )}
+          </div>
+          <div className="mb-3">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">选择任务</p>
+            <div className="flex flex-wrap gap-1.5">
+              {promptList.map((p, i) => (
+                <Badge key={i} onClick={() => setSelectedPromptIdx(i)} color={selectedPromptIdx === i ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600'}>{p.label}</Badge>
+              ))}
+            </div>
+          </div>
           <p className="text-sm text-gray-500 mb-2">以下 Prompt 包含你的数据，复制后粘贴给 Claude：</p>
           <textarea className="w-full border rounded-lg p-2 text-sm font-mono h-48 resize-none" readOnly value={exportPromptText} />
           <div className="flex gap-2 mt-3 justify-end">
-            <Btn variant="secondary" onClick={downloadJson}>下载 JSON</Btn>
-            <Btn onClick={copyPrompt}>复制 Prompt</Btn>
+            <Btn variant="secondary" onClick={downloadJson} disabled={filteredCount === 0}>下载 JSON</Btn>
+            <Btn onClick={copyPrompt} disabled={filteredCount === 0}>复制 Prompt</Btn>
           </div>
         </Modal>
       )}
