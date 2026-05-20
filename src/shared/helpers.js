@@ -38,19 +38,43 @@ const useClaudeExport = ({ items, mapExport, filename, claudePrompt, matchKey, i
   const [deleteJson, setDeleteJson] = useState('');
   const [hasBackup, setHasBackup] = useState(() => !!localStorage.getItem('backup_' + filename));
   const [exportModal, setExportModal] = useState(false);
-  const [exportPromptText, setExportPromptText] = useState('');
-  const [exportJsonString, setExportJsonString] = useState('');
   const [exportFilename, setExportFilename] = useState('');
+  const [selectedTags, setSelectedTags] = useState(() => new Set());
 
-  const exportForClaude = () => {
-    const exported = mapExport(items);
-    const jsonString = JSON.stringify(exported, null, 2);
-    const today = new Date().toISOString().slice(0, 10);
-    setExportJsonString(jsonString);
-    setExportFilename(`${filename}-${today}.json`);
-    setExportPromptText(claudePrompt(jsonString));
-    setExportModal(true);
+  const filteredItems = useMemo(() => {
+    if (selectedTags.size === 0) return items;
+    return items.filter(x => x.tags?.some(t => selectedTags.has(t)));
+  }, [items, selectedTags]);
+
+  const exportJsonString = useMemo(() => JSON.stringify(mapExport(filteredItems), null, 2), [filteredItems, mapExport]);
+  const exportPromptText = useMemo(() => claudePrompt(exportJsonString), [exportJsonString, claudePrompt]);
+
+  const availableTags = useMemo(() => {
+    const counts = {};
+    items.forEach(x => x.tags?.forEach(t => { counts[t] = (counts[t] || 0) + 1; }));
+    return Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  }, [items]);
+
+  const toggleTag = (tag) => setSelectedTags(prev => {
+    const next = new Set(prev);
+    if (next.has(tag)) next.delete(tag); else next.add(tag);
+    return next;
+  });
+  const clearTags = () => setSelectedTags(new Set());
+
+  const openExportModal = (open) => {
+    if (open) {
+      const today = new Date().toISOString().slice(0, 10);
+      setExportFilename(`${filename}-${today}.json`);
+      setSelectedTags(new Set());
+      setExportModal(true);
+    } else {
+      setExportModal(false);
+      setSelectedTags(new Set());
+    }
   };
+
+  const exportForClaude = () => openExportModal(true);
 
   const copyPrompt = async () => {
     try { await navigator.clipboard.writeText(exportPromptText); } catch(e) {}
@@ -110,5 +134,5 @@ const useClaudeExport = ({ items, mapExport, filename, claudePrompt, matchKey, i
     setTimeout(() => setExportToast(''), 3000);
   };
 
-  return { exportForClaude, applyDeleteList, restoreBackup, hasBackup, setHasBackup, exportToast, deleteModal, setDeleteModal, deleteJson, setDeleteJson, exportModal, setExportModal, exportPromptText, copyPrompt, downloadJson };
+  return { exportForClaude, applyDeleteList, restoreBackup, hasBackup, setHasBackup, exportToast, deleteModal, setDeleteModal, deleteJson, setDeleteJson, exportModal, setExportModal: openExportModal, exportPromptText, copyPrompt, downloadJson, selectedTags, toggleTag, clearTags, availableTags, filteredCount: filteredItems.length, totalCount: items.length };
 };

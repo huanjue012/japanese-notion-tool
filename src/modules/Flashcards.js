@@ -115,7 +115,7 @@ const Flashcards = ({ cards, setCards, allTags, onNav, notes = [], navCtx, clear
 
   const del = id => { if (confirm('删除此闪卡？')) setCards(p => p.filter(c => c.id !== id)); };
 
-  const { exportForClaude, applyDeleteList, restoreBackup, hasBackup, setHasBackup, exportToast, deleteModal, setDeleteModal, deleteJson, setDeleteJson, exportModal, setExportModal, exportPromptText, copyPrompt, downloadJson } = useClaudeExport({
+  const { exportForClaude, applyDeleteList, restoreBackup, hasBackup, setHasBackup, exportToast, deleteModal, setDeleteModal, deleteJson, setDeleteJson, exportModal, setExportModal, exportPromptText, copyPrompt, downloadJson, selectedTags, toggleTag, clearTags, availableTags, filteredCount, totalCount } = useClaudeExport({
     items: cards,
     mapExport: items => ({ flashcards: items.map(({ front, back, tags }) => ({ front, back, tags })) }),
     filename: 'flashcards-export',
@@ -431,11 +431,22 @@ const Flashcards = ({ cards, setCards, allTags, onNav, notes = [], navCtx, clear
     )}
     {exportModal && (
       <Modal open={true} title="导出给 Claude" onClose={() => setExportModal(false)}>
+        <div className="mb-3">
+          <p className="text-sm text-gray-600 mb-2">📤 将导出 <span className="font-semibold">{filteredCount}</span> / {totalCount} 张闪卡{selectedTags.size === 0 && '（全部）'}</p>
+          {availableTags.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              <Badge onClick={clearTags} color={selectedTags.size === 0 ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600'}>全部</Badge>
+              {availableTags.map(([tag, cnt]) => (
+                <Badge key={tag} onClick={() => toggleTag(tag)} color={selectedTags.has(tag) ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600'}>{tag} ({cnt})</Badge>
+              ))}
+            </div>
+          )}
+        </div>
         <p className="text-sm text-gray-500 mb-2">以下 Prompt 包含你的数据，复制后粘贴给 Claude：</p>
         <textarea className="w-full border rounded-lg p-2 text-sm font-mono h-48 resize-none" readOnly value={exportPromptText} />
         <div className="flex gap-2 mt-3 justify-end">
-          <Btn variant="secondary" onClick={downloadJson}>下载 JSON</Btn>
-          <Btn onClick={copyPrompt}>复制 Prompt</Btn>
+          <Btn variant="secondary" onClick={downloadJson} disabled={filteredCount === 0}>下载 JSON</Btn>
+          <Btn onClick={copyPrompt} disabled={filteredCount === 0}>复制 Prompt</Btn>
         </div>
       </Modal>
     )}
