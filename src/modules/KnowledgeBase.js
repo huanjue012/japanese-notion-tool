@@ -22,8 +22,11 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteId
   const notesSentinel = useRef(null);
   // PDF 导出
   const [pdfModal, setPdfModal] = useState(false);
+  const [pdfMode, setPdfMode] = useState('filter'); // 'filter' | 'manual'
   const [pdfTags, setPdfTags] = useState(() => new Set());
   const [pdfBookmarkOnly, setPdfBookmarkOnly] = useState(false);
+  const [pdfPicked, setPdfPicked] = useState(() => new Set()); // 手动选中的 note id
+  const [pdfSearch, setPdfSearch] = useState('');
   const [pdfIncludeImages, setPdfIncludeImages] = useState(true);
   const [pdfLoading, setPdfLoading] = useState(false);
   const [pdfToast, setPdfToast] = useState('');
@@ -218,7 +221,7 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteId
           {notes.length > 0 && <Btn variant="danger" onClick={() => { if (confirm(`删除全部 ${notes.length} 条笔记？此操作不可恢复。`)) setNotes([]); }}>🗑 全部删除</Btn>}
           {notes.length > 0 && <Btn variant="secondary" onClick={() => setDeleteModal(true)}>🗑 删除重复</Btn>}
           {notes.length > 0 && <Btn variant="secondary" onClick={exportForClaude}>导出给 Claude</Btn>}
-          {notes.length > 0 && <Btn variant="secondary" onClick={() => { setPdfTags(new Set()); setPdfBookmarkOnly(false); setPdfModal(true); }}>📄 导出 PDF</Btn>}
+          {notes.length > 0 && <Btn variant="secondary" onClick={() => { setPdfMode('filter'); setPdfTags(new Set()); setPdfBookmarkOnly(false); setPdfPicked(new Set()); setPdfSearch(''); setPdfModal(true); }}>📄 导出 PDF</Btn>}
           <Btn onClick={openNew}>+ 新建笔记</Btn>
         </div>
       </div>
@@ -543,23 +546,34 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteId
       )}
       {pdfModal && (() => {
         const tagOptions = Object.entries(tagCounts).sort((a,b) => b[1]-a[1]);
-        const filtered = notes.filter(n => {
-          if (pdfBookmarkOnly && !n.bookmarked) return false;
-          if (pdfTags.size > 0 && !n.tags?.some(t => pdfTags.has(t))) return false;
-          return true;
-        });
+        const filtered = pdfMode === 'manual'
+          ? notes.filter(n => pdfPicked.has(n.id))
+          : notes.filter(n => {
+              if (pdfBookmarkOnly && !n.bookmarked) return false;
+              if (pdfTags.size > 0 && !n.tags?.some(t => pdfTags.has(t))) return false;
+              return true;
+            });
         const togglePdfTag = (tag) => setPdfTags(prev => { const next = new Set(prev); if (next.has(tag)) next.delete(tag); else next.add(tag); return next; });
+        const togglePicked = (id) => setPdfPicked(prev => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; });
+        const q = pdfSearch.trim().toLowerCase();
+        const pickList = !q ? notes : notes.filter(n => n.title.toLowerCase().includes(q) || (n.content || '').toLowerCase().includes(q));
+        const COLLAPSE_THRESHOLD = 30, COLLAPSED_LIMIT = 20;
+        const collapsePickList = !q && pickList.length > COLLAPSE_THRESHOLD;
+        const sortedPickList = [...pickList].sort((a, b) => {
+          const aPicked = pdfPicked.has(a.id), bPicked = pdfPicked.has(b.id);
+          if (aPicked !== bPicked) return aPicked ? -1 : 1; // 已选优先
+          return new Date(b.updatedAt || b.createdAt || 0) - new Date(a.updatedAt || a.createdAt || 0);
+        });
+        const visiblePickList = collapsePickList ? sortedPickList.slice(0, COLLAPSED_LIMIT) : sortedPickList;
         const doExport = async () => {
           if (filtered.length === 0) return;
           setPdfLoading(true);
           try {
-            // 预取所有图片为 data URL，避开 canvas tainting
             if (pdfIncludeImages) {
               const urls = filtered.flatMap(n => (n.images || []).filter(i => i.type === 'image').map(i => i.url));
               const uniq = [...new Set(urls)];
               const map = await prefetchImagesAsDataUrls(uniq);
               setPdfImageMap(map);
-              // 等 React 重新渲染预览，把 img src 切到 data URL
               await new Promise(r => setTimeout(r, 100));
             } else {
               await new Promise(r => setTimeout(r, 50));
@@ -576,30 +590,79 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteId
           }
         };
         return (
-          <Modal open={true} title="导出笔记 PDF" onClose={() => !pdfLoading && setPdfModal(false)}>
-            <p className="text-sm text-gray-600 mb-2">📄 将导出 <span className="font-semibold">{filtered.length}</span> / {notes.length} 条笔记{pdfTags.size === 0 && !pdfBookmarkOnly && '（全部）'}</p>
-            {tagOptions.length > 0 && (
-              <div className="mb-3">
-                <p className="text-xs text-gray-400 mb-1.5">按标签筛选（不选 = 全部）</p>
-                <div className="flex flex-wrap gap-1.5">
-                  <Badge onClick={() => setPdfTags(new Set())} color={pdfTags.size === 0 ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600'}>全部</Badge>
-                  {tagOptions.map(([tag, cnt]) => (
-                    <Badge key={tag} onClick={() => togglePdfTag(tag)} color={pdfTags.has(tag) ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600'}>{tag} ({cnt})</Badge>
+          <Modal open={true} title="导出笔记 PDF" onClose={() => !pdfLoading && setPdfModal(false)} wide>
+            {/* 模式切换 */}
+            <div className="flex gap-1 bg-gray-100 p-1 rounded-lg mb-3 w-fit">
+              {[['filter', '按筛选'], ['manual', '手动选择']].map(([v, l]) => (
+                <button key={v} onClick={() => setPdfMode(v)}
+                  className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${pdfMode === v ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+                  {l}
+                </button>
+              ))}
+            </div>
+
+            {pdfMode === 'filter' && (
+              <>
+                <p className="text-sm text-gray-600 mb-2">📄 将导出 <span className="font-semibold">{filtered.length}</span> / {notes.length} 条笔记{pdfTags.size === 0 && !pdfBookmarkOnly && '（全部）'}</p>
+                {tagOptions.length > 0 && (
+                  <div className="mb-3">
+                    <p className="text-xs text-gray-400 mb-1.5">按标签筛选（不选 = 全部）</p>
+                    <div className="flex flex-wrap gap-1.5 max-h-40 overflow-y-auto">
+                      <Badge onClick={() => setPdfTags(new Set())} color={pdfTags.size === 0 ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600'}>全部</Badge>
+                      {tagOptions.map(([tag, cnt]) => (
+                        <Badge key={tag} onClick={() => togglePdfTag(tag)} color={pdfTags.has(tag) ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600'}>{tag} ({cnt})</Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <label className="flex items-center gap-2 cursor-pointer text-sm text-gray-600 mb-3">
+                  <input type="checkbox" checked={pdfBookmarkOnly} onChange={e => setPdfBookmarkOnly(e.target.checked)} />
+                  只导出收藏（★）
+                </label>
+              </>
+            )}
+
+            {pdfMode === 'manual' && (
+              <>
+                <div className="flex items-center justify-between mb-2 gap-2 flex-wrap">
+                  <p className="text-sm text-gray-600">📄 已选 <span className="font-semibold">{pdfPicked.size}</span> / {notes.length} 条</p>
+                  <div className="flex gap-2">
+                    <button onClick={() => setPdfPicked(new Set(pickList.map(n => n.id)))} className="text-xs text-indigo-500 hover:text-indigo-700">全选当前</button>
+                    <button onClick={() => setPdfPicked(new Set())} className="text-xs text-gray-400 hover:text-gray-600">清空</button>
+                  </div>
+                </div>
+                <div className="relative mb-2">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none">🔍</span>
+                  <input value={pdfSearch} onChange={e => setPdfSearch(e.target.value)}
+                    placeholder={`搜索笔记标题/内容（共 ${notes.length} 条）…`}
+                    className="w-full border border-gray-200 rounded-lg pl-8 pr-8 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+                  {pdfSearch && <button onClick={() => setPdfSearch('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-sm">×</button>}
+                </div>
+                <div className="max-h-72 overflow-y-auto border border-gray-200 rounded-xl divide-y mb-2">
+                  {pickList.length === 0 ? (
+                    <p className="text-sm text-gray-400 italic p-3 text-center">没有匹配的笔记</p>
+                  ) : visiblePickList.map(n => (
+                    <label key={n.id} className="flex items-start gap-3 px-3 py-2 cursor-pointer hover:bg-gray-50">
+                      <input type="checkbox" checked={pdfPicked.has(n.id)} onChange={() => togglePicked(n.id)} className="mt-0.5 shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-gray-700 break-words">{n.bookmarked && '★ '}{n.title}</p>
+                        <p className="text-xs text-gray-400 line-clamp-1">{(n.content || '').slice(0, 80)}…</p>
+                        {n.tags?.length > 0 && <div className="flex flex-wrap gap-1 mt-1">{n.tags.map(t => <span key={t} className="text-xs bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded">{t}</span>)}</div>}
+                      </div>
+                    </label>
                   ))}
                 </div>
-              </div>
+                {collapsePickList && (
+                  <p className="text-xs text-gray-400 mb-2">显示前 {COLLAPSED_LIMIT} 条（按更新时间倒序，已选优先）。<span className="text-indigo-500">输入搜索词</span>可看更多。</p>
+                )}
+              </>
             )}
-            <div className="space-y-2 mb-4">
-              <label className="flex items-center gap-2 cursor-pointer text-sm text-gray-600">
-                <input type="checkbox" checked={pdfBookmarkOnly} onChange={e => setPdfBookmarkOnly(e.target.checked)} />
-                只导出收藏（★）
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer text-sm text-gray-600">
-                <input type="checkbox" checked={pdfIncludeImages} onChange={e => setPdfIncludeImages(e.target.checked)} />
-                包含图片（生成 PDF 会更大）
-              </label>
-            </div>
-            <p className="text-xs text-gray-400 mb-3">PDF 会包含笔记标题、标签和 Markdown 渲染后的正文。{pdfIncludeImages && '图片会先预取为 data URL 后嵌入；获取失败的会自动跳过。'}</p>
+
+            <label className="flex items-center gap-2 cursor-pointer text-sm text-gray-600 mb-3">
+              <input type="checkbox" checked={pdfIncludeImages} onChange={e => setPdfIncludeImages(e.target.checked)} />
+              包含图片（生成 PDF 会更大）
+            </label>
+            <p className="text-xs text-gray-400 mb-3">PDF 会包含笔记标题、标签和 Markdown 渲染后的正文。{pdfIncludeImages && '图片会先预取为 data URL 后嵌入；获取失败的会自动跳过。'}首次导出会从 CDN 加载 PDF 库（约 1-2 秒）。</p>
             <div className="flex justify-end gap-2">
               <Btn variant="secondary" onClick={() => setPdfModal(false)} disabled={pdfLoading}>取消</Btn>
               <Btn onClick={doExport} disabled={pdfLoading || filtered.length === 0}>{pdfLoading ? '导出中…' : `📄 下载 PDF (${filtered.length})`}</Btn>
@@ -608,11 +671,13 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteId
         );
       })()}
       {pdfModal && (() => {
-        const filtered = notes.filter(n => {
-          if (pdfBookmarkOnly && !n.bookmarked) return false;
-          if (pdfTags.size > 0 && !n.tags?.some(t => pdfTags.has(t))) return false;
-          return true;
-        });
+        const filtered = pdfMode === 'manual'
+          ? notes.filter(n => pdfPicked.has(n.id))
+          : notes.filter(n => {
+              if (pdfBookmarkOnly && !n.bookmarked) return false;
+              if (pdfTags.size > 0 && !n.tags?.some(t => pdfTags.has(t))) return false;
+              return true;
+            });
         return (
           <div id="notes-pdf-content" className="pdf-page" style={{ position: 'fixed', left: '-10000px', top: 0 }}>
             <h1>📝 日语笔记导出</h1>
