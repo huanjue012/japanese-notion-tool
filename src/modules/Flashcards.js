@@ -258,7 +258,13 @@ const Flashcards = ({ cards, setCards, allTags, onNav, notes = [], navCtx, clear
                 {ttsLoading ? '⏳' : '🔊'}
               </button>
               <p className="text-xs text-gray-300 mb-4 uppercase tracking-widest">{flipped ? '答案' : '点击翻转查看答案'}</p>
-              <p className="text-2xl font-medium text-gray-800 leading-relaxed" style={{fontFamily:"'Noto Sans JP', 'Segoe UI', system-ui, sans-serif"}}>{flipped ? card.back : card.front}</p>
+              <div
+                className="md-body md-body-card w-full"
+                style={{fontFamily:"'Noto Sans JP', 'Segoe UI', system-ui, sans-serif"}}
+                dangerouslySetInnerHTML={{ __html: window.marked
+                  ? marked.parse(String(flipped ? card.back : card.front) || '')
+                  : String(flipped ? card.back : card.front) }}
+              />
               {card.tags?.length > 0 && <div className="flex flex-wrap gap-1 mt-4 justify-center">{card.tags.map(t => <Badge key={t}>{t}</Badge>)}</div>}
               {ttsError && <p className="absolute bottom-2 left-0 right-0 text-xs text-red-500">{ttsError}</p>}
             </div>
@@ -396,13 +402,13 @@ const Flashcards = ({ cards, setCards, allTags, onNav, notes = [], navCtx, clear
                 <React.Fragment key={c.id}>
                   <Card>
                     <div className="flex justify-between items-start mb-1">
-                      <p className="text-sm font-semibold text-gray-800 flex-1 pr-2">{c.front}</p>
+                      <p className="text-sm font-semibold text-gray-800 flex-1 pr-2 whitespace-pre-wrap break-words">{c.front}</p>
                       <div className="flex gap-1 shrink-0">
                         {!c.completed && <button onClick={() => openEdit(c)} className="text-gray-200 hover:text-blue-400 text-sm">✏️</button>}
                         <button onClick={() => del(c.id)} className="text-gray-200 hover:text-red-400 text-sm">🗑</button>
                       </div>
                     </div>
-                    <p className="text-xs text-gray-400 border-t pt-2">{c.back}</p>
+                    <p className="text-xs text-gray-400 border-t pt-2 whitespace-pre-wrap break-words">{c.back}</p>
                     <div className="flex flex-wrap gap-1 mt-2">
                       {c.completed && <Badge color="bg-emerald-100 text-emerald-700">✓ 已完成</Badge>}
                       {c.tags?.map(t => <Badge key={t}>{t}</Badge>)}
