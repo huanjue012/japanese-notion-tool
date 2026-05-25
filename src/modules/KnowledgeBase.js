@@ -663,7 +663,8 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteId
               包含图片（生成 PDF 会更大）
             </label>
             <p className="text-xs text-gray-400 mb-3">PDF 会包含笔记标题、标签和 Markdown 渲染后的正文。{pdfIncludeImages && '图片会先预取为 data URL 后嵌入；获取失败的会自动跳过。'}首次导出会从 CDN 加载 PDF 库（约 1-2 秒）。</p>
-            <div className="flex justify-end gap-2">
+            <div className="flex justify-end gap-2 items-center">
+              <button onClick={() => diagnosticCapture('notes-pdf-content')} className="text-xs text-gray-400 hover:text-indigo-600 mr-auto" disabled={pdfLoading} title="点了「下载 PDF」但内容是空白？点这个看截图">🔍 诊断截图</button>
               <Btn variant="secondary" onClick={() => setPdfModal(false)} disabled={pdfLoading}>取消</Btn>
               <Btn onClick={doExport} disabled={pdfLoading || filtered.length === 0}>{pdfLoading ? '导出中…' : `📄 下载 PDF (${filtered.length})`}</Btn>
             </div>
@@ -679,7 +680,10 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteId
               return true;
             });
         return (
-          <div id="notes-pdf-content" className="pdf-page" style={{ position: 'fixed', left: '-10000px', top: 0 }}>
+          // 包裹层 0 高 + overflow:hidden 在视觉上隐藏，但子元素仍有完整 layout
+          // 不用 position:fixed/absolute；保持子元素在文档流里，html-to-image 截图最稳
+          <div style={{ height: 0, overflow: 'hidden' }} aria-hidden="true">
+            <div id="notes-pdf-content" className="pdf-page">
             <h1>📝 日语笔记导出</h1>
             <div className="pdf-meta">共 {filtered.length} 条 · 导出于 {pdfDateStr()}</div>
             {filtered.map(n => (
@@ -696,6 +700,7 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteId
                 ))}
               </div>
             ))}
+            </div>
           </div>
         );
       })()}

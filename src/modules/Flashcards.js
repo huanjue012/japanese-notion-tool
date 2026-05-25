@@ -668,7 +668,8 @@ const Flashcards = ({ cards, setCards, allTags, onNav, notes = [], navCtx, clear
             </div>
           </div>
           <p className="text-xs text-gray-400 mb-3">首次导出会从 CDN 加载 PDF 库（约 1-2 秒）。</p>
-          <div className="flex justify-end gap-2">
+          <div className="flex justify-end gap-2 items-center">
+            <button onClick={() => diagnosticCapture(pdfMode === 'quiz' ? 'cards-pdf-questions' : 'cards-pdf-content')} className="text-xs text-gray-400 hover:text-indigo-600 mr-auto" disabled={pdfLoading} title="点了「下载 PDF」但内容是空白？点这个看截图">🔍 诊断截图</button>
             <Btn variant="secondary" onClick={() => setPdfModal(false)} disabled={pdfLoading}>取消</Btn>
             <Btn onClick={doExport} disabled={pdfLoading || filtered.length === 0}>{pdfLoading ? '导出中…' : `📄 下载 PDF (${filtered.length})`}</Btn>
           </div>
@@ -682,27 +683,30 @@ const Flashcards = ({ cards, setCards, allTags, onNav, notes = [], navCtx, clear
             if (pdfTags.size > 0 && !c.tags?.some(t => pdfTags.has(t))) return false;
             return true;
           });
-      const offScreen = { position: 'fixed', left: '-10000px', top: 0 };
+      // 包裹层 0 高 + overflow:hidden 在视觉上隐藏，但子元素仍有完整 layout
+      const Wrap = ({ children }) => <div style={{ height: 0, overflow: 'hidden' }} aria-hidden="true">{children}</div>;
       if (pdfMode === 'study') {
         return (
-          <div id="cards-pdf-content" className="pdf-page" style={offScreen}>
-            <h1>🃏 日语闪卡导出 — 学习模式</h1>
-            <div className="pdf-meta">共 {filtered.length} 张 · 导出于 {pdfDateStr()}</div>
-            <div className="pdf-cards-grid">
-              {filtered.map((c, i) => (
-                <div key={c.id} className="pdf-card">
-                  <div className="pdf-card-num">#{i + 1}{c.tags?.length > 0 && ` · ${c.tags.join(' / ')}`}</div>
-                  <div className="pdf-card-front">{c.front}</div>
-                  <div className="pdf-card-back">{c.back}</div>
-                </div>
-              ))}
+          <Wrap>
+            <div id="cards-pdf-content" className="pdf-page">
+              <h1>🃏 日语闪卡导出 — 学习模式</h1>
+              <div className="pdf-meta">共 {filtered.length} 张 · 导出于 {pdfDateStr()}</div>
+              <div className="pdf-cards-grid">
+                {filtered.map((c, i) => (
+                  <div key={c.id} className="pdf-card">
+                    <div className="pdf-card-num">#{i + 1}{c.tags?.length > 0 && ` · ${c.tags.join(' / ')}`}</div>
+                    <div className="pdf-card-front">{c.front}</div>
+                    <div className="pdf-card-back">{c.back}</div>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
+          </Wrap>
         );
       }
       return (
-        <>
-          <div id="cards-pdf-questions" className="pdf-page" style={offScreen}>
+        <Wrap>
+          <div id="cards-pdf-questions" className="pdf-page">
             <h1>🃏 日语闪卡导出 — 测试模式（题目）</h1>
             <div className="pdf-meta">共 {filtered.length} 题 · 导出于 {pdfDateStr()}</div>
             <ol className="pdf-quiz-list">
@@ -711,7 +715,7 @@ const Flashcards = ({ cards, setCards, allTags, onNav, notes = [], navCtx, clear
               ))}
             </ol>
           </div>
-          <div id="cards-pdf-answers" className="pdf-page" style={offScreen}>
+          <div id="cards-pdf-answers" className="pdf-page">
             <h1>✅ 答案</h1>
             <div className="pdf-meta">共 {filtered.length} 题 · 导出于 {pdfDateStr()}</div>
             <ol className="pdf-quiz-list">
@@ -723,7 +727,7 @@ const Flashcards = ({ cards, setCards, allTags, onNav, notes = [], navCtx, clear
               ))}
             </ol>
           </div>
-        </>
+        </Wrap>
       );
     })()}
     {pdfToast && <div className="fixed bottom-4 right-4 bg-green-600 text-white px-4 py-2 rounded-xl shadow-lg z-50 text-sm">{pdfToast}</div>}

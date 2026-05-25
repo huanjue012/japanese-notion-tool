@@ -247,6 +247,45 @@ const exportElementsToPDF = async (elementIds, filename) => {
 // 单容器版：兼容旧调用，内部走多容器
 const exportElementToPDF = (elementId, filename) => exportElementsToPDF([elementId], filename);
 
+// 诊断用：把目标元素截图后直接在新标签页打开 PNG。让用户肉眼看出是
+// 截图本身就空 / 还是 PDF 渲染过程的问题。
+const diagnosticCapture = async (elementId) => {
+  await ensurePdfLibs();
+  const el = document.getElementById(elementId);
+  if (!el) { alert('找不到容器：' + elementId); return; }
+  el.classList.add('pdf-export-mode');
+  try {
+    await new Promise(r => requestAnimationFrame(() => r()));
+    await new Promise(r => requestAnimationFrame(() => r()));
+    const rect = el.getBoundingClientRect();
+    const w = el.scrollWidth || rect.width || 794;
+    const h = el.scrollHeight || rect.height;
+    const dataUrl = await window.htmlToImage.toPng(el, {
+      pixelRatio: 1, // 诊断不需要高清
+      cacheBust: true,
+      backgroundColor: '#ffffff',
+      width: w,
+      height: h,
+      style: { transform: 'none', position: 'static', left: 'auto', top: 'auto' },
+    });
+    const win = window.open('', '_blank');
+    if (!win) { alert('请允许弹窗以查看诊断结果'); return; }
+    win.document.write(`<!doctype html><html><head><title>PDF 诊断 — ${elementId}</title></head>
+<body style="margin:0;font-family:system-ui;padding:1em">
+  <h3 style="margin:0 0 0.5em">PDF 诊断：${elementId}</h3>
+  <p>容器尺寸：${w} × ${h} px · PNG 解码后会显示在下面 ↓</p>
+  <p>如果下面是空白说明截图就空了（不是 jsPDF 的问题）。截图给开发者看。</p>
+  <hr>
+  <img src="${dataUrl}" style="max-width:100%;border:1px solid #ccc;background:#f5f5f5"
+       onload="document.title='PDF 诊断 ✓ ' + this.naturalWidth + '×' + this.naturalHeight"
+       onerror="document.title='PDF 诊断 ✗ 图片加载失败'">
+</body></html>`);
+    win.document.close();
+  } finally {
+    el.classList.remove('pdf-export-mode');
+  }
+};
+
 // 把远程 URL 转 base64 data URL。Firebase Storage 跨域图片走 <img crossOrigin>
 // 在桶未配 CORS 时会污染 canvas；改成先 fetch + FileReader 转 data URL，避开
 // canvas tainting（fetch 仍需要 CORS，但失败时返回 null，调用方可优雅降级）。
