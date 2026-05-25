@@ -186,16 +186,28 @@ const ensurePdfLibs = async () => {
 const _appendElementToPDF = async (el, pdf, isFirst) => {
   el.classList.add('pdf-export-mode');
   try {
-    // 两个 RAF 等 React reconciliation + 浏览器 layout 完成（off-screen 容器要有 width/height）
+    // 两个 RAF 等 React reconciliation + 浏览器 layout 完成
     await new Promise(r => requestAnimationFrame(() => r()));
     await new Promise(r => requestAnimationFrame(() => r()));
+    // 显式告诉 html-to-image 用 scrollWidth/Height — 某些 off-screen 定位下，
+    // 它自动计算的尺寸会拿到 0，导致截到空白图
+    const rect = el.getBoundingClientRect();
+    const w = el.scrollWidth || rect.width || 794;
+    const h = el.scrollHeight || rect.height;
+    if (!w || !h) throw new Error(`容器尺寸异常：${w}×${h}（id=${el.id}）。可能 React 未渲染或 CSS 未加载。`);
     const dataUrl = await window.htmlToImage.toPng(el, {
       pixelRatio: 2,
       cacheBust: true,
       backgroundColor: '#ffffff',
+      width: w,
+      height: h,
+      style: { transform: 'none', position: 'static', left: 'auto', top: 'auto' },
     });
     const img = new Image();
-    await new Promise((res, rej) => { img.onload = res; img.onerror = () => rej(new Error('图片渲染失败')); img.src = dataUrl; });
+    await new Promise((res, rej) => { img.onload = res; img.onerror = () => rej(new Error('PNG 解码失败')); img.src = dataUrl; });
+    if (!img.naturalWidth || !img.naturalHeight) {
+      throw new Error(`截图为空：${img.naturalWidth}×${img.naturalHeight}（id=${el.id}）`);
+    }
     const pdfW = pdf.internal.pageSize.getWidth();
     const pdfH = pdf.internal.pageSize.getHeight();
     const ratio = pdfW / img.naturalWidth;
