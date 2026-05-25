@@ -27,6 +27,7 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteId
   const [pdfIncludeImages, setPdfIncludeImages] = useState(true);
   const [pdfLoading, setPdfLoading] = useState(false);
   const [pdfToast, setPdfToast] = useState('');
+  const [pdfImageMap, setPdfImageMap] = useState({}); // { url: dataUrl }
 
   const tagCounts = useMemo(() => {
     const c = {};
@@ -552,7 +553,17 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteId
           if (filtered.length === 0) return;
           setPdfLoading(true);
           try {
-            await new Promise(r => setTimeout(r, 50)); // 等 DOM 渲染
+            // 预取所有图片为 data URL，避开 canvas tainting
+            if (pdfIncludeImages) {
+              const urls = filtered.flatMap(n => (n.images || []).filter(i => i.type === 'image').map(i => i.url));
+              const uniq = [...new Set(urls)];
+              const map = await prefetchImagesAsDataUrls(uniq);
+              setPdfImageMap(map);
+              // 等 React 重新渲染预览，把 img src 切到 data URL
+              await new Promise(r => setTimeout(r, 100));
+            } else {
+              await new Promise(r => setTimeout(r, 50));
+            }
             await exportElementToPDF('notes-pdf-content', `japanese-notes-${pdfDateStr()}`);
             setPdfToast(`✅ 已导出 ${filtered.length} 条笔记为 PDF`);
             setTimeout(() => setPdfToast(''), 3000);
@@ -561,6 +572,7 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteId
             alert('PDF 导出失败：' + e.message);
           } finally {
             setPdfLoading(false);
+            setPdfImageMap({});
           }
         };
         return (
@@ -587,7 +599,7 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteId
                 包含图片（生成 PDF 会更大）
               </label>
             </div>
-            <p className="text-xs text-gray-400 mb-3">PDF 会包含笔记标题、标签和 Markdown 渲染后的正文。{pdfIncludeImages && '图片会嵌入正文之后（若 Firebase Storage 未配置 CORS，图片可能无法捕获，可关掉本选项）。'}</p>
+            <p className="text-xs text-gray-400 mb-3">PDF 会包含笔记标题、标签和 Markdown 渲染后的正文。{pdfIncludeImages && '图片会先预取为 data URL 后嵌入；获取失败的会自动跳过。'}</p>
             <div className="flex justify-end gap-2">
               <Btn variant="secondary" onClick={() => setPdfModal(false)} disabled={pdfLoading}>取消</Btn>
               <Btn onClick={doExport} disabled={pdfLoading || filtered.length === 0}>{pdfLoading ? '导出中…' : `📄 下载 PDF (${filtered.length})`}</Btn>
@@ -614,8 +626,8 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteId
                   </div>
                 )}
                 <div className="md-body" dangerouslySetInnerHTML={{ __html: window.marked ? marked.parse(n.content || '') : (n.content || '') }} />
-                {pdfIncludeImages && n.images?.filter(i => i.type === 'image').map(img => (
-                  <img key={img.path} src={img.url} alt={img.name} className="pdf-img" crossOrigin="anonymous" />
+                {pdfIncludeImages && n.images?.filter(i => i.type === 'image' && pdfImageMap[i.url]).map(img => (
+                  <img key={img.path} src={pdfImageMap[img.url]} alt={img.name} className="pdf-img" />
                 ))}
               </div>
             ))}

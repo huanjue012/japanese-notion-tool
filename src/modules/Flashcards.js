@@ -558,7 +558,13 @@ const Flashcards = ({ cards, setCards, allTags, onNav, notes = [], navCtx, clear
         setPdfLoading(true);
         try {
           await new Promise(r => setTimeout(r, 50));
-          await exportElementToPDF('cards-pdf-content', `japanese-flashcards-${pdfMode}-${pdfDateStr()}`);
+          const fname = `japanese-flashcards-${pdfMode}-${pdfDateStr()}`;
+          if (pdfMode === 'quiz') {
+            // 题目和答案分两次截图，答案真正从新页开始
+            await exportElementsToPDF(['cards-pdf-questions', 'cards-pdf-answers'], fname);
+          } else {
+            await exportElementToPDF('cards-pdf-content', fname);
+          }
           setPdfToast(`✅ 已导出 ${filtered.length} 张闪卡为 PDF`);
           setTimeout(() => setPdfToast(''), 3000);
           setPdfModal(false);
@@ -607,11 +613,12 @@ const Flashcards = ({ cards, setCards, allTags, onNav, notes = [], navCtx, clear
         if (pdfTags.size > 0 && !c.tags?.some(t => pdfTags.has(t))) return false;
         return true;
       });
-      return (
-        <div id="cards-pdf-content" className="pdf-page" style={{ position: 'fixed', left: '-10000px', top: 0 }}>
-          <h1>🃏 日语闪卡导出 — {pdfMode === 'study' ? '学习模式' : '测试模式'}</h1>
-          <div className="pdf-meta">共 {filtered.length} 张 · 导出于 {pdfDateStr()}</div>
-          {pdfMode === 'study' ? (
+      const offScreen = { position: 'fixed', left: '-10000px', top: 0 };
+      if (pdfMode === 'study') {
+        return (
+          <div id="cards-pdf-content" className="pdf-page" style={offScreen}>
+            <h1>🃏 日语闪卡导出 — 学习模式</h1>
+            <div className="pdf-meta">共 {filtered.length} 张 · 导出于 {pdfDateStr()}</div>
             <div className="pdf-cards-grid">
               {filtered.map((c, i) => (
                 <div key={c.id} className="pdf-card">
@@ -621,28 +628,33 @@ const Flashcards = ({ cards, setCards, allTags, onNav, notes = [], navCtx, clear
                 </div>
               ))}
             </div>
-          ) : (
-            <>
-              <h2>📝 题目（正面）</h2>
-              <ol className="pdf-quiz-list">
-                {filtered.map((c, i) => (
-                  <li key={'q-'+c.id}><span className="pdf-card-num">{i + 1}.</span> <span style={{whiteSpace:'pre-wrap'}}>{c.front}</span></li>
-                ))}
-              </ol>
-              <div className="pdf-divider">
-                <h2>✅ 答案（背面）</h2>
-                <ol className="pdf-quiz-list">
-                  {filtered.map((c, i) => (
-                    <li key={'a-'+c.id}>
-                      <span className="pdf-card-num">{i + 1}.</span> <span style={{whiteSpace:'pre-wrap'}}>{c.front}</span>
-                      <div style={{marginTop:4, color:'#4b5563', whiteSpace:'pre-wrap'}}>→ {c.back}</div>
-                    </li>
-                  ))}
-                </ol>
-              </div>
-            </>
-          )}
-        </div>
+          </div>
+        );
+      }
+      return (
+        <>
+          <div id="cards-pdf-questions" className="pdf-page" style={offScreen}>
+            <h1>🃏 日语闪卡导出 — 测试模式（题目）</h1>
+            <div className="pdf-meta">共 {filtered.length} 题 · 导出于 {pdfDateStr()}</div>
+            <ol className="pdf-quiz-list">
+              {filtered.map((c, i) => (
+                <li key={'q-'+c.id}><span className="pdf-card-num">{i + 1}.</span> <span style={{whiteSpace:'pre-wrap'}}>{c.front}</span></li>
+              ))}
+            </ol>
+          </div>
+          <div id="cards-pdf-answers" className="pdf-page" style={offScreen}>
+            <h1>✅ 答案</h1>
+            <div className="pdf-meta">共 {filtered.length} 题 · 导出于 {pdfDateStr()}</div>
+            <ol className="pdf-quiz-list">
+              {filtered.map((c, i) => (
+                <li key={'a-'+c.id}>
+                  <span className="pdf-card-num">{i + 1}.</span> <span style={{whiteSpace:'pre-wrap'}}>{c.front}</span>
+                  <div style={{marginTop:4, color:'#4b5563', whiteSpace:'pre-wrap'}}>→ {c.back}</div>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </>
       );
     })()}
     {pdfToast && <div className="fixed bottom-4 right-4 bg-green-600 text-white px-4 py-2 rounded-xl shadow-lg z-50 text-sm">{pdfToast}</div>}
