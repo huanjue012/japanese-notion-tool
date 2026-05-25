@@ -627,7 +627,7 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteId
                 <div className="flex items-center justify-between mb-2 gap-2 flex-wrap">
                   <p className="text-sm text-gray-600">📄 已选 <span className="font-semibold">{pdfPicked.size}</span> / {notes.length} 条</p>
                   <div className="flex gap-2">
-                    <button onClick={() => setPdfPicked(new Set(pickList.map(n => n.id)))} className="text-xs text-indigo-500 hover:text-indigo-700">全选当前</button>
+                    <button onClick={() => setPdfPicked(prev => new Set([...prev, ...pickList.map(n => n.id)]))} className="text-xs text-indigo-500 hover:text-indigo-700">全选当前</button>
                     <button onClick={() => setPdfPicked(new Set())} className="text-xs text-gray-400 hover:text-gray-600">清空</button>
                   </div>
                 </div>
