@@ -145,11 +145,49 @@ const useClaudeExport = ({ items, mapExport, filename, claudePrompt, claudePromp
 // ─── PDF EXPORT ───────────────────────────────────────────────────────────────
 // 参考 travel map 项目：html-to-image 渲 PNG → jspdf 分页贴图
 // 用 html-to-image（SVG foreignObject）而非 html2canvas，避免现代 CSS 颜色函数兼容问题
+
+// 动态加载脚本，失败时尝试备用 CDN
+const _loadScript = (urls) => new Promise((resolve, reject) => {
+  const tryNext = (i) => {
+    if (i >= urls.length) { reject(new Error('所有 CDN 都加载失败')); return; }
+    const src = urls[i];
+    if (document.querySelector(`script[data-pdfdep="${src}"]`)) { resolve(); return; }
+    const s = document.createElement('script');
+    s.src = src;
+    s.dataset.pdfdep = src;
+    s.onload = () => resolve();
+    s.onerror = () => { s.remove(); tryNext(i + 1); };
+    document.head.appendChild(s);
+  };
+  tryNext(0);
+});
+
+// 按需加载 PDF 依赖（首次约 1-2 秒，浏览器后续会缓存）
+const ensurePdfLibs = async () => {
+  if (!window.htmlToImage) {
+    await _loadScript([
+      'https://cdn.jsdelivr.net/npm/html-to-image@1.11.13/dist/html-to-image.js',
+      'https://unpkg.com/html-to-image@1.11.13/dist/html-to-image.js',
+    ]);
+  }
+  if (!window.jspdf) {
+    await _loadScript([
+      'https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js',
+      'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js',
+      'https://unpkg.com/jspdf@2.5.2/dist/jspdf.umd.min.js',
+    ]);
+  }
+  if (!window.htmlToImage || !window.jspdf) {
+    throw new Error('PDF 库加载失败：脚本已加载但全局变量缺失。请检查网络或刷新页面。');
+  }
+};
 // 把单个 DOM 元素截图、按 A4 宽缩放，分页贴入已有 jsPDF 实例。
 // 如果 pdf 已有内容（page > 1 或当前页非空），先 addPage 以确保新元素从新页开始。
 const _appendElementToPDF = async (el, pdf, isFirst) => {
   el.classList.add('pdf-export-mode');
   try {
+    // 两个 RAF 等 React reconciliation + 浏览器 layout 完成（off-screen 容器要有 width/height）
+    await new Promise(r => requestAnimationFrame(() => r()));
     await new Promise(r => requestAnimationFrame(() => r()));
     const dataUrl = await window.htmlToImage.toPng(el, {
       pixelRatio: 2,
@@ -180,7 +218,7 @@ const _appendElementToPDF = async (el, pdf, isFirst) => {
 // 多容器版：每个容器从新页开始（真正的 page break，CSS 的 page-break-before 在
 // html-to-image + jspdf 切片流程下不生效，必须分次截图）
 const exportElementsToPDF = async (elementIds, filename) => {
-  if (!window.htmlToImage || !window.jspdf) throw new Error('PDF 库未加载，请刷新页面再试');
+  await ensurePdfLibs();
   const els = elementIds.map(id => {
     const el = document.getElementById(id);
     if (!el) throw new Error('找不到导出容器：' + id);
