@@ -186,16 +186,28 @@ const ensurePdfLibs = async () => {
 const _appendElementToPDF = async (el, pdf, isFirst) => {
   el.classList.add('pdf-export-mode');
   try {
-    // 两个 RAF 等 React reconciliation + 浏览器 layout 完成（off-screen 容器要有 width/height）
+    // 两个 RAF 等 React reconciliation + 浏览器 layout 完成
     await new Promise(r => requestAnimationFrame(() => r()));
     await new Promise(r => requestAnimationFrame(() => r()));
+    // 显式告诉 html-to-image 用 scrollWidth/Height — 某些 off-screen 定位下，
+    // 它自动计算的尺寸会拿到 0，导致截到空白图
+    const rect = el.getBoundingClientRect();
+    const w = el.scrollWidth || rect.width || 794;
+    const h = el.scrollHeight || rect.height;
+    if (!w || !h) throw new Error(`容器尺寸异常：${w}×${h}（id=${el.id}）。可能 React 未渲染或 CSS 未加载。`);
     const dataUrl = await window.htmlToImage.toPng(el, {
       pixelRatio: 2,
       cacheBust: true,
       backgroundColor: '#ffffff',
+      width: w,
+      height: h,
+      style: { transform: 'none', position: 'static', left: 'auto', top: 'auto' },
     });
     const img = new Image();
-    await new Promise((res, rej) => { img.onload = res; img.onerror = () => rej(new Error('图片渲染失败')); img.src = dataUrl; });
+    await new Promise((res, rej) => { img.onload = res; img.onerror = () => rej(new Error('PNG 解码失败')); img.src = dataUrl; });
+    if (!img.naturalWidth || !img.naturalHeight) {
+      throw new Error(`截图为空：${img.naturalWidth}×${img.naturalHeight}（id=${el.id}）`);
+    }
     const pdfW = pdf.internal.pageSize.getWidth();
     const pdfH = pdf.internal.pageSize.getHeight();
     const ratio = pdfW / img.naturalWidth;
@@ -234,6 +246,45 @@ const exportElementsToPDF = async (elementIds, filename) => {
 
 // 单容器版：兼容旧调用，内部走多容器
 const exportElementToPDF = (elementId, filename) => exportElementsToPDF([elementId], filename);
+
+// 诊断用：把目标元素截图后直接在新标签页打开 PNG。让用户肉眼看出是
+// 截图本身就空 / 还是 PDF 渲染过程的问题。
+const diagnosticCapture = async (elementId) => {
+  await ensurePdfLibs();
+  const el = document.getElementById(elementId);
+  if (!el) { alert('找不到容器：' + elementId); return; }
+  el.classList.add('pdf-export-mode');
+  try {
+    await new Promise(r => requestAnimationFrame(() => r()));
+    await new Promise(r => requestAnimationFrame(() => r()));
+    const rect = el.getBoundingClientRect();
+    const w = el.scrollWidth || rect.width || 794;
+    const h = el.scrollHeight || rect.height;
+    const dataUrl = await window.htmlToImage.toPng(el, {
+      pixelRatio: 1, // 诊断不需要高清
+      cacheBust: true,
+      backgroundColor: '#ffffff',
+      width: w,
+      height: h,
+      style: { transform: 'none', position: 'static', left: 'auto', top: 'auto' },
+    });
+    const win = window.open('', '_blank');
+    if (!win) { alert('请允许弹窗以查看诊断结果'); return; }
+    win.document.write(`<!doctype html><html><head><title>PDF 诊断 — ${elementId}</title></head>
+<body style="margin:0;font-family:system-ui;padding:1em">
+  <h3 style="margin:0 0 0.5em">PDF 诊断：${elementId}</h3>
+  <p>容器尺寸：${w} × ${h} px · PNG 解码后会显示在下面 ↓</p>
+  <p>如果下面是空白说明截图就空了（不是 jsPDF 的问题）。截图给开发者看。</p>
+  <hr>
+  <img src="${dataUrl}" style="max-width:100%;border:1px solid #ccc;background:#f5f5f5"
+       onload="document.title='PDF 诊断 ✓ ' + this.naturalWidth + '×' + this.naturalHeight"
+       onerror="document.title='PDF 诊断 ✗ 图片加载失败'">
+</body></html>`);
+    win.document.close();
+  } finally {
+    el.classList.remove('pdf-export-mode');
+  }
+};
 
 // 把远程 URL 转 base64 data URL。Firebase Storage 跨域图片走 <img crossOrigin>
 // 在桶未配 CORS 时会污染 canvas；改成先 fetch + FileReader 转 data URL，避开
