@@ -141,3 +141,51 @@ const useClaudeExport = ({ items, mapExport, filename, claudePrompt, claudePromp
 
   return { exportForClaude, applyDeleteList, restoreBackup, hasBackup, setHasBackup, exportToast, deleteModal, setDeleteModal, deleteJson, setDeleteJson, exportModal, setExportModal: openExportModal, exportPromptText, copyPrompt, downloadJson, selectedTags, toggleTag, clearTags, availableTags, filteredCount: filteredItems.length, totalCount: items.length, promptList, selectedPromptIdx, setSelectedPromptIdx };
 };
+
+// ─── PDF EXPORT ───────────────────────────────────────────────────────────────
+// 参考 travel map 项目：html-to-image 渲 PNG → jspdf 分页贴图
+// 用 html-to-image（SVG foreignObject）而非 html2canvas，避免现代 CSS 颜色函数兼容问题
+const exportElementToPDF = async (elementId, filename) => {
+  const el = document.getElementById(elementId);
+  if (!el) throw new Error('找不到导出容器：' + elementId);
+  if (!window.htmlToImage || !window.jspdf) throw new Error('PDF 库未加载，请刷新页面再试');
+  el.classList.add('pdf-export-mode');
+  // 临时让 off-screen 容器在可视区域之外但可被渲染（去掉 visibility:hidden 之类）
+  const prevStyle = { left: el.style.left, position: el.style.position };
+  try {
+    // 确保 layout 已计算（off-screen 容器需要有 width/height）
+    await new Promise(r => requestAnimationFrame(() => r()));
+    const dataUrl = await window.htmlToImage.toPng(el, {
+      pixelRatio: 2,
+      cacheBust: true,
+      backgroundColor: '#ffffff',
+    });
+    const img = new Image();
+    await new Promise((res, rej) => { img.onload = res; img.onerror = () => rej(new Error('图片渲染失败')); img.src = dataUrl; });
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF('p', 'pt', 'a4');
+    const pdfW = pdf.internal.pageSize.getWidth();
+    const pdfH = pdf.internal.pageSize.getHeight();
+    const ratio = pdfW / img.naturalWidth;
+    const imgH = img.naturalHeight * ratio;
+    let position = 0;
+    pdf.addImage(dataUrl, 'PNG', 0, position, pdfW, imgH);
+    let remaining = imgH - pdfH;
+    while (remaining > 0) {
+      position -= pdfH;
+      pdf.addPage();
+      pdf.addImage(dataUrl, 'PNG', 0, position, pdfW, imgH);
+      remaining -= pdfH;
+    }
+    pdf.save(filename + '.pdf');
+  } finally {
+    el.classList.remove('pdf-export-mode');
+    el.style.left = prevStyle.left;
+    el.style.position = prevStyle.position;
+  }
+};
+
+const pdfDateStr = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+};

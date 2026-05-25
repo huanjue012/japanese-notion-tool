@@ -140,6 +140,12 @@ const Flashcards = ({ cards, setCards, allTags, onNav, notes = [], navCtx, clear
   const [maintToast, setMaintToast] = useState('');
   const [moreMenuOpen, setMoreMenuOpen] = useState(false);
   const moreMenuRef = useRef(null);
+  // PDF 导出
+  const [pdfModal, setPdfModal] = useState(false);
+  const [pdfTags, setPdfTags] = useState(() => new Set());
+  const [pdfMode, setPdfMode] = useState('study'); // 'study' | 'quiz'
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const [pdfToast, setPdfToast] = useState('');
 
   useEffect(() => {
     if (!moreMenuOpen) return;
@@ -355,6 +361,7 @@ const Flashcards = ({ cards, setCards, allTags, onNav, notes = [], navCtx, clear
                   <div onClick={() => { setMoreMenuOpen(false); setDeleteModal(true); }} className="px-3 py-2 text-sm hover:bg-indigo-50 cursor-pointer">🗑 删除重复</div>
                   <div onClick={() => { setMoreMenuOpen(false); openMoveReadingsPreview(); }} className="px-3 py-2 text-sm hover:bg-indigo-50 cursor-pointer">📖 整理读音</div>
                   <div onClick={() => { setMoreMenuOpen(false); exportForClaude(); }} className="px-3 py-2 text-sm hover:bg-indigo-50 cursor-pointer">导出给 Claude</div>
+                  <div onClick={() => { setMoreMenuOpen(false); setPdfTags(new Set()); setPdfMode('study'); setPdfModal(true); }} className="px-3 py-2 text-sm hover:bg-indigo-50 cursor-pointer">📄 导出 PDF</div>
                 </div>
               )}
             </div>
@@ -537,6 +544,108 @@ const Flashcards = ({ cards, setCards, allTags, onNav, notes = [], navCtx, clear
         )}
       </Modal>
     )}
+    {pdfModal && (() => {
+      const tagCounts = {};
+      cards.forEach(c => c.tags?.forEach(t => tagCounts[t] = (tagCounts[t]||0)+1));
+      const tagOptions = Object.entries(tagCounts).sort((a,b) => b[1]-a[1]);
+      const filtered = cards.filter(c => {
+        if (pdfTags.size > 0 && !c.tags?.some(t => pdfTags.has(t))) return false;
+        return true;
+      });
+      const togglePdfTag = (tag) => setPdfTags(prev => { const next = new Set(prev); if (next.has(tag)) next.delete(tag); else next.add(tag); return next; });
+      const doExport = async () => {
+        if (filtered.length === 0) return;
+        setPdfLoading(true);
+        try {
+          await new Promise(r => setTimeout(r, 50));
+          await exportElementToPDF('cards-pdf-content', `japanese-flashcards-${pdfMode}-${pdfDateStr()}`);
+          setPdfToast(`✅ 已导出 ${filtered.length} 张闪卡为 PDF`);
+          setTimeout(() => setPdfToast(''), 3000);
+          setPdfModal(false);
+        } catch (e) {
+          alert('PDF 导出失败：' + e.message);
+        } finally {
+          setPdfLoading(false);
+        }
+      };
+      return (
+        <Modal open={true} title="导出闪卡 PDF" onClose={() => !pdfLoading && setPdfModal(false)}>
+          <p className="text-sm text-gray-600 mb-2">📄 将导出 <span className="font-semibold">{filtered.length}</span> / {cards.length} 张闪卡{pdfTags.size === 0 && '（全部）'}</p>
+          {tagOptions.length > 0 && (
+            <div className="mb-3">
+              <p className="text-xs text-gray-400 mb-1.5">按标签筛选（不选 = 全部）</p>
+              <div className="flex flex-wrap gap-1.5">
+                <Badge onClick={() => setPdfTags(new Set())} color={pdfTags.size === 0 ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600'}>全部</Badge>
+                {tagOptions.map(([tag, cnt]) => (
+                  <Badge key={tag} onClick={() => togglePdfTag(tag)} color={pdfTags.has(tag) ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600'}>{tag} ({cnt})</Badge>
+                ))}
+              </div>
+            </div>
+          )}
+          <div className="mb-3">
+            <p className="text-xs text-gray-400 mb-1.5">布局</p>
+            <div className="space-y-1.5">
+              <label className="flex items-start gap-2 cursor-pointer text-sm text-gray-700">
+                <input type="radio" value="study" checked={pdfMode === 'study'} onChange={() => setPdfMode('study')} className="mt-0.5" />
+                <span><span className="font-medium">学习模式</span><span className="text-xs text-gray-400 block">2 列网格，每张卡同时显示正面 + 背面</span></span>
+              </label>
+              <label className="flex items-start gap-2 cursor-pointer text-sm text-gray-700">
+                <input type="radio" value="quiz" checked={pdfMode === 'quiz'} onChange={() => setPdfMode('quiz')} className="mt-0.5" />
+                <span><span className="font-medium">测试模式</span><span className="text-xs text-gray-400 block">先列出所有正面（题目），分页后列出所有背面（答案）</span></span>
+              </label>
+            </div>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Btn variant="secondary" onClick={() => setPdfModal(false)} disabled={pdfLoading}>取消</Btn>
+            <Btn onClick={doExport} disabled={pdfLoading || filtered.length === 0}>{pdfLoading ? '导出中…' : `📄 下载 PDF (${filtered.length})`}</Btn>
+          </div>
+        </Modal>
+      );
+    })()}
+    {pdfModal && (() => {
+      const filtered = cards.filter(c => {
+        if (pdfTags.size > 0 && !c.tags?.some(t => pdfTags.has(t))) return false;
+        return true;
+      });
+      return (
+        <div id="cards-pdf-content" className="pdf-page" style={{ position: 'absolute', left: '-10000px', top: 0 }}>
+          <h1>🃏 日语闪卡导出 — {pdfMode === 'study' ? '学习模式' : '测试模式'}</h1>
+          <div className="pdf-meta">共 {filtered.length} 张 · 导出于 {pdfDateStr()}</div>
+          {pdfMode === 'study' ? (
+            <div className="pdf-cards-grid">
+              {filtered.map((c, i) => (
+                <div key={c.id} className="pdf-card">
+                  <div className="pdf-card-num">#{i + 1}{c.tags?.length > 0 && ` · ${c.tags.join(' / ')}`}</div>
+                  <div className="pdf-card-front">{c.front}</div>
+                  <div className="pdf-card-back">{c.back}</div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <>
+              <h2>📝 题目（正面）</h2>
+              <ol className="pdf-quiz-list">
+                {filtered.map((c, i) => (
+                  <li key={'q-'+c.id}><span className="pdf-card-num">{i + 1}.</span> <span style={{whiteSpace:'pre-wrap'}}>{c.front}</span></li>
+                ))}
+              </ol>
+              <div className="pdf-divider">
+                <h2>✅ 答案（背面）</h2>
+                <ol className="pdf-quiz-list">
+                  {filtered.map((c, i) => (
+                    <li key={'a-'+c.id}>
+                      <span className="pdf-card-num">{i + 1}.</span> <span style={{whiteSpace:'pre-wrap'}}>{c.front}</span>
+                      <div style={{marginTop:4, color:'#4b5563', whiteSpace:'pre-wrap'}}>→ {c.back}</div>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            </>
+          )}
+        </div>
+      );
+    })()}
+    {pdfToast && <div className="fixed bottom-4 right-4 bg-green-600 text-white px-4 py-2 rounded-xl shadow-lg z-50 text-sm">{pdfToast}</div>}
     </>
   );
 };

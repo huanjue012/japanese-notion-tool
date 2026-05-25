@@ -20,6 +20,13 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteId
   const [bookmarkFilter, setBookmarkFilter] = useState(false);
   const [notesVisible, setNotesVisible] = useState(100);
   const notesSentinel = useRef(null);
+  // PDF 导出
+  const [pdfModal, setPdfModal] = useState(false);
+  const [pdfTags, setPdfTags] = useState(() => new Set());
+  const [pdfBookmarkOnly, setPdfBookmarkOnly] = useState(false);
+  const [pdfIncludeImages, setPdfIncludeImages] = useState(true);
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const [pdfToast, setPdfToast] = useState('');
 
   const tagCounts = useMemo(() => {
     const c = {};
@@ -210,6 +217,7 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteId
           {notes.length > 0 && <Btn variant="danger" onClick={() => { if (confirm(`删除全部 ${notes.length} 条笔记？此操作不可恢复。`)) setNotes([]); }}>🗑 全部删除</Btn>}
           {notes.length > 0 && <Btn variant="secondary" onClick={() => setDeleteModal(true)}>🗑 删除重复</Btn>}
           {notes.length > 0 && <Btn variant="secondary" onClick={exportForClaude}>导出给 Claude</Btn>}
+          {notes.length > 0 && <Btn variant="secondary" onClick={() => { setPdfTags(new Set()); setPdfBookmarkOnly(false); setPdfModal(true); }}>📄 导出 PDF</Btn>}
           <Btn onClick={openNew}>+ 新建笔记</Btn>
         </div>
       </div>
@@ -532,6 +540,89 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteId
           </div>
         </div>
       )}
+      {pdfModal && (() => {
+        const tagOptions = Object.entries(tagCounts).sort((a,b) => b[1]-a[1]);
+        const filtered = notes.filter(n => {
+          if (pdfBookmarkOnly && !n.bookmarked) return false;
+          if (pdfTags.size > 0 && !n.tags?.some(t => pdfTags.has(t))) return false;
+          return true;
+        });
+        const togglePdfTag = (tag) => setPdfTags(prev => { const next = new Set(prev); if (next.has(tag)) next.delete(tag); else next.add(tag); return next; });
+        const doExport = async () => {
+          if (filtered.length === 0) return;
+          setPdfLoading(true);
+          try {
+            await new Promise(r => setTimeout(r, 50)); // 等 DOM 渲染
+            await exportElementToPDF('notes-pdf-content', `japanese-notes-${pdfDateStr()}`);
+            setPdfToast(`✅ 已导出 ${filtered.length} 条笔记为 PDF`);
+            setTimeout(() => setPdfToast(''), 3000);
+            setPdfModal(false);
+          } catch (e) {
+            alert('PDF 导出失败：' + e.message);
+          } finally {
+            setPdfLoading(false);
+          }
+        };
+        return (
+          <Modal open={true} title="导出笔记 PDF" onClose={() => !pdfLoading && setPdfModal(false)}>
+            <p className="text-sm text-gray-600 mb-2">📄 将导出 <span className="font-semibold">{filtered.length}</span> / {notes.length} 条笔记{pdfTags.size === 0 && !pdfBookmarkOnly && '（全部）'}</p>
+            {tagOptions.length > 0 && (
+              <div className="mb-3">
+                <p className="text-xs text-gray-400 mb-1.5">按标签筛选（不选 = 全部）</p>
+                <div className="flex flex-wrap gap-1.5">
+                  <Badge onClick={() => setPdfTags(new Set())} color={pdfTags.size === 0 ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600'}>全部</Badge>
+                  {tagOptions.map(([tag, cnt]) => (
+                    <Badge key={tag} onClick={() => togglePdfTag(tag)} color={pdfTags.has(tag) ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600'}>{tag} ({cnt})</Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+            <div className="space-y-2 mb-4">
+              <label className="flex items-center gap-2 cursor-pointer text-sm text-gray-600">
+                <input type="checkbox" checked={pdfBookmarkOnly} onChange={e => setPdfBookmarkOnly(e.target.checked)} />
+                只导出收藏（★）
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer text-sm text-gray-600">
+                <input type="checkbox" checked={pdfIncludeImages} onChange={e => setPdfIncludeImages(e.target.checked)} />
+                包含图片（生成 PDF 会更大）
+              </label>
+            </div>
+            <p className="text-xs text-gray-400 mb-3">PDF 会包含笔记标题、标签和 Markdown 渲染后的正文。{pdfIncludeImages && '图片会嵌入正文之后。'}</p>
+            <div className="flex justify-end gap-2">
+              <Btn variant="secondary" onClick={() => setPdfModal(false)} disabled={pdfLoading}>取消</Btn>
+              <Btn onClick={doExport} disabled={pdfLoading || filtered.length === 0}>{pdfLoading ? '导出中…' : `📄 下载 PDF (${filtered.length})`}</Btn>
+            </div>
+          </Modal>
+        );
+      })()}
+      {pdfModal && (() => {
+        const filtered = notes.filter(n => {
+          if (pdfBookmarkOnly && !n.bookmarked) return false;
+          if (pdfTags.size > 0 && !n.tags?.some(t => pdfTags.has(t))) return false;
+          return true;
+        });
+        return (
+          <div id="notes-pdf-content" className="pdf-page" style={{ position: 'absolute', left: '-10000px', top: 0 }}>
+            <h1>📝 日语笔记导出</h1>
+            <div className="pdf-meta">共 {filtered.length} 条 · 导出于 {pdfDateStr()}</div>
+            {filtered.map(n => (
+              <div key={n.id} className="pdf-item">
+                <h2>{n.title}</h2>
+                {n.tags?.length > 0 && (
+                  <div className="pdf-tags">
+                    {n.tags.map(t => <span key={t} className="pdf-tag">#{t}</span>)}
+                  </div>
+                )}
+                <div className="md-body" dangerouslySetInnerHTML={{ __html: window.marked ? marked.parse(n.content || '') : (n.content || '') }} />
+                {pdfIncludeImages && n.images?.filter(i => i.type === 'image').map(img => (
+                  <img key={img.path} src={img.url} alt={img.name} className="pdf-img" />
+                ))}
+              </div>
+            ))}
+          </div>
+        );
+      })()}
+      {pdfToast && <div className="fixed bottom-4 right-4 bg-green-600 text-white px-4 py-2 rounded-xl shadow-lg z-50 text-sm">{pdfToast}</div>}
     </div>
   );
 };

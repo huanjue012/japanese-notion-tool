@@ -17,6 +17,8 @@
   <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/kuroshiro@1.2.0/dist/kuroshiro.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/kuroshiro-analyzer-kuromoji@1.1.0/dist/kuroshiro-analyzer-kuromoji.min.js"></script>
+  <script src="https://unpkg.com/html-to-image@1.11.13/dist/html-to-image.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&display=swap" rel="stylesheet">
@@ -60,6 +62,33 @@
     .md-body-card strong { color: #111827; font-weight: 700; }
     .md-body-card code { font-size: 0.9em; background: #f1f5f9; }
     .md-body-card table { font-size: 1rem; text-align: left; margin: 0.4em auto; }
+    /* PDF 导出 */
+    .pdf-export-mode .no-pdf { display: none !important; }
+    .pdf-page {
+      width: 794px; /* A4 @ 96dpi */
+      padding: 48px 56px;
+      background: #ffffff;
+      color: #1f2937;
+      font-family: 'Noto Sans JP', 'Segoe UI', system-ui, sans-serif;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .pdf-page h1 { font-size: 22px; font-weight: 700; margin: 0 0 4px; color: #111827; }
+    .pdf-page h2 { font-size: 18px; font-weight: 700; margin: 16px 0 6px; color: #1f2937; }
+    .pdf-page .pdf-meta { font-size: 12px; color: #6b7280; margin-bottom: 20px; }
+    .pdf-page .pdf-item { page-break-inside: avoid; margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid #e5e7eb; }
+    .pdf-page .pdf-item:last-child { border-bottom: none; }
+    .pdf-page .pdf-tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
+    .pdf-page .pdf-tag { display: inline-block; background: #eef2ff; color: #4f46e5; font-size: 11px; padding: 2px 8px; border-radius: 10px; }
+    .pdf-page .pdf-img { max-width: 100%; max-height: 320px; margin: 8px 0; border: 1px solid #e5e7eb; border-radius: 6px; object-fit: contain; }
+    .pdf-page .pdf-cards-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .pdf-page .pdf-card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 10px 12px; page-break-inside: avoid; }
+    .pdf-page .pdf-card-front { font-weight: 600; font-size: 14px; color: #111827; white-space: pre-wrap; }
+    .pdf-page .pdf-card-back { font-size: 12px; color: #4b5563; margin-top: 6px; padding-top: 6px; border-top: 1px dashed #d1d5db; white-space: pre-wrap; }
+    .pdf-page .pdf-card-num { font-size: 10px; color: #9ca3af; margin-bottom: 2px; }
+    .pdf-page .pdf-quiz-list { list-style: none; padding: 0; margin: 0; }
+    .pdf-page .pdf-quiz-list li { padding: 8px 0; border-bottom: 1px dashed #e5e7eb; page-break-inside: avoid; }
+    .pdf-page .pdf-divider { page-break-before: always; margin-top: 24px; padding-top: 12px; border-top: 2px solid #111827; }
   </style>
 </head>
 <body>
