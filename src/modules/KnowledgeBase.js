@@ -587,7 +587,7 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteId
                 包含图片（生成 PDF 会更大）
               </label>
             </div>
-            <p className="text-xs text-gray-400 mb-3">PDF 会包含笔记标题、标签和 Markdown 渲染后的正文。{pdfIncludeImages && '图片会嵌入正文之后。'}</p>
+            <p className="text-xs text-gray-400 mb-3">PDF 会包含笔记标题、标签和 Markdown 渲染后的正文。{pdfIncludeImages && '图片会嵌入正文之后（若 Firebase Storage 未配置 CORS，图片可能无法捕获，可关掉本选项）。'}</p>
             <div className="flex justify-end gap-2">
               <Btn variant="secondary" onClick={() => setPdfModal(false)} disabled={pdfLoading}>取消</Btn>
               <Btn onClick={doExport} disabled={pdfLoading || filtered.length === 0}>{pdfLoading ? '导出中…' : `📄 下载 PDF (${filtered.length})`}</Btn>
@@ -602,7 +602,7 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteId
           return true;
         });
         return (
-          <div id="notes-pdf-content" className="pdf-page" style={{ position: 'absolute', left: '-10000px', top: 0 }}>
+          <div id="notes-pdf-content" className="pdf-page" style={{ position: 'fixed', left: '-10000px', top: 0 }}>
             <h1>📝 日语笔记导出</h1>
             <div className="pdf-meta">共 {filtered.length} 条 · 导出于 {pdfDateStr()}</div>
             {filtered.map(n => (
@@ -615,7 +615,7 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteId
                 )}
                 <div className="md-body" dangerouslySetInnerHTML={{ __html: window.marked ? marked.parse(n.content || '') : (n.content || '') }} />
                 {pdfIncludeImages && n.images?.filter(i => i.type === 'image').map(img => (
-                  <img key={img.path} src={img.url} alt={img.name} className="pdf-img" />
+                  <img key={img.path} src={img.url} alt={img.name} className="pdf-img" crossOrigin="anonymous" />
                 ))}
               </div>
             ))}

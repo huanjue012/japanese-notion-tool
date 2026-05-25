@@ -150,10 +150,8 @@ const exportElementToPDF = async (elementId, filename) => {
   if (!el) throw new Error('找不到导出容器：' + elementId);
   if (!window.htmlToImage || !window.jspdf) throw new Error('PDF 库未加载，请刷新页面再试');
   el.classList.add('pdf-export-mode');
-  // 临时让 off-screen 容器在可视区域之外但可被渲染（去掉 visibility:hidden 之类）
-  const prevStyle = { left: el.style.left, position: el.style.position };
   try {
-    // 确保 layout 已计算（off-screen 容器需要有 width/height）
+    // 等一帧让 layout 计算完毕（off-screen 容器需要有正确的 width/height）
     await new Promise(r => requestAnimationFrame(() => r()));
     const dataUrl = await window.htmlToImage.toPng(el, {
       pixelRatio: 2,
@@ -180,8 +178,6 @@ const exportElementToPDF = async (elementId, filename) => {
     pdf.save(filename + '.pdf');
   } finally {
     el.classList.remove('pdf-export-mode');
-    el.style.left = prevStyle.left;
-    el.style.position = prevStyle.position;
   }
 };
 

@@ -608,7 +608,7 @@ const Flashcards = ({ cards, setCards, allTags, onNav, notes = [], navCtx, clear
         return true;
       });
       return (
-        <div id="cards-pdf-content" className="pdf-page" style={{ position: 'absolute', left: '-10000px', top: 0 }}>
+        <div id="cards-pdf-content" className="pdf-page" style={{ position: 'fixed', left: '-10000px', top: 0 }}>
           <h1>🃏 日语闪卡导出 — {pdfMode === 'study' ? '学习模式' : '测试模式'}</h1>
           <div className="pdf-meta">共 {filtered.length} 张 · 导出于 {pdfDateStr()}</div>
           {pdfMode === 'study' ? (
