@@ -132,6 +132,35 @@ const useOnlineStatus = () => {
 const fmt = (iso) => iso ? new Date(iso).toLocaleDateString('zh-CN') : '—';
 const isOverdue = (hw) => hw.status === 'pending' && hw.dueDate && new Date(hw.dueDate) < new Date();
 
+// ─── MARKDOWN 渲染（所见即所得换行）────────────────────────────────────────────
+// 保留用户输入的所有换行与空行：单个回车 → <br>（breaks:true），空行 → &nbsp; 行。
+// 代码块 / 表格先抽成占位符隔离，避免"空行→&nbsp;"那一步打断块级语法。
+// 占位符用控制字符 \x01 包裹，几乎不可能出现在用户笔记里，也不是空白，故不被误伤。
+const renderMarkdown = (text) => {
+  if (!text) return '';
+  if (!window.marked) return text;
+  const D = String.fromCharCode(1); // 占位符分隔符
+  const code = [];
+  const tables = [];
+  let src = String(text);
+  // 1. 抽出围栏代码块，保护其内部空行/原文
+  src = src.replace(/```[\s\S]*?```|~~~[\s\S]*?~~~/g, function (m) {
+    code.push(m);
+    return D + 'C' + (code.length - 1) + D;
+  });
+  // 2. 抽出 GFM 表格块（表头行 + 分隔行 + 含 | 的后续行）
+  src = src.replace(/^ *\|?.*\|.*\n *\|?[ :|-]*-[ :|-]*\n(?:.*\|.*(?:\n|$))*/gm, function (m) {
+    tables.push(m.replace(/\n+$/, ''));
+    return D + 'T' + (tables.length - 1) + D;
+  });
+  // 3. 去掉结尾多余空白行，再把"只含空白的整行"换成 &nbsp; 以保留空行
+  src = src.replace(/(?:[^\S\n]*\n)+[^\S\n]*$/, '').replace(/^[^\S\n]*$/gm, '&nbsp;');
+  // 4. 还原占位符：代码块原样回填；表格前后补空行确保仍按块级解析
+  src = src.replace(new RegExp(D + 'T(\\d+)' + D, 'g'), function (_, i) { return '\n\n' + tables[+i] + '\n\n'; });
+  src = src.replace(new RegExp(D + 'C(\\d+)' + D, 'g'), function (_, i) { return code[+i]; });
+  return marked.parse(src, { breaks: true, gfm: true });
+};
+
 let _kuroshiroPromise = null;
 const getKuroshiro = () => {
   if (_kuroshiroPromise) return _kuroshiroPromise;

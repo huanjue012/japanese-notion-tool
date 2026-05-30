@@ -298,8 +298,7 @@ const Flashcards = ({ cards, setCards, allTags, onNav, notes = [], navCtx, clear
               title="点击查看笔记">
               {relatedNotes[noteIdx].title} →
             </p>
-            <div className="md-body"
-              dangerouslySetInnerHTML={{ __html: window.marked ? marked.parse(relatedNotes[noteIdx].content || '') : relatedNotes[noteIdx].content }} />
+            <NoteContent content={relatedNotes[noteIdx].content} format={relatedNotes[noteIdx].format} />
             {relatedNotes[noteIdx].tags?.length > 0 && (
               <div className="flex flex-wrap gap-1 mt-2">
                 {relatedNotes[noteIdx].tags.map(t => <Badge key={t}>{t}</Badge>)}

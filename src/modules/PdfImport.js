@@ -92,10 +92,11 @@ const PDFImport = ({ setNotes, setFlashcards, uid, isOnline, notes, flashcards, 
         if (!existing) { noMatch.push(x); continue; }
         const newContent = x.content ?? existing.content;
         const newTags = Array.isArray(x.tags) ? x.tags : existing.tags;
-        if (newContent === existing.content && JSON.stringify(newTags) === JSON.stringify(existing.tags || [])) {
+        const newFormat = x.format ?? existing.format;
+        if (newContent === existing.content && JSON.stringify(newTags) === JSON.stringify(existing.tags || []) && newFormat === existing.format) {
           noChange.push(x.title);
         } else {
-          willUpdate.push({ id: existing.id, key: x.title, newContent, newTags });
+          willUpdate.push({ id: existing.id, key: x.title, newContent, newTags, newFormat });
         }
       }
       notePart = { willUpdate, noMatch, noChange, total: d.notes.length };
@@ -140,7 +141,7 @@ const PDFImport = ({ setNotes, setFlashcards, uid, isOnline, notes, flashcards, 
       setNotes(p => {
         const updated = p.map(n => {
           const u = updateMap.get(n.id);
-          return u ? { ...n, content: u.newContent, tags: u.newTags, updatedAt: now } : n;
+          return u ? { ...n, content: u.newContent, tags: u.newTags, format: u.newFormat, updatedAt: now } : n;
         });
         return [...updated, ...newNotes];
       });
@@ -356,7 +357,8 @@ const PDFImport = ({ setNotes, setFlashcards, uid, isOnline, notes, flashcards, 
 
   const EXAMPLE = `{
   "notes": [
-    {"title": "第1课文法：です・ます", "content": "礼貌体结尾，表示肯定。\\nです = 是\\nます = 动词礼貌形", "tags": ["文法", "第1课"]}
+    {"title": "第1课文法：です・ます", "content": "礼貌体结尾，表示肯定。\\nです = 是\\nます = 动词礼貌形", "tags": ["文法", "第1课"]},
+    {"title": "第28课·彩色排版示例", "content": "<style>.tip{background:#f0f8f0;border-left:3px solid #4caf50;padding:8px 12px}</style><h2>～ながら</h2><div class='tip'>一边A一边B</div>", "format": "html", "tags": ["文法", "第28课"]}
   ],
   "flashcards": [
     {"front": "おはようございます", "back": "早上好（正式）", "tags": ["打招呼"]},

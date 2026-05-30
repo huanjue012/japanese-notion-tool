@@ -50,7 +50,7 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteId
   }, [notesVisible]);
 
   const toggleBookmark = id => setNotes(p => p.map(n => n.id === id ? { ...n, bookmarked: !n.bookmarked, updatedAt: new Date().toISOString() } : n));
-  const openNew = () => { setForm({ title: '', content: '', tags: activeTag ? [activeTag] : [], images: [] }); setContentExpanded(false); setModal('new'); };
+  const openNew = () => { setForm({ title: '', content: '', tags: activeTag ? [activeTag] : [], images: [], format: 'markdown' }); setContentExpanded(false); setModal('new'); };
   const openEdit = n => { setForm({ ...n, images: n.images || [] }); setContentExpanded(false); setModal(n.id); };
 
   const uploadFile = async (file) => {
@@ -114,12 +114,13 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteId
 
   const { exportForClaude, applyDeleteList, restoreBackup, hasBackup, exportToast, deleteModal, setDeleteModal, deleteJson, setDeleteJson, exportModal, setExportModal, exportPromptText, copyPrompt, downloadJson, selectedTags: exportSelectedTags, toggleTag: exportToggleTag, clearTags: exportClearTags, availableTags: exportAvailableTags, filteredCount, totalCount, promptList, selectedPromptIdx, setSelectedPromptIdx } = useClaudeExport({
     items: notes,
-    mapExport: items => ({ notes: items.map(({ title, content, tags }) => ({ title, content, tags })) }),
+    mapExport: items => ({ notes: items.map(({ title, content, tags, format }) => format ? ({ title, content, tags, format }) : ({ title, content, tags })) }),
     filename: 'notes-export',
     claudePrompts: [
       { label: '🔍 查找重复', build: json => `请帮我检查以下日语学习笔记，找出完全重复或高度相似的笔记（标题相同，或内容主旨完全一样）。\n\n只返回以下格式的 JSON，不要包含任何其他文字或解释：\n{"delete_duplicates": ["重复笔记的title1", "重复笔记的title2"]}\n\n如果没有重复，返回 {"delete_duplicates": []}。每组重复中保留最好的一条，只列出应删除的那些。\n\n笔记数据如下：\n\n${json}` },
       { label: '✏️ 审阅并改进内容', build: json => `请帮我检查以下日语学习笔记，指出有误的内容、补充不完整的地方，并以相同JSON格式返回修正后的版本（包含所有笔记）：\n\n${json}` },
       { label: '✨ 补充例句和读音', build: json => `请帮我给以下日语学习笔记补充内容：在每条笔记的 content 字段末尾追加 1-2 个简短例句（日中对照）+ 出现的汉字读音。保持 title 和 tags 不变，content 原内容保留，只在末尾追加。\n\n例句格式：\\n\\n例：日语例句。中文翻译。\\n汉字 - 读音\n\n只返回完整的 JSON（包含所有笔记，未改动的也要原样返回），格式与输入相同：\n{"notes": [{"title":"...","content":"...","tags":[...]}]}\n\n笔记数据：\n\n${json}` },
+      { label: '🎨 美化为彩色 HTML 笔记', build: json => `请把以下日语学习笔记每一条的 content 改写成「自包含的彩色排版 HTML」，并在每条笔记上加 "format":"html"。保持 title 和 tags 不变。\n\n要求：\n1. 每条笔记的 content 是一段自包含 HTML，开头用 <style> 写好该条用到的 CSS（class 自取，但要自包含，不依赖外部样式）。\n2. 排版参考以下结构：标题区、语法卡(.grammar-card 左边框高亮)、句型(.pattern)、释义(.meaning)、例句框(.example 含日文.jp+中文.cn)、💡提示框(.tip 绿色)、⚠️警示框(.warn 红色)、重点词汇网格(.vocab-grid)、彩色表格、对话(.dialogue)。用 <mark> 高亮重点助词、<strong> 标红关键词。\n3. 配色温和清晰（米白底 #faf7f2、墨色字、红/金/绿/蓝点缀），中文为主、日文夹注，适合手机阅读（宽度自适应）。\n4. 不要写 <html>/<head>/<body> 外壳，从 <style> 或第一个内容标签开始即可。\n\n只返回完整 JSON（包含所有笔记，未改动的也原样返回），格式与输入相同，每条加 format 字段：\n{"notes": [{"title":"...","content":"<style>...</style>...","format":"html","tags":[...]}]}\n\n笔记数据：\n\n${json}` },
     ],
     matchKey: 'title',
     itemLabel: '笔记',
@@ -303,7 +304,7 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteId
                 </div>
                 <div className="mb-3 text-xs text-gray-500 leading-relaxed"
                   style={{display:'-webkit-box',WebkitLineClamp:3,WebkitBoxOrient:'vertical',overflow:'hidden'}}>
-                  {(n.content||'').replace(/#{1,6}\s/g,'').replace(/\*\*/g,'').replace(/\*/g,'').replace(/`/g,'').replace(/\[([^\]]+)\]\([^)]+\)/g,'$1').replace(/\n/g,' ').trim()}
+                  {noteSnippet(n.content, n.format)}
                 </div>
                 {n.images?.length > 0 && (
                   <div className="flex flex-wrap gap-1 mb-2">
@@ -404,15 +405,26 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteId
             <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
               内容 {contentExpanded ? '▲' : '▼'}
             </label>
-            <button type="button" onClick={() => setContentExpanded(v => !v)}
-              className="text-xs text-indigo-500 hover:text-indigo-700 font-medium">
-              {contentExpanded ? '收起' : '展开编辑'}
-            </button>
+            <div className="flex items-center gap-2">
+              <div className="flex gap-0.5 bg-gray-100 rounded-md p-0.5">
+                <button type="button" onClick={() => setForm(p => ({...p, format: 'markdown'}))}
+                  className={`px-2 py-0.5 rounded text-xs font-medium transition-colors ${form.format !== 'html' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}>
+                  Markdown
+                </button>
+                <button type="button" onClick={() => setForm(p => ({...p, format: 'html'}))}
+                  className={`px-2 py-0.5 rounded text-xs font-medium transition-colors ${form.format === 'html' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}>
+                  HTML
+                </button>
+              </div>
+              <button type="button" onClick={() => setContentExpanded(v => !v)}
+                className="text-xs text-indigo-500 hover:text-indigo-700 font-medium">
+                {contentExpanded ? '收起' : '展开编辑'}
+              </button>
+            </div>
           </div>
           {!contentExpanded && form.content && (
             <div className="border border-gray-100 rounded-xl bg-gray-50 px-3 py-2">
-              <div className="md-body text-sm"
-                dangerouslySetInnerHTML={{ __html: window.marked ? marked.parse(form.content) : form.content }} />
+              <NoteContent content={form.content} format={form.format} className="text-sm" />
             </div>
           )}
           {!contentExpanded && !form.content && (
@@ -424,15 +436,14 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteId
           {contentExpanded && (
             <>
               <textarea rows={10}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-transparent resize-none"
+                className={`w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-transparent resize-none ${form.format === 'html' ? 'font-mono' : ''}`}
                 value={form.content}
                 onChange={e => setForm(p => ({...p, content: e.target.value}))}
-                placeholder="记录知识点、例句、文法解释…支持 Markdown 表格" />
+                placeholder={form.format === 'html' ? '粘贴完整 HTML（可含 <style>），将以彩色排版渲染…' : '记录知识点、例句、文法解释…支持 Markdown 表格'} />
               {form.content && (
                 <div className="mt-2 mb-2 border border-gray-100 rounded-xl bg-gray-50 p-3">
                   <p className="text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wide">预览</p>
-                  <div className="md-body"
-                    dangerouslySetInnerHTML={{ __html: window.marked ? marked.parse(form.content) : form.content }} />
+                  <NoteContent content={form.content} format={form.format} />
                 </div>
               )}
             </>

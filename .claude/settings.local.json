@@ -3,7 +3,12 @@
     "allow": [
       "Bash(find /c/Users/Kee/Documents/JapaneseAITools -type f -name *.rules)",
       "Bash(node *)",
-      "Bash(xargs grep -l \"useClaudeExport\")"
+      "Bash(xargs grep -l \"useClaudeExport\")",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\Kee\\\\Documents\\\\MyApps\\\\JapaneseAITools\" -Recurse -Directory)",
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "Bash(Sort-Object)",
+      "Bash(grep -n \"trim\\\\|replace\\\\|split.*\\\\\\\\\\\\\\\\n\\\\|collapse\\\\|clean\" \"C:\\\\Users\\\\Kee\\\\Documents\\\\MyApps\\\\JapaneseAITools/src/modules/KnowledgeBase.js\")",
+      "Bash(Get-ChildItem *)"
     ]
   }
 }
