@@ -92,7 +92,7 @@ const PDFImport = ({ setNotes, setFlashcards, uid, isOnline, notes, flashcards, 
         if (!existing) { noMatch.push(x); continue; }
         const newContent = x.content ?? existing.content;
         const newTags = Array.isArray(x.tags) ? x.tags : existing.tags;
-        const newFormat = x.format ?? existing.format;
+        const newFormat = x.format ?? existing.format ?? 'markdown';
         if (newContent === existing.content && JSON.stringify(newTags) === JSON.stringify(existing.tags || []) && newFormat === existing.format) {
           noChange.push(x.title);
         } else {
@@ -137,7 +137,7 @@ const PDFImport = ({ setNotes, setFlashcards, uid, isOnline, notes, flashcards, 
     if (noteUpdates.length > 0 || noteInserts.length > 0) {
       localStorage.setItem('backup_merge_notes', JSON.stringify(notes));
       const updateMap = new Map(noteUpdates.map(u => [u.id, u]));
-      const newNotes = noteInserts.map(x => ({ ...x, id: genId(), createdAt: now, images: Array.isArray(x.images) ? x.images : [], tags: Array.isArray(x.tags) ? x.tags : [] }));
+      const newNotes = noteInserts.map(x => ({ ...x, id: genId(), createdAt: now, images: Array.isArray(x.images) ? x.images : [], tags: Array.isArray(x.tags) ? x.tags : [], format: x.format || 'markdown' }));
       setNotes(p => {
         const updated = p.map(n => {
           const u = updateMap.get(n.id);
@@ -263,7 +263,7 @@ const PDFImport = ({ setNotes, setFlashcards, uid, isOnline, notes, flashcards, 
     if (d.notes?.length) {
       const rawNew = d.notes.filter(x => !notes.some(n => n.title === x.title));
       skippedN = d.notes.length - rawNew.length;
-      const withIds = rawNew.map(x => ({ ...x, id: genId(), createdAt: new Date().toISOString(), images: [...(x.images||[]), ...uploadedFiles] }));
+      const withIds = rawNew.map(x => ({ ...x, id: genId(), createdAt: new Date().toISOString(), images: [...(x.images||[]), ...uploadedFiles], format: x.format || 'markdown' }));
       setNotes(p => [...p, ...withIds]);
       cnt.n = withIds.length;
       if (withIds.length > 0 && setImportedNoteIds) setImportedNoteIds(withIds.map(x => x.id));

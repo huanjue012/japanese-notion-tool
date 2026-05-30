@@ -95,7 +95,8 @@ const useFirestoreCollection = (collectionName, uid) => {
       for (const [id, item] of nextMap) {
         const old = prevMap.get(id);
         if (!old || JSON.stringify(item) !== JSON.stringify(old)) {
-          const { id: _, ...data } = item;
+          const { id: _, ...rest } = item;
+          const data = Object.fromEntries(Object.entries(rest).filter(([, v]) => v !== undefined));
           colRef.doc(id).set(data).catch(console.error);
         }
       }
