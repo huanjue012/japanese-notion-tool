@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第28课 日语笔记</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@300;400;500&display=swap');
+
+  :root {
+    --ink: #1a1a2e;
+    --paper: #faf7f2;
+    --accent: #c0392b;
+    --gold: #d4a017;
+    --muted: #7a6a5a;
+    --light-line: #e8e0d5;
+    --highlight: #fff3cd;
+    --tip-bg: #f0f8f0;
+    --tip-border: #4caf50;
+    --warn-bg: #fff0f0;
+    --warn-border: #e74c3c;
+    --blue-bg: #f0f4ff;
+    --blue-border: #3b5bdb;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Noto Sans SC', sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    line-height: 1.8;
+    padding: 40px 20px 80px;
+  }
+
+  .page {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  /* Header */
+  .header {
+    text-align: center;
+    padding: 40px 0 30px;
+    border-bottom: 3px solid var(--accent);
+    margin-bottom: 40px;
+    position: relative;
+  }
+  .header::before {
+    content: '第28課';
+    font-family: 'Noto Serif SC', serif;
+    font-size: 13px;
+    color: var(--muted);
+    letter-spacing: 6px;
+    display: block;
+    margin-bottom: 8px;
+  }
+  .header h1 {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 6px;
+  }
+  .header p {
+    color: var(--muted);
+    font-size: 14px;
+    font-weight: 300;
+  }
+
+  /* Section */
+  .section {
+    margin-bottom: 36px;
+  }
+  .section-title {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--ink);
+    padding: 8px 16px;
+    background: var(--ink);
+    color: white;
+    display: inline-block;
+    margin-bottom: 20px;
+    border-radius: 2px;
+    letter-spacing: 1px;
+  }
+
+  /* Grammar cards */
+  .grammar-card {
+    border-left: 4px solid var(--accent);
+    background: white;
+    padding: 20px 24px;
+    margin-bottom: 24px;
+    box-shadow: 2px 2px 12px rgba(0,0,0,0.06);
+    border-radius: 0 8px 8px 0;
+  }
+  .grammar-card .pattern {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 8px;
+    padding: 6px 12px;
+    background: #fdf0ee;
+    display: inline-block;
+    border-radius: 4px;
+  }
+  .grammar-card .meaning {
+    font-size: 15px;
+    color: var(--muted);
+    margin-bottom: 12px;
+    font-weight: 500;
+  }
+  .grammar-card .desc {
+    font-size: 14px;
+    line-height: 1.9;
+    margin-bottom: 14px;
+  }
+
+  /* Example box */
+  .example {
+    background: var(--blue-bg);
+    border-left: 3px solid var(--blue-border);
+    padding: 10px 16px;
+    margin: 8px 0;
+    border-radius: 0 6px 6px 0;
+    font-size: 14px;
+  }
+  .example .jp {
+    font-size: 15px;
+    font-weight: 500;
+    margin-bottom: 2px;
+    color: #1a1a3e;
+  }
+  .example .cn {
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  /* Tip box */
+  .tip {
+    background: var(--tip-bg);
+    border-left: 3px solid var(--tip-border);
+    padding: 10px 16px;
+    margin-top: 12px;
+    border-radius: 0 6px 6px 0;
+    font-size: 13.5px;
+    line-height: 1.8;
+  }
+  .tip::before { content: '💡 '; font-size: 14px; }
+
+  .warn {
+    background: var(--warn-bg);
+    border-left: 3px solid var(--warn-border);
+    padding: 10px 16px;
+    margin-top: 12px;
+    border-radius: 0 6px 6px 0;
+    font-size: 13.5px;
+    line-height: 1.8;
+  }
+  .warn::before { content: '⚠️ '; font-size: 14px; }
+
+  /* Highlight inline */
+  mark {
+    background: var(--highlight);
+    padding: 1px 4px;
+    border-radius: 3px;
+  }
+  strong { color: var(--accent); }
+
+  /* Vocab table */
+  .vocab-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 10px;
+  }
+  @media (max-width: 560px) { .vocab-grid { grid-template-columns: 1fr; } }
+  .vocab-item {
+    background: white;
+    border: 1px solid var(--light-line);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 13.5px;
+  }
+  .vocab-item .jp-word {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 2px;
+  }
+  .vocab-item .cn-word {
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  /* Dialogue */
+  .dialogue {
+    background: white;
+    border-radius: 10px;
+    padding: 20px 24px;
+    box-shadow: 2px 2px 12px rgba(0,0,0,0.05);
+    margin-top: 10px;
+  }
+  .dialogue-title {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--muted);
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px dashed var(--light-line);
+  }
+  .line { margin-bottom: 12px; font-size: 14px; }
+  .speaker { font-weight: 600; color: var(--accent); margin-right: 6px; }
+  .jp-line { margin-bottom: 2px; }
+  .cn-line { color: var(--muted); font-size: 13px; padding-left: 4px; }
+
+  /* Summary table */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13.5px;
+    margin-top: 12px;
+  }
+  th {
+    background: var(--ink);
+    color: white;
+    padding: 8px 14px;
+    text-align: left;
+    font-weight: 500;
+  }
+  td {
+    padding: 8px 14px;
+    border-bottom: 1px solid var(--light-line);
+  }
+  tr:nth-child(even) td { background: #f7f4ef; }
+
+  .divider {
+    border: none;
+    border-top: 1px dashed var(--light-line);
+    margin: 28px 0;
+  }
+
+  .tag {
+    display: inline-block;
+    background: var(--gold);
+    color: white;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    margin-left: 8px;
+    font-weight: 500;
+    vertical-align: middle;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header">
+    <h1>第 28 课</h1>
+    <p>文法笔记 · 以华语口语整理</p>
+  </div>
+
+  <!-- GRAMMAR 1 -->
+  <div class="section">
+    <div class="section-title">📌 文法 1</div>
+
+    <div class="grammar-card">
+      <div class="pattern">动词ます形＋ながら＋动词</div>
+      <div class="meaning">一边做A，一边做B</div>
+      <div class="desc">
+        就是"同时做两件事"的意思。<strong>ながら</strong>前面的动词是"顺带"的那个，后面的动词才是"主要在做"的事。<br><br>
+        比如你一边听歌一边吃饭——吃饭是主要的，听歌是顺便的，所以"听歌"放前面接 ながら。
+      </div>
+
+      <div class="example">
+        <div class="jp">音楽を 聞き<mark>ながら</mark> 食事します。</div>
+        <div class="cn">一边听音乐，一边吃饭。</div>
+      </div>
+      <div class="example">
+        <div class="jp">眠い とき、ガムを かみ<mark>ながら</mark> 運転します。</div>
+        <div class="cn">困的时候，会一边嚼口香糖一边开车。</div>
+      </div>
+      <div class="example">
+        <div class="jp">彼は 働き<mark>ながら</mark> 大学で 勉強して います。</div>
+        <div class="cn">他一边工作，一边在大学念书。（持续一段时间同时做两件事）</div>
+      </div>
+
+      <div class="tip">
+        ながら 的用法：把动词的 ます 去掉，直接加 ながら。<br>
+        例：聞き<strong>ます</strong> → 聞き<strong>ながら</strong> ／ 働き<strong>ます</strong> → 働き<strong>ながら</strong>
+      </div>
+      <div class="warn">
+        ながら 前面的动词不是主角！主要动作在后面。别搞错顺序哦。
+      </div>
+    </div>
+  </div>
+
+  <!-- GRAMMAR 2 -->
+  <div class="section">
+    <div class="section-title">📌 文法 2</div>
+
+    <div class="grammar-card">
+      <div class="pattern">动词て形＋います</div>
+      <div class="meaning">表示"习惯性、反复做"的事情</div>
+      <div class="desc">
+        这个用法在第14课已经学过"正在做"，这里是另一个意思——<strong>表示一个持续的习惯</strong>。就像华语说"我每天早上都跑步"，不是现在正在跑，而是一种规律。
+      </div>
+
+      <div class="example">
+        <div class="jp">毎朝 ジョギングを <mark>して います</mark>。</div>
+        <div class="cn">我每天早上都跑步。（习惯）</div>
+      </div>
+      <div class="example">
+        <div class="jp">子どもの とき、毎晩 8時に 寝て <mark>いました</mark>。</div>
+        <div class="cn">小时候每天晚上8点睡觉。（过去的习惯用 いました）</div>
+      </div>
+
+      <div class="tip">
+        说的是以前的习惯，就把 います 改成 <strong>いました</strong>，表示那是以前的事了。
+      </div>
+    </div>
+  </div>
+
+  <!-- GRAMMAR 3 -->
+  <div class="section">
+    <div class="section-title">📌 文法 3</div>
+
+    <div class="grammar-card">
+      <div class="pattern">普通形＋し、普通形＋し、～</div>
+      <div class="meaning">又…又…／而且…</div>
+      <div class="desc">
+        要列举好几个优点（或缺点）的时候用这个。就像华语说"这里又便宜，鱼又新鲜，所以我常来"。<br><br>
+        <strong>し</strong>有一种"还有更多原因想说"的感觉，通常会跟 <strong>も</strong> 搭配。
+      </div>
+
+      <div class="example">
+        <div class="jp">鈴木さんは ピアノも 弾ける<mark>し</mark>、歌も 歌える<mark>し</mark>、ダンスも できます。</div>
+        <div class="cn">铃木既会弹钢琴，又会唱歌，还会跳舞。</div>
+      </div>
+      <div class="example">
+        <div class="jp">ここは 値段も 安い<mark>し</mark>、魚も 新しい<mark>し</mark>、よく 食べに 来ます。</div>
+        <div class="cn">这里价钱又便宜，鱼又新鲜，所以我常来吃。（し 也可以当理由用）</div>
+      </div>
+      <div class="example">
+        <div class="jp">田中さんは まじめだ<mark>し</mark>、中国語も 上手だ<mark>し</mark>、それに 経験も あります。</div>
+        <div class="cn">田中很认真，中文也好，而且还有经验。（用 それに 加强"而且"的感觉）</div>
+      </div>
+
+      <div class="tip">
+        要强调"除了这些还有更多"的感觉，可以加 <strong>それに</strong>（而且）。<br>
+        最后一个 し 有时候可以换成 <strong>から</strong>，表示原因更明确。
+      </div>
+
+      <div style="margin-top:16px;">
+        <table>
+          <tr><th>用法</th><th>例子</th><th>华语感觉</th></tr>
+          <tr><td>列举优点/缺点</td><td>速いし、安いし……</td><td>又快又便宜……</td></tr>
+          <tr><td>说明理由（原因在前）</td><td>値段も 安いし、魚も 新しいし、よく来ます</td><td>因为又便宜又新鲜，所以常来</td></tr>
+          <tr><td>理由省略（暗示）</td><td>値段も 安いし、魚も 新しいし……（句子不完整）</td><td>又便宜又新鲜……（意思到了，不说完）</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- GRAMMAR 4 -->
+  <div class="section">
+    <div class="section-title">📌 文法 4</div>
+
+    <div class="grammar-card">
+      <div class="pattern">それで</div>
+      <div class="meaning">所以 / 因此</div>
+      <div class="desc">
+        <strong>それで</strong> 是把前面说的内容当作原因，引出后面的结果。就是华语的"所以"。<br><br>
+        注意：それで 是"承接前句作为理由"，不是"为什么"（那是 どうして）。
+      </div>
+
+      <div class="example">
+        <div class="jp">将来 小説家に なりたいです。<mark>それで</mark> 今は アルバイトを しながら 小説を 書いて います。</div>
+        <div class="cn">我将来想当小说家。所以现在一边打工，一边写小说。</div>
+      </div>
+      <div class="example">
+        <div class="jp">ここは コーヒーも おいしいし、食事も できるし……。<mark>それで</mark> 人気が あるんですね。</div>
+        <div class="cn">这里咖啡好喝，也可以吃饭……所以才这么受欢迎啊。</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GRAMMAR 5 -->
+  <div class="section">
+    <div class="section-title">📌 文法 5</div>
+
+    <div class="grammar-card">
+      <div class="pattern">～ とき＋助词</div>
+      <div class="meaning">……的时候……</div>
+      <div class="desc">
+        <strong>とき</strong> 是名词，所以后面可以接助词，比如 <strong>は、に、や</strong> 等等。
+      </div>
+
+      <div class="example">
+        <div class="jp">勉強する とき<mark>は</mark>、音楽を 聞きません。</div>
+        <div class="cn">学习的时候，不听音乐。（とき 后接 は，表示"在这种情况下"）</div>
+      </div>
+      <div class="example">
+        <div class="jp">疲れた とき<mark>や</mark> 寂しい とき、よく 田舎の 青い 空を 思い出す。</div>
+        <div class="cn">每当累了或寂寞的时候，常常会想起家乡的蓝天。（とき 接 や，表示"或者"）</div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- DIALOGUE -->
+  <div class="section">
+    <div class="section-title">💬 会话</div>
+    <div class="dialogue">
+      <div class="dialogue-title">出张も 多いし、試験も あるし…… ｜ 出差多又有考试……</div>
+
+      <div class="line">
+        <div class="jp-line"><span class="speaker">小川：</span>ミラーさん、ちょっと お願いが あるんですが。</div>
+        <div class="cn-line">米勒先生，我有件事想麻烦你一下。</div>
+      </div>
+      <div class="line">
+        <div class="jp-line"><span class="speaker">米勒：</span>何ですか。</div>
+        <div class="cn-line">什么事？</div>
+      </div>
+      <div class="line">
+        <div class="jp-line"><span class="speaker">小川：</span>実は 8月に オーストラリアへ ホームステイに 行くんです。</div>
+        <div class="cn-line">其实我8月要去澳大利亚寄宿家庭。</div>
+      </div>
+      <div class="line">
+        <div class="jp-line"><span class="speaker">小川：</span>なかなか 上手に ならないんです。先生も いないし、英語で 話す チャンスも ないし……。ミラーさん、会話の 先生に なって いただけませんか。</div>
+        <div class="cn-line">（英语）怎么也学不好。没有老师，也没有说英语的机会……。请问米勒先生可以当我的会话老师吗？</div>
+      </div>
+      <div class="line">
+        <div class="jp-line"><span class="speaker">米勒：</span>うーん、出張も 多いし、もうすぐ 日本語の 試験も あるし……。</div>
+        <div class="cn-line">嗯……出差也多，马上又有日语考试……（所以很难）</div>
+      </div>
+      <div class="line">
+        <div class="jp-line"><span class="speaker">米勒：</span>すみません。</div>
+        <div class="cn-line">不好意思（帮不上忙）。</div>
+      </div>
+
+      <div class="tip" style="margin-top:16px;">
+        对话里米勒没有直接说"不行"，而是列出理由（し、し……）然后句子不说完——这是日语很常见的<strong>婉拒方式</strong>，列理由暗示"所以我没办法"，但不说死，语气比较客气。华语里类似"我最近比较忙……"
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- KEY VOCAB -->
+  <div class="section">
+    <div class="section-title">📖 重点词汇</div>
+    <div class="vocab-grid">
+      <div class="vocab-item">
+        <div class="jp-word">ながら</div>
+        <div class="cn-word">一边……一边……</div>
+      </div>
+      <div class="vocab-item">
+        <div class="jp-word">えらい（偉い）</div>
+        <div class="cn-word">了不起、厉害</div>
+      </div>
+      <div class="vocab-item">
+        <div class="jp-word">たいてい（大抵）</div>
+        <div class="cn-word">大部分、通常</div>
+      </div>
+      <div class="vocab-item">
+        <div class="jp-word">ねっしん（熱心）</div>
+        <div class="cn-word">热心、积极</div>
+      </div>
+      <div class="vocab-item">
+        <div class="jp-word">それに</div>
+        <div class="cn-word">而且、再加上</div>
+      </div>
+      <div class="vocab-item">
+        <div class="jp-word">けいけん（経験）</div>
+        <div class="cn-word">经验</div>
+      </div>
+      <div class="vocab-item">
+        <div class="jp-word">じつは（実は）</div>
+        <div class="cn-word">其实、实际上</div>
+      </div>
+      <div class="vocab-item">
+        <div class="jp-word">それで</div>
+        <div class="cn-word">所以、因此</div>
+      </div>
+      <div class="vocab-item">
+        <div class="jp-word">ねだん（値段）</div>
+        <div class="cn-word">价钱</div>
+      </div>
+      <div class="vocab-item">
+        <div class="jp-word">にんき（人気）</div>
+        <div class="cn-word">受欢迎、人气</div>
+      </div>
+      <div class="vocab-item">
+        <div class="jp-word">しょうらい（将来）</div>
+        <div class="cn-word">将来、未来</div>
+      </div>
+      <div class="vocab-item">
+        <div class="jp-word">むりょう（無料）</div>
+        <div class="cn-word">免费</div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- SUMMARY -->
+  <div class="section">
+    <div class="section-title">✅ 本课总结</div>
+    <table>
+      <tr><th>句型</th><th>意思</th><th>华语类比</th></tr>
+      <tr><td>Vます形＋ながら＋V</td><td>一边做A一边做B</td><td>一边…一边…</td></tr>
+      <tr><td>Vて形＋います</td><td>习惯性反复做</td><td>平时都会/每天都…</td></tr>
+      <tr><td>普通形＋し、し～</td><td>列举多个原因/特点</td><td>又…又…／不仅…而且…</td></tr>
+      <tr><td>それで</td><td>承接前句作为理由</td><td>所以</td></tr>
+      <tr><td>とき＋助词</td><td>在某时候+助词修饰</td><td>……的时候（+は/に/や）</td></tr>
+    </table>
+  </div>
+
+</div>
+</body>
+</html>
