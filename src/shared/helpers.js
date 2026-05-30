@@ -141,3 +141,178 @@ const useClaudeExport = ({ items, mapExport, filename, claudePrompt, claudePromp
 
   return { exportForClaude, applyDeleteList, restoreBackup, hasBackup, setHasBackup, exportToast, deleteModal, setDeleteModal, deleteJson, setDeleteJson, exportModal, setExportModal: openExportModal, exportPromptText, copyPrompt, downloadJson, selectedTags, toggleTag, clearTags, availableTags, filteredCount: filteredItems.length, totalCount: items.length, promptList, selectedPromptIdx, setSelectedPromptIdx };
 };
+
+// ─── PDF EXPORT ───────────────────────────────────────────────────────────────
+// 参考 travel map 项目：html-to-image 渲 PNG → jspdf 分页贴图
+// 用 html-to-image（SVG foreignObject）而非 html2canvas，避免现代 CSS 颜色函数兼容问题
+
+// 动态加载脚本，失败时尝试备用 CDN
+const _loadScript = (urls) => new Promise((resolve, reject) => {
+  const tryNext = (i) => {
+    if (i >= urls.length) { reject(new Error('所有 CDN 都加载失败')); return; }
+    const src = urls[i];
+    if (document.querySelector(`script[data-pdfdep="${src}"]`)) { resolve(); return; }
+    const s = document.createElement('script');
+    s.src = src;
+    s.dataset.pdfdep = src;
+    s.onload = () => resolve();
+    s.onerror = () => { s.remove(); tryNext(i + 1); };
+    document.head.appendChild(s);
+  };
+  tryNext(0);
+});
+
+// 按需加载 PDF 依赖（首次约 1-2 秒，浏览器后续会缓存）
+const ensurePdfLibs = async () => {
+  if (!window.htmlToImage) {
+    await _loadScript([
+      'https://cdn.jsdelivr.net/npm/html-to-image@1.11.13/dist/html-to-image.js',
+      'https://unpkg.com/html-to-image@1.11.13/dist/html-to-image.js',
+    ]);
+  }
+  if (!window.jspdf) {
+    await _loadScript([
+      'https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js',
+      'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js',
+      'https://unpkg.com/jspdf@2.5.2/dist/jspdf.umd.min.js',
+    ]);
+  }
+  if (!window.htmlToImage || !window.jspdf) {
+    throw new Error('PDF 库加载失败：脚本已加载但全局变量缺失。请检查网络或刷新页面。');
+  }
+};
+// 把单个 DOM 元素截图、按 A4 宽缩放，分页贴入已有 jsPDF 实例。
+// 如果 pdf 已有内容（page > 1 或当前页非空），先 addPage 以确保新元素从新页开始。
+const _appendElementToPDF = async (el, pdf, isFirst) => {
+  el.classList.add('pdf-export-mode');
+  try {
+    // 两个 RAF 等 React reconciliation + 浏览器 layout 完成
+    await new Promise(r => requestAnimationFrame(() => r()));
+    await new Promise(r => requestAnimationFrame(() => r()));
+    // 显式告诉 html-to-image 用 scrollWidth/Height — 某些 off-screen 定位下，
+    // 它自动计算的尺寸会拿到 0，导致截到空白图
+    const rect = el.getBoundingClientRect();
+    const w = el.scrollWidth || rect.width || 794;
+    const h = el.scrollHeight || rect.height;
+    if (!w || !h) throw new Error(`容器尺寸异常：${w}×${h}（id=${el.id}）。可能 React 未渲染或 CSS 未加载。`);
+    const dataUrl = await window.htmlToImage.toPng(el, {
+      pixelRatio: 2,
+      cacheBust: true,
+      backgroundColor: '#ffffff',
+      width: w,
+      height: h,
+      style: { transform: 'none', position: 'static', left: 'auto', top: 'auto' },
+    });
+    const img = new Image();
+    await new Promise((res, rej) => { img.onload = res; img.onerror = () => rej(new Error('PNG 解码失败')); img.src = dataUrl; });
+    if (!img.naturalWidth || !img.naturalHeight) {
+      throw new Error(`截图为空：${img.naturalWidth}×${img.naturalHeight}（id=${el.id}）`);
+    }
+    const pdfW = pdf.internal.pageSize.getWidth();
+    const pdfH = pdf.internal.pageSize.getHeight();
+    const ratio = pdfW / img.naturalWidth;
+    const imgH = img.naturalHeight * ratio;
+    if (!isFirst) pdf.addPage();
+    let position = 0;
+    pdf.addImage(dataUrl, 'PNG', 0, position, pdfW, imgH);
+    let remaining = imgH - pdfH;
+    while (remaining > 0) {
+      position -= pdfH;
+      pdf.addPage();
+      pdf.addImage(dataUrl, 'PNG', 0, position, pdfW, imgH);
+      remaining -= pdfH;
+    }
+  } finally {
+    el.classList.remove('pdf-export-mode');
+  }
+};
+
+// 多容器版：每个容器从新页开始（真正的 page break，CSS 的 page-break-before 在
+// html-to-image + jspdf 切片流程下不生效，必须分次截图）
+const exportElementsToPDF = async (elementIds, filename) => {
+  await ensurePdfLibs();
+  const els = elementIds.map(id => {
+    const el = document.getElementById(id);
+    if (!el) throw new Error('找不到导出容器：' + id);
+    return el;
+  });
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF('p', 'pt', 'a4');
+  for (let i = 0; i < els.length; i++) {
+    await _appendElementToPDF(els[i], pdf, i === 0);
+  }
+  pdf.save(filename + '.pdf');
+};
+
+// 单容器版：兼容旧调用，内部走多容器
+const exportElementToPDF = (elementId, filename) => exportElementsToPDF([elementId], filename);
+
+// 诊断用：把目标元素截图后直接在新标签页打开 PNG。让用户肉眼看出是
+// 截图本身就空 / 还是 PDF 渲染过程的问题。
+const diagnosticCapture = async (elementId) => {
+  await ensurePdfLibs();
+  const el = document.getElementById(elementId);
+  if (!el) { alert('找不到容器：' + elementId); return; }
+  el.classList.add('pdf-export-mode');
+  try {
+    await new Promise(r => requestAnimationFrame(() => r()));
+    await new Promise(r => requestAnimationFrame(() => r()));
+    const rect = el.getBoundingClientRect();
+    const w = el.scrollWidth || rect.width || 794;
+    const h = el.scrollHeight || rect.height;
+    const dataUrl = await window.htmlToImage.toPng(el, {
+      pixelRatio: 1, // 诊断不需要高清
+      cacheBust: true,
+      backgroundColor: '#ffffff',
+      width: w,
+      height: h,
+      style: { transform: 'none', position: 'static', left: 'auto', top: 'auto' },
+    });
+    const win = window.open('', '_blank');
+    if (!win) { alert('请允许弹窗以查看诊断结果'); return; }
+    win.document.write(`<!doctype html><html><head><title>PDF 诊断 — ${elementId}</title></head>
+<body style="margin:0;font-family:system-ui;padding:1em">
+  <h3 style="margin:0 0 0.5em">PDF 诊断：${elementId}</h3>
+  <p>容器尺寸：${w} × ${h} px · PNG 解码后会显示在下面 ↓</p>
+  <p>如果下面是空白说明截图就空了（不是 jsPDF 的问题）。截图给开发者看。</p>
+  <hr>
+  <img src="${dataUrl}" style="max-width:100%;border:1px solid #ccc;background:#f5f5f5"
+       onload="document.title='PDF 诊断 ✓ ' + this.naturalWidth + '×' + this.naturalHeight"
+       onerror="document.title='PDF 诊断 ✗ 图片加载失败'">
+</body></html>`);
+    win.document.close();
+  } finally {
+    el.classList.remove('pdf-export-mode');
+  }
+};
+
+// 把远程 URL 转 base64 data URL。Firebase Storage 跨域图片走 <img crossOrigin>
+// 在桶未配 CORS 时会污染 canvas；改成先 fetch + FileReader 转 data URL，避开
+// canvas tainting（fetch 仍需要 CORS，但失败时返回 null，调用方可优雅降级）。
+const fetchImageAsDataUrl = async (url) => {
+  try {
+    const res = await fetch(url, { mode: 'cors', credentials: 'omit' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const blob = await res.blob();
+    return await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => reject(reader.error || new Error('FileReader error'));
+      reader.readAsDataURL(blob);
+    });
+  } catch (e) {
+    console.warn('[PDF] 图片获取失败，将跳过：', url, e.message);
+    return null;
+  }
+};
+
+// 批量预加载图片为 data URL，返回 { url: dataUrl | null }
+const prefetchImagesAsDataUrls = async (urls) => {
+  const entries = await Promise.all(urls.map(async u => [u, await fetchImageAsDataUrl(u)]));
+  return Object.fromEntries(entries);
+};
+
+const pdfDateStr = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+};

@@ -1,5 +1,10 @@
 const { useState, useEffect, useCallback, useMemo, useRef } = React;
 
+// 单 \n 渲染为 <br>（不需要两个空格或空行），更符合手写笔记/闪卡习惯
+if (window.marked && window.marked.use) {
+  try { window.marked.use({ breaks: true }); } catch (e) { /* 老版本 marked 没 use，忽略 */ }
+}
+
 // ─── UTILITIES ────────────────────────────────────────────────────────────────
 const genId = () => Date.now().toString(36) + Math.random().toString(36).substr(2);
 

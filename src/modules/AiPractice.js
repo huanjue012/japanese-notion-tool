@@ -104,6 +104,8 @@ const QuizTab = ({ notes, allTags, onNoKey, initialTags, consumeInitialTags }) =
   const [selectedNotes, setSelectedNotes] = React.useState([]);
   const [customScope, setCustomScope] = React.useState('');
   const [scopeSearch, setScopeSearch] = React.useState('');
+  const [expandTags, setExpandTags] = React.useState(false);
+  const [expandNotes, setExpandNotes] = React.useState(false);
   const [quizType, setQuizType] = React.useState('choice');
   const [focusMode, setFocusMode] = React.useState('mixed'); // 'mixed' | 'grammar'
   const [questions, setQuestions] = React.useState([]);
@@ -225,12 +227,15 @@ ${context}
           </div>
 
           {scopeMode !== 'custom' && (
-            <div className="relative mb-3">
+            <div className="relative mb-2">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none">🔍</span>
               <input
                 value={scopeSearch}
                 onChange={e => setScopeSearch(e.target.value)}
-                placeholder={scopeMode === 'tags' ? '搜索标签…' : '搜索笔记标题/内容…'}
-                className="w-full border border-gray-200 rounded-lg pl-3 pr-8 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                placeholder={scopeMode === 'tags'
+                  ? `搜索标签（共 ${allTags.length} 个）…`
+                  : `搜索笔记标题/内容（共 ${notes.length} 条）…`}
+                className="w-full border border-gray-200 rounded-lg pl-8 pr-8 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
               />
               {scopeSearch && (
                 <button
@@ -248,21 +253,51 @@ ${context}
               q ? allTags.filter(t => t.toLowerCase().includes(q)) : allTags
             );
             selectedTags.forEach(t => matchSet.add(t));
-            const visible = allTags.filter(t => matchSet.has(t));
+            const matched = allTags.filter(t => matchSet.has(t));
+            const COLLAPSE_THRESHOLD = 30;
+            const COLLAPSED_LIMIT = 20;
+            const shouldCollapse = !q && !expandTags && allTags.length > COLLAPSE_THRESHOLD;
+            const unselectedMatched = matched.filter(t => !selectedTags.includes(t));
+            const selectedVisible = matched.filter(t => selectedTags.includes(t));
+            const visible = shouldCollapse
+              ? [...selectedVisible, ...unselectedMatched.slice(0, COLLAPSED_LIMIT)]
+              : matched;
+            const hiddenCount = shouldCollapse ? unselectedMatched.length - COLLAPSED_LIMIT : 0;
             return (
               <div className="mb-4">
-                <p className="text-xs text-gray-400 mb-2">选择标签（不选则出 N5 综合题）</p>
-                {visible.length === 0 ? (
+                <div className="flex items-center justify-between mb-2 gap-2 flex-wrap">
+                  <p className="text-xs text-gray-400">选择标签（不选则出 N5 综合题）</p>
+                  <p className="text-xs text-gray-400">
+                    {q
+                      ? `显示 ${matched.length} / ${allTags.length} · 已选 ${selectedTags.length}`
+                      : `已选 ${selectedTags.length} / ${allTags.length}`}
+                  </p>
+                </div>
+                {allTags.length === 0 ? (
+                  <p className="text-sm text-gray-400 italic">暂无标签</p>
+                ) : matched.length === 0 ? (
                   <p className="text-sm text-gray-400 italic">没有匹配的标签</p>
                 ) : (
-                  <div className="flex flex-wrap gap-2">
-                    {visible.map(tag => (
-                      <Badge key={tag} onClick={() => toggleTag(tag)}
-                        color={selectedTags.includes(tag) ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600'}>
-                        {tag}
-                      </Badge>
-                    ))}
-                  </div>
+                  <>
+                    <div className="flex flex-wrap gap-2">
+                      {visible.map(tag => (
+                        <Badge key={tag} onClick={() => toggleTag(tag)}
+                          color={selectedTags.includes(tag) ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600'}>
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
+                    {hiddenCount > 0 && (
+                      <button onClick={() => setExpandTags(true)} className="mt-2 text-xs text-indigo-500 hover:text-indigo-700">
+                        展开全部 ({hiddenCount} 个未显示) ▼
+                      </button>
+                    )}
+                    {!q && expandTags && allTags.length > COLLAPSE_THRESHOLD && (
+                      <button onClick={() => setExpandTags(false)} className="mt-2 text-xs text-indigo-500 hover:text-indigo-700">
+                        收起 ▲
+                      </button>
+                    )}
+                  </>
                 )}
               </div>
             );
@@ -274,27 +309,55 @@ ${context}
               (q ? notes.filter(n => n.title.toLowerCase().includes(q) || n.content.toLowerCase().includes(q)) : notes).map(n => n.id)
             );
             selectedNotes.forEach(id => matchIds.add(id));
-            const visible = notes.filter(n => matchIds.has(n.id));
+            const matched = notes.filter(n => matchIds.has(n.id));
+            const COLLAPSE_THRESHOLD = 30;
+            const COLLAPSED_LIMIT = 20;
+            const shouldCollapse = !q && !expandNotes && notes.length > COLLAPSE_THRESHOLD;
+            const selectedVisible = matched.filter(n => selectedNotes.includes(n.id));
+            const unselectedMatched = matched.filter(n => !selectedNotes.includes(n.id));
+            const visible = shouldCollapse
+              ? [...selectedVisible, ...unselectedMatched.slice(0, COLLAPSED_LIMIT)]
+              : matched;
+            const hiddenCount = shouldCollapse ? unselectedMatched.length - COLLAPSED_LIMIT : 0;
             return (
               <div className="mb-4">
-                <p className="text-xs text-gray-400 mb-2">选择要考核的笔记（不选则出 N5 综合题）</p>
+                <div className="flex items-center justify-between mb-2 gap-2 flex-wrap">
+                  <p className="text-xs text-gray-400">选择要考核的笔记（不选则出 N5 综合题）</p>
+                  <p className="text-xs text-gray-400">
+                    {q
+                      ? `显示 ${matched.length} / ${notes.length} · 已选 ${selectedNotes.length}`
+                      : `已选 ${selectedNotes.length} / ${notes.length}`}
+                  </p>
+                </div>
                 {notes.length === 0 ? (
                   <p className="text-sm text-gray-400 italic">暂无笔记</p>
-                ) : visible.length === 0 ? (
+                ) : matched.length === 0 ? (
                   <p className="text-sm text-gray-400 italic">没有匹配的笔记</p>
                 ) : (
-                  <div className="max-h-48 overflow-y-auto border border-gray-200 rounded-xl divide-y">
-                    {visible.map(n => (
-                      <label key={n.id} className="flex items-start gap-3 px-3 py-2 cursor-pointer hover:bg-gray-50">
-                        <input type="checkbox" checked={selectedNotes.includes(n.id)}
-                          onChange={() => toggleNote(n.id)} className="mt-0.5 shrink-0" />
-                        <div className="min-w-0">
-                          <p className="text-sm font-medium text-gray-700 break-words">{n.title}</p>
-                          <p className="text-xs text-gray-400 line-clamp-1">{n.content.slice(0, 60)}…</p>
-                        </div>
-                      </label>
-                    ))}
-                  </div>
+                  <>
+                    <div className="max-h-48 overflow-y-auto border border-gray-200 rounded-xl divide-y">
+                      {visible.map(n => (
+                        <label key={n.id} className="flex items-start gap-3 px-3 py-2 cursor-pointer hover:bg-gray-50">
+                          <input type="checkbox" checked={selectedNotes.includes(n.id)}
+                            onChange={() => toggleNote(n.id)} className="mt-0.5 shrink-0" />
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-gray-700 break-words">{n.title}</p>
+                            <p className="text-xs text-gray-400 line-clamp-1">{n.content.slice(0, 60)}…</p>
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                    {hiddenCount > 0 && (
+                      <button onClick={() => setExpandNotes(true)} className="mt-2 text-xs text-indigo-500 hover:text-indigo-700">
+                        展开全部 ({hiddenCount} 条未显示) ▼
+                      </button>
+                    )}
+                    {!q && expandNotes && notes.length > COLLAPSE_THRESHOLD && (
+                      <button onClick={() => setExpandNotes(false)} className="mt-2 text-xs text-indigo-500 hover:text-indigo-700">
+                        收起 ▲
+                      </button>
+                    )}
+                  </>
                 )}
               </div>
             );
