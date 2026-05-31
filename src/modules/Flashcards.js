@@ -428,10 +428,17 @@ const Flashcards = ({ cards, setCards, allTags, onNav, notes = [], navCtx, clear
                     }
                   </Card>
                   {i === Math.floor(cardsVisible * 0.7) - 1 && (
-                    <div ref={cardsSentinel} style={{gridColumn:'1/-1',height:0}} />
+                    <div ref={cardsSentinel} style={{gridColumn:'1/-1',height:'1px'}} />
                   )}
                 </React.Fragment>
               ))}
+            </div>
+          )}
+          {displayList.length > cardsVisible && (
+            <div className="text-center mt-4">
+              <Btn variant="secondary" onClick={() => setCardsVisible(v => v + 100)}>
+                加载更多（还有 {displayList.length - cardsVisible} 张）
+              </Btn>
             </div>
           )}
         </>;
