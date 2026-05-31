@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第29课 日语笔记</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@300;400;500&display=swap');
+
+  :root {
+    --ink: #1a1a2e;
+    --paper: #faf7f2;
+    --accent: #c0392b;
+    --gold: #d4a017;
+    --muted: #7a6a5a;
+    --light-line: #e8e0d5;
+    --highlight: #fff3cd;
+    --tip-bg: #f0f8f0;
+    --tip-border: #4caf50;
+    --warn-bg: #fff0f0;
+    --warn-border: #e74c3c;
+    --blue-bg: #f0f4ff;
+    --blue-border: #3b5bdb;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Noto Sans SC', sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    line-height: 1.8;
+    padding: 40px 20px 80px;
+  }
+
+  .page {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  /* Header */
+  .header {
+    text-align: center;
+    padding: 40px 0 30px;
+    border-bottom: 3px solid var(--accent);
+    margin-bottom: 40px;
+    position: relative;
+  }
+  .header::before {
+    content: '第29課';
+    font-family: 'Noto Serif SC', serif;
+    font-size: 13px;
+    color: var(--muted);
+    letter-spacing: 6px;
+    display: block;
+    margin-bottom: 8px;
+  }
+  .header h1 {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 6px;
+  }
+  .header p {
+    color: var(--muted);
+    font-size: 14px;
+    font-weight: 300;
+  }
+
+  /* Section */
+  .section {
+    margin-bottom: 36px;
+  }
+  .section-title {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 18px;
+    font-weight: 700;
+    padding: 8px 16px;
+    background: var(--ink);
+    color: white;
+    display: inline-block;
+    margin-bottom: 20px;
+    border-radius: 2px;
+    letter-spacing: 1px;
+  }
+
+  /* Grammar cards */
+  .grammar-card {
+    border-left: 4px solid var(--accent);
+    background: white;
+    padding: 20px 24px;
+    margin-bottom: 24px;
+    box-shadow: 2px 2px 12px rgba(0,0,0,0.06);
+    border-radius: 0 8px 8px 0;
+  }
+  .grammar-card .pattern {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 8px;
+    padding: 6px 12px;
+    background: #fdf0ee;
+    display: inline-block;
+    border-radius: 4px;
+  }
+  .grammar-card .meaning {
+    font-size: 15px;
+    color: var(--muted);
+    margin-bottom: 12px;
+    font-weight: 500;
+  }
+  .grammar-card .desc {
+    font-size: 14px;
+    line-height: 1.9;
+    margin-bottom: 14px;
+  }
+
+  /* Example box */
+  .example {
+    background: var(--blue-bg);
+    border-left: 3px solid var(--blue-border);
+    padding: 10px 16px;
+    margin: 8px 0;
+    border-radius: 0 6px 6px 0;
+    font-size: 14px;
+  }
+  .example .jp {
+    font-size: 15px;
+    font-weight: 500;
+    margin-bottom: 2px;
+    color: #1a1a3e;
+  }
+  .example .cn {
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  /* Tip box */
+  .tip {
+    background: var(--tip-bg);
+    border-left: 3px solid var(--tip-border);
+    padding: 10px 16px;
+    margin-top: 12px;
+    border-radius: 0 6px 6px 0;
+    font-size: 13.5px;
+    line-height: 1.8;
+  }
+  .tip::before { content: '💡 '; font-size: 14px; }
+
+  .warn {
+    background: var(--warn-bg);
+    border-left: 3px solid var(--warn-border);
+    padding: 10px 16px;
+    margin-top: 12px;
+    border-radius: 0 6px 6px 0;
+    font-size: 13.5px;
+    line-height: 1.8;
+  }
+  .warn::before { content: '⚠️ '; font-size: 14px; }
+
+  /* Highlight inline */
+  mark {
+    background: var(--highlight);
+    padding: 1px 4px;
+    border-radius: 3px;
+  }
+  strong { color: var(--accent); }
+
+  /* Vocab table */
+  .vocab-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 10px;
+  }
+  @media (max-width: 560px) { .vocab-grid { grid-template-columns: 1fr; } }
+  .vocab-item {
+    background: white;
+    border: 1px solid var(--light-line);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 13.5px;
+  }
+  .vocab-item .jp-word {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 2px;
+  }
+  .vocab-item .cn-word {
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  /* Dialogue */
+  .dialogue {
+    background: white;
+    border-radius: 10px;
+    padding: 20px 24px;
+    box-shadow: 2px 2px 12px rgba(0,0,0,0.05);
+    margin-top: 10px;
+  }
+  .dialogue-title {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--muted);
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px dashed var(--light-line);
+  }
+  .line { margin-bottom: 12px; font-size: 14px; }
+  .speaker { font-weight: 600; color: var(--accent); margin-right: 6px; }
+  .jp-line { margin-bottom: 2px; }
+  .cn-line { color: var(--muted); font-size: 13px; padding-left: 4px; }
+
+  /* Summary table */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13.5px;
+    margin-top: 12px;
+  }
+  th {
+    background: var(--ink);
+    color: white;
+    padding: 8px 14px;
+    text-align: left;
+    font-weight: 500;
+  }
+  td {
+    padding: 8px 14px;
+    border-bottom: 1px solid var(--light-line);
+  }
+  tr:nth-child(even) td { background: #f7f4ef; }
+
+  .divider {
+    border: none;
+    border-top: 1px dashed var(--light-line);
+    margin: 28px 0;
+  }
+
+  .tag {
+    display: inline-block;
+    background: var(--gold);
+    color: white;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    margin-left: 8px;
+    font-weight: 500;
+    vertical-align: middle;
+  }
+
+  /* Verb pair table */
+  .verb-pair-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .verb-pair {
+    background: #f7f4ef;
+    border: 1px solid var(--light-line);
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 13.5px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .verb-pair .arrow { color: var(--muted); }
+  .verb-pair .state { font-weight: 600; color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header">
+    <h1>第 29 课</h1>
+    <p>文法笔记 · 以华语口语整理</p>
+  </div>
+
+  <!-- GRAMMAR 1 -->
+  <div class="section">
+    <div class="section-title">📌 文法 1</div>
+
+    <div class="grammar-card">
+      <div class="pattern">动词て形＋います（结果状态持续）</div>
+      <div class="meaning">表示某动作发生后，其结果状态一直持续到现在</div>
+      <div class="desc">
+        跟第14课的「て います」（正在做）不一样——这里是<strong>动作已经发生了，产生的状态还在持续</strong>。就像华语说"门开着"、"灯亮着"，不是"正在开门"，而是"门现在处于开着的状态"。
+      </div>
+
+      <div class="example">
+        <div class="jp">窓が 割れ<mark>て います</mark>。</div>
+        <div class="cn">窗户碎了（现在还是碎的状态）。</div>
+      </div>
+      <div class="example">
+        <div class="jp">電気が つい<mark>て います</mark>。</div>
+        <div class="cn">灯开着。</div>
+      </div>
+      <div class="example">
+        <div class="jp">会議室の かぎが 掛かっ<mark>て います</mark>ね。</div>
+        <div class="cn">会议室上锁着呢。</div>
+      </div>
+      <div class="example">
+        <div class="jp">この いすは 壊れ<mark>て います</mark>。</div>
+        <div class="cn">这把椅子坏了。（把椅子作为话题提到时，用<strong>は</strong>）</div>
+      </div>
+
+      <div class="tip">
+        この用法で使える动词是有「开/关/亮/灭」这种状态变化的词：<br>
+        あきます（开）、しまります（关）、つきます（亮/开着）、きえます（灭/关着）、こわれます（坏了）、われます（碎了）等。
+      </div>
+
+      <div style="margin-top:16px;">
+        <div class="verb-pair-grid">
+          <div class="verb-pair"><span>ドアが あきます</span><span class="arrow">→</span><span class="state">開いて います</span></div>
+          <div class="verb-pair"><span>ドアが しまります</span><span class="arrow">→</span><span class="state">閉まって います</span></div>
+          <div class="verb-pair"><span>電気が つきます</span><span class="arrow">→</span><span class="state">ついて います</span></div>
+          <div class="verb-pair"><span>電気が きえます</span><span class="arrow">→</span><span class="state">消えて います</span></div>
+          <div class="verb-pair"><span>車が とまります</span><span class="arrow">→</span><span class="state">止まって います</span></div>
+          <div class="verb-pair"><span>ガラスが われます</span><span class="arrow">→</span><span class="state">割れて います</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GRAMMAR 2 -->
+  <div class="section">
+    <div class="section-title">📌 文法 2</div>
+
+    <div class="grammar-card">
+      <div class="pattern">动词て形＋しまいました ／ しまいます</div>
+      <div class="meaning">（1）动作已经完成了 ／ 将来会完成；（2）表示后悔、遗憾</div>
+      <div class="desc">
+        <strong>しまいました</strong>：动作已经完了（强调"做完了""已经做了"）。<br>
+        <strong>しまいます</strong>：将来某时刻动作会做完。<br><br>
+        另一个意思——当"做完了"是你不想发生的事，就带有<strong>后悔、无奈的语气</strong>，华语类似"居然……了""不小心……了"。
+      </div>
+
+      <div class="example">
+        <div class="jp">漢字の 宿題は もう やって <mark>しまいました</mark>。</div>
+        <div class="cn">汉字作业已经做完了。（完成，正面）</div>
+      </div>
+      <div class="example">
+        <div class="jp">昼ごはんまでに レポートを 書いて <mark>しまいます</mark>。</div>
+        <div class="cn">我要在午饭前把报告写完。（将来完成）</div>
+      </div>
+      <div class="example">
+        <div class="jp">シュミットさんが 持って 来た ワインは みんなで 飲んで <mark>しまいました</mark>。</div>
+        <div class="cn">大家把施密特带来的葡萄酒喝光了。（带有"喝得一干二净"的语感）</div>
+      </div>
+      <div class="example">
+        <div class="jp">電車に 傘を 忘れて <mark>しまいました</mark>。</div>
+        <div class="cn">我把雨伞忘在电车上了。（遗憾，不想发生的事）</div>
+      </div>
+      <div class="example">
+        <div class="jp">パスポートを なくして <mark>しまいました</mark>。</div>
+        <div class="cn">护照弄丢了。（不小心/遗憾）</div>
+      </div>
+
+      <div class="tip">
+        判断是"完成"还是"后悔"，看上下文就知道了——明显是不想发生的事（丢东西、忘东西、搞坏了），就是后悔；主动做完的事（作业、报告），就是完成。
+      </div>
+      <div class="warn">
+        口语里常缩短说：<br>
+        ～て しまいました → ～ちゃいました<br>
+        ～て しまいます → ～ちゃいます<br>
+        例：傘を 忘れ<strong>ちゃいました</strong>。（口语化）
+      </div>
+    </div>
+  </div>
+
+  <!-- GRAMMAR 3 -->
+  <div class="section">
+    <div class="section-title">📌 文法 3</div>
+
+    <div class="grammar-card">
+      <div class="pattern">名词（场所）＋に＋行きます／来ます／帰ります</div>
+      <div class="meaning">表示到达目的地，「に」可代替「へ」</div>
+      <div class="desc">
+        行きます、来ます、帰ります 这类表示移动的动词，目的地可以用<strong>「へ」</strong>，也可以用<strong>「に」</strong>，意思相同。
+      </div>
+
+      <div class="example">
+        <div class="jp">すぐ 交番<mark>に</mark> 行かないと。</div>
+        <div class="cn">得赶快去派出所。（に ＝ へ，表示前往的目的地）</div>
+      </div>
+      <div class="example">
+        <div class="jp">じゃ、新宿駅の 事務所<mark>に</mark> 行って ください。</div>
+        <div class="cn">那请去新宿站的事务所。</div>
+      </div>
+
+      <div class="tip">
+        「へ」强调方向感，「に」强调到达点。日常口语两者差异不大，可以互换。
+      </div>
+    </div>
+  </div>
+
+  <!-- GRAMMAR 4 -->
+  <div class="section">
+    <div class="section-title">📌 文法 4</div>
+
+    <div class="grammar-card">
+      <div class="pattern">それ ／ その ／ そう</div>
+      <div class="meaning">指代对方刚说过的话或文章中出现的内容</div>
+      <div class="desc">
+        初级1第2课里，それ／その 是指"眼前看得到的东西"。这课的用法不一样——是<strong>指代对方刚讲完的话</strong>，华语类似"那样啊""那件事""就这样"。
+      </div>
+
+      <div style="margin-top:8px; margin-bottom:8px; font-size:13.5px; color: var(--muted); font-weight:600;">在对话中：</div>
+
+      <div class="example">
+        <div class="jp">どこかで 財布を 落として しまったんです。<br>……<mark>それは</mark> 大変ですね。すぐ 交番に 行かないと。</div>
+        <div class="cn">我把钱包不知道掉在哪里了。……那可糟了，得赶快去派出所。<br>（それは＝你说的那件事）</div>
+      </div>
+      <div class="example">
+        <div class="jp">来月から 大阪の 本社に 転勤なんです。<br>……<mark>それは</mark> おめでとう ございます。</div>
+        <div class="cn">我从下个月开始要调到大阪总公司了。……那恭喜你了！</div>
+      </div>
+      <div class="example">
+        <div class="jp">あのう、途中で やめたい 場合は？<br>……<mark>その</mark> 場合は、近くの 係員に 名前を 言って、帰って ください。</div>
+        <div class="cn">那个，如果想中途退出的话？……那种情况下，请告诉附近的工作人员你的名字再离开。<br>（その場合＝你说的那个情况）</div>
+      </div>
+      <div class="example">
+        <div class="jp">うちへ 帰って、休んだ ほうが いいですよ。<br>……ええ、<mark>そう</mark> します。</div>
+        <div class="cn">你还是回家休息比较好。……好的，我就这么做。<br>（そう＝你说的那样做）</div>
+      </div>
+
+      <div style="margin-top:14px; margin-bottom:8px; font-size:13.5px; color: var(--muted); font-weight:600;">在文章里：</div>
+
+      <div class="example">
+        <div class="jp">一人で コンサートや 展覧会に 出かけると、いいでしょう。<mark>その</mark> とき 会った 人が 将来の 恋人に なるかも しれません。</div>
+        <div class="cn">一个人去音乐会或展览会也不错。那时遇到的人，说不定会成为将来的恋人。<br>（その とき＝前文说的那个时候）</div>
+      </div>
+
+      <div class="tip">
+        简单记法：<br>
+        <strong>それは</strong>……（接话，表示"说到那件事……"）<br>
+        <strong>その＋名词</strong>……（修饰前文提到的事物）<br>
+        <strong>そう します</strong>……（"就按你说的做"）
+      </div>
+    </div>
+  </div>
+
+  <!-- GRAMMAR 5 -->
+  <div class="section">
+    <div class="section-title">📌 文法 5</div>
+
+    <div class="grammar-card">
+      <div class="pattern">ありました</div>
+      <div class="meaning">找到了！（发现某物存在的语感）</div>
+      <div class="desc">
+        这里的「ありました」不是"以前有"，而是<strong>说话人此刻发现"有"这个事实</strong>，华语就是"找到了！有呢！"的惊喜语气。
+      </div>
+
+      <div class="example">
+        <div class="jp">[かばんが] <mark>ありましたよ</mark>。</div>
+        <div class="cn">（您的）包找到了！</div>
+      </div>
+
+      <div class="tip">
+        类似的用法还有 見つかりました（找到了），日语里用过去时表示"刚刚发现"这件事。
+      </div>
+    </div>
+  </div>
+
+  <!-- GRAMMAR 6 -->
+  <div class="section">
+    <div class="section-title">📌 文法 6</div>
+
+    <div class="grammar-card">
+      <div class="pattern">どこかで ／ どこかに</div>
+      <div class="meaning">在某处（助词 で／に 不能省略）</div>
+      <div class="desc">
+        「どこか」「なにか」后面，助词「へ」「を」可以省略，但<strong>「で」「に」不能省略</strong>。
+      </div>
+
+      <div class="example">
+        <div class="jp">どこか<mark>で</mark> 財布を なくして しまいました。</div>
+        <div class="cn">在某处把钱包弄丢了。（でを省略 ✗）</div>
+      </div>
+      <div class="example">
+        <div class="jp">どこか<mark>に</mark> 電話が ありますか。</div>
+        <div class="cn">哪里有电话吗？（にを省略 ✗）</div>
+      </div>
+
+      <div class="tip">
+        对比可省略的例子：<br>
+        どこか（へ）行きますか。→ 「へ」可省<br>
+        何か（を）食べますか。→ 「を」可省<br>
+        但：どこかで・どこかに → <strong>で・に 不可省</strong>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- DIALOGUE -->
+  <div class="section">
+    <div class="section-title">💬 会话</div>
+    <div class="dialogue">
+      <div class="dialogue-title">忘れ物を して しまったんです ｜ 我遗失东西了</div>
+
+      <div class="line">
+        <div class="jp-line"><span class="speaker">イー：</span>すみません。今の 電車に 忘れ物を して しまったんですが……。</div>
+        <div class="cn-line">不好意思，我把东西忘在刚发的那趟电车上了……</div>
+      </div>
+      <div class="line">
+        <div class="jp-line"><span class="speaker">駅員：</span>何を 忘れたんですか。</div>
+        <div class="cn-line">忘了什么东西呢？</div>
+      </div>
+      <div class="line">
+        <div class="jp-line"><span class="speaker">イー：</span>青い かばんです。このくらいの……。外側に 大きい ポケットが 付いて います。</div>
+        <div class="cn-line">蓝色的包。大约这么大……外侧有一个大口袋。</div>
+      </div>
+      <div class="line">
+        <div class="jp-line"><span class="speaker">駅員：</span>どの 辺に 置きましたか。</div>
+        <div class="cn-line">放在哪个位置附近？</div>
+      </div>
+      <div class="line">
+        <div class="jp-line"><span class="speaker">イー：</span>よく 覚えて いません。でも、網棚の 上に 置きました。</div>
+        <div class="cn-line">记不太清楚了。不过放在行李架上面的。</div>
+      </div>
+      <div class="line">
+        <div class="jp-line"><span class="speaker">駅員：</span>中に 何が 入って いますか。</div>
+        <div class="cn-line">里面装了什么？</div>
+      </div>
+      <div class="line">
+        <div class="jp-line"><span class="speaker">イー：</span>えーと、確か、本と 傘が 入って います。</div>
+        <div class="cn-line">嗯，好像有书和雨伞。</div>
+      </div>
+      <div class="line">
+        <div class="jp-line"><span class="speaker">駅員：</span>じゃ、調べますから、ちょっと 待って いて ください。</div>
+        <div class="cn-line">那我来查一下，请稍等。</div>
+      </div>
+      <div class="line">
+        <div class="jp-line"><span class="speaker">駅員：</span>ありましたよ。</div>
+        <div class="cn-line">找到了！</div>
+      </div>
+      <div class="line">
+        <div class="jp-line"><span class="speaker">イー：</span>ああ、よかった。</div>
+        <div class="cn-line">啊，太好了。</div>
+      </div>
+      <div class="line">
+        <div class="jp-line"><span class="speaker">駅員：</span>今 新宿駅に ありますが、どう しますか。</div>
+        <div class="cn-line">现在在新宿站，您怎么处理？</div>
+      </div>
+      <div class="line">
+        <div class="jp-line"><span class="speaker">イー：</span>すぐ 取りに 行きます。</div>
+        <div class="cn-line">我马上去取。</div>
+      </div>
+      <div class="line">
+        <div class="jp-line"><span class="speaker">駅員：</span>じゃ、新宿駅の 事務所に 行って ください。</div>
+        <div class="cn-line">那请去新宿站的事务所。</div>
+      </div>
+      <div class="line">
+        <div class="jp-line"><span class="speaker">イー：</span>はい。どうも ありがとう ございました。</div>
+        <div class="cn-line">好的，非常感谢。</div>
+      </div>
+
+      <div class="tip" style="margin-top:16px;">
+        描述失物的关键表达：<br>
+        ・<strong>このくらいの</strong>……（这么大的……）<br>
+        ・<strong>～が 付いて います</strong>（带有……）<br>
+        ・<strong>確か、～が 入って います</strong>（里面好像有……）
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- KEY VOCAB -->
+  <div class="section">
+    <div class="section-title">📖 重点词汇</div>
+    <div class="vocab-grid">
+      <div class="vocab-item">
+        <div class="jp-word">しまります（閉まります）</div>
+        <div class="cn-word">（门/窗）关上 → 閉まって います＝关着</div>
+      </div>
+      <div class="vocab-item">
+        <div class="jp-word">かかります（掛かります）</div>
+        <div class="cn-word">上锁 → かぎが 掛かって います＝锁着</div>
+      </div>
+      <div class="vocab-item">
+        <div class="jp-word">われます（割れます）</div>
+        <div class="cn-word">碎了 → ガラスが 割れて います</div>
+      </div>
+      <div class="vocab-item">
+        <div class="jp-word">こわれます（壊れます）</div>
+        <div class="cn-word">坏了 → パソコンが 壊れて います</div>
+      </div>
+      <div class="vocab-item">
+        <div class="jp-word">やぶれます（破れます）</div>
+        <div class="cn-word">破了（纸、布等）</div>
+      </div>
+      <div class="vocab-item">
+        <div class="jp-word">おれます（折れます）</div>
+        <div class="cn-word">折断了（树枝、骨头等）</div>
+      </div>
+      <div class="vocab-item">
+        <div class="jp-word">はずれます（外れます）</div>
+        <div class="cn-word">掉了（纽扣等）</div>
+      </div>
+      <div class="vocab-item">
+        <div class="jp-word">よごれます（汚れます）</div>
+        <div class="cn-word">脏了</div>
+      </div>
+      <div class="vocab-item">
+        <div class="jp-word">わすれもの（忘れ物）</div>
+        <div class="cn-word">遗失物品、落下的东西</div>
+      </div>
+      <div class="vocab-item">
+        <div class="jp-word">あみだな（網棚）</div>
+        <div class="cn-word">（车厢里的）行李架</div>
+      </div>
+      <div class="vocab-item">
+        <div class="jp-word">こうばん（交番）</div>
+        <div class="cn-word">派出所（日本街道上的警察亭）</div>
+      </div>
+      <div class="vocab-item">
+        <div class="jp-word">えきいん（駅員）</div>
+        <div class="cn-word">站务员</div>
+      </div>
+      <div class="vocab-item">
+        <div class="jp-word">たしか（確か）</div>
+        <div class="cn-word">似乎是、大概是（副词，表示不完全确定）</div>
+      </div>
+      <div class="vocab-item">
+        <div class="jp-word">おとします（落とします）</div>
+        <div class="cn-word">掉落、弄丢</div>
+      </div>
+      <div class="vocab-item">
+        <div class="jp-word">このくらい</div>
+        <div class="cn-word">大约这么大/这么多</div>
+      </div>
+      <div class="vocab-item">
+        <div class="jp-word">ポケット（pocket）</div>
+        <div class="cn-word">口袋</div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- SUMMARY -->
+  <div class="section">
+    <div class="section-title">✅ 本课总结</div>
+    <table>
+      <tr><th>句型</th><th>意思</th><th>华语类比</th></tr>
+      <tr><td>Vて形＋います（状态）</td><td>动作结果的持续状态</td><td>门开着 / 灯亮着</td></tr>
+      <tr><td>Vて形＋しまいました</td><td>动作完了 / 遗憾后悔</td><td>做完了 / 不小心…了</td></tr>
+      <tr><td>场所＋に＋移动动词</td><td>往某地去（に ＝ へ）</td><td>去派出所 / 去车站</td></tr>
+      <tr><td>それは／その～／そう します</td><td>指代刚说过的话</td><td>那可真是……／就这样做</td></tr>
+      <tr><td>ありました</td><td>找到了！发现有</td><td>有了！找到了！</td></tr>
+      <tr><td>どこかで／どこかに</td><td>在某处（で・に 不省）</td><td>在某个地方（介词不能丢）</td></tr>
+    </table>
+  </div>
+
+</div>
+</body>
+</html>

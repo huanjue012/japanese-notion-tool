@@ -1,0 +1,948 @@
+{
+  "notes": [
+    {
+      "title": "第29課｜Vて状態・てしまう",
+      "content": "<!DOCTYPE html><html lang=\"zh\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1.0\"><title>第29課｜Vて状態・てしまう</title><style>\n@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@300;400;500&display=swap');\n  :root{--ink:#1a1a2e;--paper:#faf7f2;--accent:#c0392b;--gold:#d4a017;--muted:#7a6a5a;--ll:#e8e0d5;--hl:#fff8e1;--tip-bg:#f0f8f0;--tip-b:#4caf50;--warn-bg:#fff0f0;--warn-b:#e74c3c;--blue-bg:#f0f4ff;--blue-b:#3b5bdb;}\n  *{box-sizing:border-box;margin:0;padding:0}\n  body{font-family:'Noto Sans SC',sans-serif;background:var(--paper);color:var(--ink);line-height:1.8;padding:40px 20px 80px}\n  .w{max-width:740px;margin:0 auto}\n  .hd{border-left:5px solid var(--accent);padding-left:16px;margin-bottom:32px}\n  .hd h1{font-family:'Noto Serif SC',serif;font-size:1.65rem;font-weight:700;line-height:1.4}\n  .tags{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px}\n  .tag{font-size:.72rem;background:var(--ll);color:var(--muted);padding:2px 8px;border-radius:20px}\n  h2{font-family:'Noto Serif SC',serif;font-size:1.05rem;font-weight:700;color:var(--accent);margin:28px 0 10px;padding-bottom:4px;border-bottom:1.5px solid var(--ll);display:flex;align-items:center;gap:8px}\n  h2::before{content:'';display:inline-block;width:7px;height:7px;background:var(--accent);border-radius:50%;flex-shrink:0}\n  p{margin-bottom:9px;font-size:.93rem}\n  .tw{overflow-x:auto;margin:10px 0;border-radius:8px;border:1px solid var(--ll)}\n  table{width:100%;border-collapse:collapse;font-size:.88rem}\n  thead{background:var(--ink);color:#fff}\n  thead th{padding:8px 12px;font-weight:500;text-align:left}\n  tbody tr:nth-child(even){background:#f3ede6}\n  tbody tr:nth-child(odd){background:#fff}\n  tbody td{padding:7px 12px;border-bottom:1px solid var(--ll);vertical-align:top}\n  tbody tr:last-child td{border-bottom:none}\n  .jp{font-size:1.01em;letter-spacing:.03em}\n  .warn{background:var(--warn-bg);border-left:4px solid var(--warn-b);padding:9px 13px;border-radius:0 6px 6px 0;margin:10px 0;font-size:.88rem}\n  .tip{background:var(--tip-bg);border-left:4px solid var(--tip-b);padding:9px 13px;border-radius:0 6px 6px 0;margin:10px 0;font-size:.88rem}\n  .nb{background:var(--blue-bg);border-left:4px solid var(--blue-b);padding:9px 13px;border-radius:0 6px 6px 0;margin:10px 0;font-size:.88rem}\n  .hl{background:var(--hl);border-left:4px solid var(--gold);padding:9px 13px;border-radius:0 6px 6px 0;margin:10px 0;font-size:.88rem}\n  .lbl{font-weight:700;margin-right:5px}\n  strong{color:var(--accent)}\n  hr{border:none;border-top:1px dashed var(--ll);margin:22px 0}\n</style></head><body><div class=\"w\"><div class=\"hd\"><h1>第29課｜Vて状態・てしまう<br><small style=\"font-size:.6em;font-weight:400;color:var(--muted)\">忘れ物をしてしまったんです</small></h1><div class=\"tags\"><span class=\"tag\">第29課</span><span class=\"tag\">文法</span><span class=\"tag\">初级2</span><span class=\"tag\">N4</span></div></div><h2>1. Vて＋います（结果状态持续）</h2><p>动作发生后，<strong>结果状态一直维持到现在</strong>。不是\"正在做\"，而是\"处于…的状态\"。</p><div class=\"tw\"><table><thead><tr><th>原形</th><th>状态表达</th><th>意思</th></tr></thead><tbody><tr><td class=\"jp\">ドアが あきます</td><td>開いて います</td><td>门开着</td></tr><tr><td class=\"jp\">ドアが しまります</td><td>閉まって います</td><td>门关着</td></tr><tr><td class=\"jp\">電気が つきます</td><td>ついて います</td><td>灯亮着</td></tr><tr><td class=\"jp\">電気が きえます</td><td>消えて います</td><td>灯灭着</td></tr><tr><td class=\"jp\">ガラスが われます</td><td>割れて います</td><td>玻璃碎了</td></tr><tr><td class=\"jp\">いすが こわれます</td><td>壊れて います</td><td>椅子坏了</td></tr></tbody></table></div><div class=\"tip\"><span class=\"lbl\">💡</span>主体用<strong>が</strong>；当话题提示时换<strong>は</strong>：この いすは 壊れて います。</div><h2>2. Vて＋しまいました ／ しまいます</h2><p>① <strong>动作完成</strong>；② <strong>后悔/遗憾</strong>（不想发生的事）</p><div class=\"tw\"><table><thead><tr><th>例句</th><th>中文</th><th>语感</th></tr></thead><tbody><tr><td class=\"jp\">漢字の宿題は やって しまいました。</td><td>作业做完了。</td><td>完成 ✅</td></tr><tr><td class=\"jp\">午前中に レポートを 書いて しまいます。</td><td>上午前把报告写完。</td><td>将来完成</td></tr><tr><td class=\"jp\">電車に 傘を 忘れて しまいました。</td><td>把伞忘在电车上了。</td><td>遗憾 😔</td></tr><tr><td class=\"jp\">パスポートを なくして しまいました。</td><td>护照弄丢了。</td><td>遗憾 😔</td></tr></tbody></table></div><div class=\"tip\"><span class=\"lbl\">口语缩写</span>～てしまいました → <strong>～ちゃいました</strong></div><h2>3. 场所＋に＋移动动词（に ＝ へ）</h2><div class=\"nb\"><span class=\"lbl\">例</span><span class=\"jp\">すぐ 交番<strong>に</strong> 行かないと。</span>→ 得赶快去派出所。</div><h2>4. それ ／ その ／ そう（指代前文内容）</h2><div class=\"tw\"><table><thead><tr><th>用法</th><th>例句</th><th>中文</th></tr></thead><tbody><tr><td class=\"jp\">それは（接话）</td><td>財布を落とした。……それは 大変ですね。</td><td>……那可糟了。</td></tr><tr><td class=\"jp\">その＋名词</td><td>途中でやめたい場合は？……その場合は…</td><td>……那种情况下……</td></tr><tr><td class=\"jp\">そう します</td><td>休んだほうがいいですよ。……そうします。</td><td>……好的，就这样做。</td></tr></tbody></table></div><h2>5. ありました（发现！找到了！）</h2><div class=\"nb\"><span class=\"lbl\">例</span><span class=\"jp\">[かばんが] <strong>ありましたよ</strong>。</span>→ 包找到了！</div><h2>6. どこかで ／ どこかに（で・に 不可省）</h2><div class=\"tw\"><table><thead><tr><th>助词</th><th>可省？</th><th>例</th></tr></thead><tbody><tr><td class=\"jp\">どこか<strong>へ</strong>，何か<strong>を</strong></td><td>✅ 可省</td><td>どこか（へ）行きますか。</td></tr><tr><td class=\"jp\">どこか<strong>で</strong>，どこか<strong>に</strong></td><td>❌ 不可省</td><td>どこかで 財布を なくしました。</td></tr></tbody></table></div><hr><h2>重点词汇</h2><div class=\"tw\"><table><thead><tr><th>日语</th><th>读音</th><th>词义</th></tr></thead><tbody><tr><td class=\"jp\">忘れ物</td><td>わすれもの</td><td>遗失物品</td></tr><tr><td class=\"jp\">網棚</td><td>あみだな</td><td>（车厢）行李架</td></tr><tr><td class=\"jp\">交番</td><td>こうばん</td><td>派出所（街头警察亭）</td></tr><tr><td class=\"jp\">駅員</td><td>えきいん</td><td>站务员</td></tr><tr><td class=\"jp\">確か</td><td>たしか</td><td>似乎、好像（副词）</td></tr><tr><td class=\"jp\">落とします</td><td>おとします</td><td>弄丢、落下</td></tr><tr><td class=\"jp\">片付けます</td><td>かたづけます</td><td>收拾、整理</td></tr></tbody></table></div></div></body></html>",
+      "format": "html",
+      "tags": [
+        "第29課",
+        "文法",
+        "初级2",
+        "N4"
+      ]
+    },
+    {
+      "title": "第30課｜てある・ておく",
+      "content": "<!DOCTYPE html><html lang=\"zh\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1.0\"><title>第30課｜てある・ておく</title><style>\n@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@300;400;500&display=swap');\n  :root{--ink:#1a1a2e;--paper:#faf7f2;--accent:#c0392b;--gold:#d4a017;--muted:#7a6a5a;--ll:#e8e0d5;--hl:#fff8e1;--tip-bg:#f0f8f0;--tip-b:#4caf50;--warn-bg:#fff0f0;--warn-b:#e74c3c;--blue-bg:#f0f4ff;--blue-b:#3b5bdb;}\n  *{box-sizing:border-box;margin:0;padding:0}\n  body{font-family:'Noto Sans SC',sans-serif;background:var(--paper);color:var(--ink);line-height:1.8;padding:40px 20px 80px}\n  .w{max-width:740px;margin:0 auto}\n  .hd{border-left:5px solid var(--accent);padding-left:16px;margin-bottom:32px}\n  .hd h1{font-family:'Noto Serif SC',serif;font-size:1.65rem;font-weight:700;line-height:1.4}\n  .tags{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px}\n  .tag{font-size:.72rem;background:var(--ll);color:var(--muted);padding:2px 8px;border-radius:20px}\n  h2{font-family:'Noto Serif SC',serif;font-size:1.05rem;font-weight:700;color:var(--accent);margin:28px 0 10px;padding-bottom:4px;border-bottom:1.5px solid var(--ll);display:flex;align-items:center;gap:8px}\n  h2::before{content:'';display:inline-block;width:7px;height:7px;background:var(--accent);border-radius:50%;flex-shrink:0}\n  p{margin-bottom:9px;font-size:.93rem}\n  .tw{overflow-x:auto;margin:10px 0;border-radius:8px;border:1px solid var(--ll)}\n  table{width:100%;border-collapse:collapse;font-size:.88rem}\n  thead{background:var(--ink);color:#fff}\n  thead th{padding:8px 12px;font-weight:500;text-align:left}\n  tbody tr:nth-child(even){background:#f3ede6}\n  tbody tr:nth-child(odd){background:#fff}\n  tbody td{padding:7px 12px;border-bottom:1px solid var(--ll);vertical-align:top}\n  tbody tr:last-child td{border-bottom:none}\n  .jp{font-size:1.01em;letter-spacing:.03em}\n  .warn{background:var(--warn-bg);border-left:4px solid var(--warn-b);padding:9px 13px;border-radius:0 6px 6px 0;margin:10px 0;font-size:.88rem}\n  .tip{background:var(--tip-bg);border-left:4px solid var(--tip-b);padding:9px 13px;border-radius:0 6px 6px 0;margin:10px 0;font-size:.88rem}\n  .nb{background:var(--blue-bg);border-left:4px solid var(--blue-b);padding:9px 13px;border-radius:0 6px 6px 0;margin:10px 0;font-size:.88rem}\n  .hl{background:var(--hl);border-left:4px solid var(--gold);padding:9px 13px;border-radius:0 6px 6px 0;margin:10px 0;font-size:.88rem}\n  .lbl{font-weight:700;margin-right:5px}\n  strong{color:var(--accent)}\n  hr{border:none;border-top:1px dashed var(--ll);margin:22px 0}\n</style></head><body><div class=\"w\"><div class=\"hd\"><h1>第30課｜てある・ておく<br><small style=\"font-size:.6em;font-weight:400;color:var(--muted)\">交番に 地図が はって あります</small></h1><div class=\"tags\"><span class=\"tag\">第30課</span><span class=\"tag\">文法</span><span class=\"tag\">初级2</span><span class=\"tag\">N4</span></div></div><h2>1. Vて形＋あります（有人做了，结果还在）</h2><p>某人为了某目的做了某事，<strong>其结果仍然存在</strong>。用于他动词。强调\"有人做了\"这个行为。</p><div class=\"tw\"><table><thead><tr><th>例句</th><th>中文</th></tr></thead><tbody><tr><td class=\"jp\">机の 上に メモが 置いて あります。</td><td>桌上（有人）放着留言条。</td></tr><tr><td class=\"jp\">カレンダーに 今月の 予定が 書いて あります。</td><td>月历上写着这个月的计划。</td></tr><tr><td class=\"jp\">セロテープは あの 引き出しに しまって ありますよ。</td><td>透明胶带（有人）放在那个抽屉里。</td></tr></tbody></table></div><div class=\"nb\"><span class=\"lbl\">对比L29</span>窓が 閉まって <strong>います</strong>（自然关着，描述状态） vs 窓が 閉めて <strong>あります</strong>（有人关上了，强调行为结果）</div><h2>2. Vて形＋おきます（提前做好准备）</h2><p>在某时间点之前先做好某事。三种用法：</p><div class=\"tw\"><table><thead><tr><th>用法</th><th>例句</th><th>中文</th></tr></thead><tbody><tr><td class=\"jp\">① 提前准备</td><td>旅行の まえに、切符を 買って おきます。</td><td>旅行前先买好票。</td></tr><tr><td class=\"jp\">② 临时措置（用完后复原）</td><td>はさみを 使ったら、元の 所に 戻して おいて ください。</td><td>剪刀用完请放回原处。</td></tr><tr><td class=\"jp\">③ 保持现状</td><td>あした 会議が ありますから、いすは このままにして おいて ください。</td><td>明天有会议，椅子就这样放着吧。</td></tr></tbody></table></div><div class=\"tip\"><span class=\"lbl\">口语缩写</span>～ておきます → <strong>～とく</strong>　／　～ておきました → <strong>～とった</strong></div><hr><h2>重点词汇</h2><div class=\"tw\"><table><thead><tr><th>日语</th><th>读音</th><th>词义</th></tr></thead><tbody><tr><td class=\"jp\">予約</td><td>よやく</td><td>预约</td></tr><tr><td class=\"jp\">資料</td><td>しりょう</td><td>资料、材料</td></tr><tr><td class=\"jp\">準備</td><td>じゅんび</td><td>准备</td></tr><tr><td class=\"jp\">地図</td><td>ちず</td><td>地图</td></tr></tbody></table></div></div></body></html>",
+      "format": "html",
+      "tags": [
+        "第30課",
+        "文法",
+        "初级2",
+        "N4"
+      ]
+    },
+    {
+      "title": "第31-32課｜意志・助言・推測",
+      "content": "<!DOCTYPE html><html lang=\"zh\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1.0\"><title>第31-32課｜意志・助言・推測</title><style>\n@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@300;400;500&display=swap');\n  :root{--ink:#1a1a2e;--paper:#faf7f2;--accent:#c0392b;--gold:#d4a017;--muted:#7a6a5a;--ll:#e8e0d5;--hl:#fff8e1;--tip-bg:#f0f8f0;--tip-b:#4caf50;--warn-bg:#fff0f0;--warn-b:#e74c3c;--blue-bg:#f0f4ff;--blue-b:#3b5bdb;}\n  *{box-sizing:border-box;margin:0;padding:0}\n  body{font-family:'Noto Sans SC',sans-serif;background:var(--paper);color:var(--ink);line-height:1.8;padding:40px 20px 80px}\n  .w{max-width:740px;margin:0 auto}\n  .hd{border-left:5px solid var(--accent);padding-left:16px;margin-bottom:32px}\n  .hd h1{font-family:'Noto Serif SC',serif;font-size:1.65rem;font-weight:700;line-height:1.4}\n  .tags{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px}\n  .tag{font-size:.72rem;background:var(--ll);color:var(--muted);padding:2px 8px;border-radius:20px}\n  h2{font-family:'Noto Serif SC',serif;font-size:1.05rem;font-weight:700;color:var(--accent);margin:28px 0 10px;padding-bottom:4px;border-bottom:1.5px solid var(--ll);display:flex;align-items:center;gap:8px}\n  h2::before{content:'';display:inline-block;width:7px;height:7px;background:var(--accent);border-radius:50%;flex-shrink:0}\n  p{margin-bottom:9px;font-size:.93rem}\n  .tw{overflow-x:auto;margin:10px 0;border-radius:8px;border:1px solid var(--ll)}\n  table{width:100%;border-collapse:collapse;font-size:.88rem}\n  thead{background:var(--ink);color:#fff}\n  thead th{padding:8px 12px;font-weight:500;text-align:left}\n  tbody tr:nth-child(even){background:#f3ede6}\n  tbody tr:nth-child(odd){background:#fff}\n  tbody td{padding:7px 12px;border-bottom:1px solid var(--ll);vertical-align:top}\n  tbody tr:last-child td{border-bottom:none}\n  .jp{font-size:1.01em;letter-spacing:.03em}\n  .warn{background:var(--warn-bg);border-left:4px solid var(--warn-b);padding:9px 13px;border-radius:0 6px 6px 0;margin:10px 0;font-size:.88rem}\n  .tip{background:var(--tip-bg);border-left:4px solid var(--tip-b);padding:9px 13px;border-radius:0 6px 6px 0;margin:10px 0;font-size:.88rem}\n  .nb{background:var(--blue-bg);border-left:4px solid var(--blue-b);padding:9px 13px;border-radius:0 6px 6px 0;margin:10px 0;font-size:.88rem}\n  .hl{background:var(--hl);border-left:4px solid var(--gold);padding:9px 13px;border-radius:0 6px 6px 0;margin:10px 0;font-size:.88rem}\n  .lbl{font-weight:700;margin-right:5px}\n  strong{color:var(--accent)}\n  hr{border:none;border-top:1px dashed var(--ll);margin:22px 0}\n</style></head><body><div class=\"w\"><div class=\"hd\"><h1>第31-32課｜意志・助言・推測<br><small style=\"font-size:.6em;font-weight:400;color:var(--muted)\">行こう・つもり・ほうがいい・でしょう・かもしれません</small></h1><div class=\"tags\"><span class=\"tag\">第31課</span><span class=\"tag\">第32課</span><span class=\"tag\">文法</span><span class=\"tag\">初级2</span><span class=\"tag\">N4</span></div></div><h2>L31: 意向形（～よう）</h2><p>就是\"ましょう\"的简体形式，表示<strong>建议、邀请或自己的意向</strong>。</p><div class=\"tw\"><table><thead><tr><th>动词类</th><th>原形 → 意向形</th></tr></thead><tbody><tr><td class=\"jp\">Ⅰ类（い段→お段＋う）</td><td>書きます → 書こう　／　飲みます → 飲もう</td></tr><tr><td class=\"jp\">Ⅱ类（ます→よう）</td><td>食べます → 食べよう　／　見ます → 見よう</td></tr><tr><td class=\"jp\">Ⅲ类</td><td>します → しよう　／　きます → こよう</td></tr></tbody></table></div><div class=\"tip\"><span class=\"lbl\">💡</span>简体疑问时不加か：休まない？……うん、休もう。（不用：休もうか？）</div><h2>L31: 意向形＋と思っています（持续的打算）</h2><div class=\"tw\"><table><thead><tr><th>例句</th><th>中文</th></tr></thead><tbody><tr><td class=\"jp\">家族と 温泉に 行こうと 思って います。</td><td>（我一直打算）和家人去温泉。</td></tr><tr><td class=\"jp\">金曜日までに まとめようと 思って います。</td><td>打算在周五前整理好。</td></tr><tr><td class=\"jp\">彼は 学校を 作ろうと 思って います。</td><td>他打算建一所学校。（第三者用思って います）</td></tr></tbody></table></div><h2>L31: 動詞辞書形/ない形＋つもりです（意图坚定）</h2><div class=\"tw\"><table><thead><tr><th>例句</th><th>中文</th></tr></thead><tbody><tr><td class=\"jp\">国へ 帰っても、日本語の 勉強を 続ける つもりです。</td><td>即使回国也打算继续学日语。</td></tr><tr><td class=\"jp\">来月から たばこを 吸わない つもりです。</td><td>打算从下个月起不抽烟了。</td></tr></tbody></table></div><div class=\"nb\"><span class=\"lbl\">区别</span>意向形と思っています ≈ つもりです；但表示<strong>坚定决心</strong>时多用 つもり。第三者用 と思っています，不用 つもり。</div><hr><h2>L32: Vた形/ない形＋ほうがいいです（建议）</h2><div class=\"tw\"><table><thead><tr><th>形式</th><th>例句</th><th>中文</th></tr></thead><tbody><tr><td class=\"jp\">Vたほうがいい</td><td>毎日 運動した ほうが いいです。</td><td>最好每天运动。</td></tr><tr><td class=\"jp\">Vないほうがいい</td><td>現金で 持って 行かない ほうが いいですよ。</td><td>最好不要带现金去。</td></tr></tbody></table></div><div class=\"warn\"><span class=\"lbl\">⚠️</span>ほうがいい 暗含\"另一方不好\"，语气较强。单纯建议用 ～たら いいですよ（第26課）。</div><h2>L32: 普通形＋でしょう（推测，较确定）</h2><div class=\"tw\"><table><thead><tr><th>例句</th><th>中文</th></tr></thead><tbody><tr><td class=\"jp\">あしたは 雪が 降るでしょう。</td><td>明天会下雪吧。</td></tr><tr><td class=\"jp\">まだ しばらく よく ならないでしょう。</td><td>还要一段时间才会好吧。</td></tr></tbody></table></div><h2>L32: 普通形＋かもしれません（可能，不确定）</h2><div class=\"tw\"><table><thead><tr><th>例句</th><th>中文</th></tr></thead><tbody><tr><td class=\"jp\">約束の 時間に 間に 合わないかも しれません。</td><td>或许来不及约定时间。</td></tr><tr><td class=\"jp\">2、3日 高い 熱が 続くかも しれません。</td><td>可能会持续2、3天高烧。</td></tr></tbody></table></div><div class=\"nb\"><span class=\"lbl\">确定程度</span>でしょう（推测，较把握）＞ かもしれません（只是可能）</div><hr><h2>重点词汇</h2><div class=\"tw\"><table><thead><tr><th>日语</th><th>读音</th><th>词义</th></tr></thead><tbody><tr><td class=\"jp\">意向</td><td>いこう</td><td>意向（语法用语）</td></tr><tr><td class=\"jp\">予定</td><td>よてい</td><td>预定、计划</td></tr><tr><td class=\"jp\">将来</td><td>しょうらい</td><td>将来</td></tr><tr><td class=\"jp\">経験</td><td>けいけん</td><td>经验</td></tr></tbody></table></div></div></body></html>",
+      "format": "html",
+      "tags": [
+        "第31課",
+        "第32課",
+        "文法",
+        "初级2",
+        "N4"
+      ]
+    },
+    {
+      "title": "第33課｜命令・引用",
+      "content": "<!DOCTYPE html><html lang=\"zh\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1.0\"><title>第33課｜命令・引用</title><style>\n@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@300;400;500&display=swap');\n  :root{--ink:#1a1a2e;--paper:#faf7f2;--accent:#c0392b;--gold:#d4a017;--muted:#7a6a5a;--ll:#e8e0d5;--hl:#fff8e1;--tip-bg:#f0f8f0;--tip-b:#4caf50;--warn-bg:#fff0f0;--warn-b:#e74c3c;--blue-bg:#f0f4ff;--blue-b:#3b5bdb;}\n  *{box-sizing:border-box;margin:0;padding:0}\n  body{font-family:'Noto Sans SC',sans-serif;background:var(--paper);color:var(--ink);line-height:1.8;padding:40px 20px 80px}\n  .w{max-width:740px;margin:0 auto}\n  .hd{border-left:5px solid var(--accent);padding-left:16px;margin-bottom:32px}\n  .hd h1{font-family:'Noto Serif SC',serif;font-size:1.65rem;font-weight:700;line-height:1.4}\n  .tags{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px}\n  .tag{font-size:.72rem;background:var(--ll);color:var(--muted);padding:2px 8px;border-radius:20px}\n  h2{font-family:'Noto Serif SC',serif;font-size:1.05rem;font-weight:700;color:var(--accent);margin:28px 0 10px;padding-bottom:4px;border-bottom:1.5px solid var(--ll);display:flex;align-items:center;gap:8px}\n  h2::before{content:'';display:inline-block;width:7px;height:7px;background:var(--accent);border-radius:50%;flex-shrink:0}\n  p{margin-bottom:9px;font-size:.93rem}\n  .tw{overflow-x:auto;margin:10px 0;border-radius:8px;border:1px solid var(--ll)}\n  table{width:100%;border-collapse:collapse;font-size:.88rem}\n  thead{background:var(--ink);color:#fff}\n  thead th{padding:8px 12px;font-weight:500;text-align:left}\n  tbody tr:nth-child(even){background:#f3ede6}\n  tbody tr:nth-child(odd){background:#fff}\n  tbody td{padding:7px 12px;border-bottom:1px solid var(--ll);vertical-align:top}\n  tbody tr:last-child td{border-bottom:none}\n  .jp{font-size:1.01em;letter-spacing:.03em}\n  .warn{background:var(--warn-bg);border-left:4px solid var(--warn-b);padding:9px 13px;border-radius:0 6px 6px 0;margin:10px 0;font-size:.88rem}\n  .tip{background:var(--tip-bg);border-left:4px solid var(--tip-b);padding:9px 13px;border-radius:0 6px 6px 0;margin:10px 0;font-size:.88rem}\n  .nb{background:var(--blue-bg);border-left:4px solid var(--blue-b);padding:9px 13px;border-radius:0 6px 6px 0;margin:10px 0;font-size:.88rem}\n  .hl{background:var(--hl);border-left:4px solid var(--gold);padding:9px 13px;border-radius:0 6px 6px 0;margin:10px 0;font-size:.88rem}\n  .lbl{font-weight:700;margin-right:5px}\n  strong{color:var(--accent)}\n  hr{border:none;border-top:1px dashed var(--ll);margin:22px 0}\n</style></head><body><div class=\"w\"><div class=\"hd\"><h1>第33課｜命令・引用<br><small style=\"font-size:.6em;font-weight:400;color:var(--muted)\">急げ！触るな！～という・と言いました</small></h1><div class=\"tags\"><span class=\"tag\">第33課</span><span class=\"tag\">文法</span><span class=\"tag\">初级2</span><span class=\"tag\">N4</span></div></div><h2>1. 命令形・禁止形</h2><div class=\"tw\"><table><thead><tr><th>动词类</th><th>命令形（做！）</th><th>禁止形（别做！）</th></tr></thead><tbody><tr><td class=\"jp\">Ⅰ类（い段→え段）</td><td>書きます → 書け</td><td>書く → 書くな</td></tr><tr><td class=\"jp\">Ⅱ类（ます→ろ）</td><td>食べます → 食べろ</td><td>食べる → 食べるな</td></tr><tr><td class=\"jp\">Ⅲ类</td><td>します → しろ　きます → こい</td><td>する→するな　くる→くるな</td></tr></tbody></table></div><div class=\"warn\"><span class=\"lbl\">⚠️</span>命令/禁止形语气非常强烈！日常口语极少用，主要出现于：<br>① 上级对下级/父对子；② 男性朋友间（加よ）；③ 紧急情况；④ 体育比赛加油；⑤ 标示牌文字（立入禁止など）。</div><h2>2. 普通形＋という＋名词（叫做…的…）</h2><div class=\"tw\"><table><thead><tr><th>例句</th><th>中文</th></tr></thead><tbody><tr><td class=\"jp\">立入禁止は 入るなと いう 意味です。</td><td>立入禁止是写着别进入的意思。</td></tr><tr><td class=\"jp\">たばこを 吸ってはいけないと いう 意味です。</td><td>意思是禁止吸烟。</td></tr><tr><td class=\"jp\">洗濯機で 洗えると いう 意味です。</td><td>意思是可以用洗衣机洗。</td></tr></tbody></table></div><h2>3. 普通形＋と言いました（间接引用）</h2><div class=\"tw\"><table><thead><tr><th>例句</th><th>中文</th></tr></thead><tbody><tr><td class=\"jp\">ミラーさんは 来週 大阪へ 出張すると 言って いました。</td><td>米勒说他下周去大阪出差。</td></tr><tr><td class=\"jp\">30分ぐらいで 戻ると 言って いました。</td><td>说大概30分钟左右回来。</td></tr><tr><td class=\"jp\">6時からだと 伝えて いただけませんか。</td><td>能否转告说是从6点开始？</td></tr></tbody></table></div><div class=\"tip\"><span class=\"lbl\">💡</span>引用时动词用<strong>普通形</strong>（不是ます形）：<br>行きます → 行くと言いました　／　おいしいです → おいしいと言いました</div><hr><h2>重点词汇</h2><div class=\"tw\"><table><thead><tr><th>日语</th><th>读音</th><th>词义</th></tr></thead><tbody><tr><td class=\"jp\">意味</td><td>いみ</td><td>意思、含义</td></tr><tr><td class=\"jp\">立入禁止</td><td>たちいりきんし</td><td>禁止进入</td></tr><tr><td class=\"jp\">禁煙</td><td>きんえん</td><td>禁烟</td></tr><tr><td class=\"jp\">伝えます</td><td>つたえます</td><td>转告、传达</td></tr></tbody></table></div></div></body></html>",
+      "format": "html",
+      "tags": [
+        "第33課",
+        "文法",
+        "初级2",
+        "N4"
+      ]
+    },
+    {
+      "title": "第34課｜とおりに・あとで・ないで",
+      "content": "<!DOCTYPE html><html lang=\"zh\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1.0\"><title>第34課｜とおりに・あとで・ないで</title><style>\n@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@300;400;500&display=swap');\n  :root{--ink:#1a1a2e;--paper:#faf7f2;--accent:#c0392b;--gold:#d4a017;--muted:#7a6a5a;--ll:#e8e0d5;--hl:#fff8e1;--tip-bg:#f0f8f0;--tip-b:#4caf50;--warn-bg:#fff0f0;--warn-b:#e74c3c;--blue-bg:#f0f4ff;--blue-b:#3b5bdb;}\n  *{box-sizing:border-box;margin:0;padding:0}\n  body{font-family:'Noto Sans SC',sans-serif;background:var(--paper);color:var(--ink);line-height:1.8;padding:40px 20px 80px}\n  .w{max-width:740px;margin:0 auto}\n  .hd{border-left:5px solid var(--accent);padding-left:16px;margin-bottom:32px}\n  .hd h1{font-family:'Noto Serif SC',serif;font-size:1.65rem;font-weight:700;line-height:1.4}\n  .tags{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px}\n  .tag{font-size:.72rem;background:var(--ll);color:var(--muted);padding:2px 8px;border-radius:20px}\n  h2{font-family:'Noto Serif SC',serif;font-size:1.05rem;font-weight:700;color:var(--accent);margin:28px 0 10px;padding-bottom:4px;border-bottom:1.5px solid var(--ll);display:flex;align-items:center;gap:8px}\n  h2::before{content:'';display:inline-block;width:7px;height:7px;background:var(--accent);border-radius:50%;flex-shrink:0}\n  p{margin-bottom:9px;font-size:.93rem}\n  .tw{overflow-x:auto;margin:10px 0;border-radius:8px;border:1px solid var(--ll)}\n  table{width:100%;border-collapse:collapse;font-size:.88rem}\n  thead{background:var(--ink);color:#fff}\n  thead th{padding:8px 12px;font-weight:500;text-align:left}\n  tbody tr:nth-child(even){background:#f3ede6}\n  tbody tr:nth-child(odd){background:#fff}\n  tbody td{padding:7px 12px;border-bottom:1px solid var(--ll);vertical-align:top}\n  tbody tr:last-child td{border-bottom:none}\n  .jp{font-size:1.01em;letter-spacing:.03em}\n  .warn{background:var(--warn-bg);border-left:4px solid var(--warn-b);padding:9px 13px;border-radius:0 6px 6px 0;margin:10px 0;font-size:.88rem}\n  .tip{background:var(--tip-bg);border-left:4px solid var(--tip-b);padding:9px 13px;border-radius:0 6px 6px 0;margin:10px 0;font-size:.88rem}\n  .nb{background:var(--blue-bg);border-left:4px solid var(--blue-b);padding:9px 13px;border-radius:0 6px 6px 0;margin:10px 0;font-size:.88rem}\n  .hl{background:var(--hl);border-left:4px solid var(--gold);padding:9px 13px;border-radius:0 6px 6px 0;margin:10px 0;font-size:.88rem}\n  .lbl{font-weight:700;margin-right:5px}\n  strong{color:var(--accent)}\n  hr{border:none;border-top:1px dashed var(--ll);margin:22px 0}\n</style></head><body><div class=\"w\"><div class=\"hd\"><h1>第34課｜とおりに・あとで・ないで<br><small style=\"font-size:.6em;font-weight:400;color:var(--muted)\">先生が言ったとおりに書きます</small></h1><div class=\"tags\"><span class=\"tag\">第34課</span><span class=\"tag\">文法</span><span class=\"tag\">初级2</span><span class=\"tag\">N4</span></div></div><h2>1. 普通形＋とおりに（按照…做）</h2><div class=\"tw\"><table><thead><tr><th>例句</th><th>中文</th></tr></thead><tbody><tr><td class=\"jp\">先生が 言った とおりに、書きます。</td><td>按照老师说的写。</td></tr><tr><td class=\"jp\">説明書の とおりに、組み立てて ください。</td><td>请按照说明书组装。</td></tr><tr><td class=\"jp\">人が した とおりに、何でも するんです。</td><td>完全按照别人做的来做。</td></tr></tbody></table></div><div class=\"tip\"><span class=\"lbl\">💡</span>名词时用：名词＋の＋とおりに（説明書のとおりに）</div><h2>2. Vた形＋あとで（在…之后）</h2><div class=\"tw\"><table><thead><tr><th>例句</th><th>中文</th></tr></thead><tbody><tr><td class=\"jp\">ごはんを 食べた あとで、歯を 磨きます。</td><td>吃完饭后刷牙。</td></tr><tr><td class=\"jp\">しょうゆは 砂糖を 入れた あとで、入れるんですよ。</td><td>酱油是放糖之后才放的。</td></tr><tr><td class=\"jp\">仕事の あとで、飲みに 行きませんか。</td><td>工作结束后去喝一杯吧。（名词＋のあとで）</td></tr></tbody></table></div><h2>3. Vない形＋ないで（不做A，而做B）</h2><div class=\"tw\"><table><thead><tr><th>例句</th><th>中文</th></tr></thead><tbody><tr><td class=\"jp\">コーヒーは 砂糖を 入れないで 飲みます。</td><td>咖啡不放糖喝。</td></tr><tr><td class=\"jp\">最近 エレベーターに 乗らないで、階段を 使って いるんです。</td><td>最近不坐电梯，走楼梯。</td></tr><tr><td class=\"jp\">何も つけないで 食べて ください。</td><td>请什么都不放，直接吃。</td></tr></tbody></table></div><div class=\"nb\"><span class=\"lbl\">区别</span>～ないで（不做A而做B，主语可以不同）<br>～なくて（因为不做A，所以…，多用于原因）</div><hr><h2>重点词汇</h2><div class=\"tw\"><table><thead><tr><th>日语</th><th>读音</th><th>词义</th></tr></thead><tbody><tr><td class=\"jp\">説明書</td><td>せつめいしょ</td><td>说明书</td></tr><tr><td class=\"jp\">組み立てます</td><td>くみたてます</td><td>组装</td></tr><tr><td class=\"jp\">砂糖</td><td>さとう</td><td>糖</td></tr><tr><td class=\"jp\">階段</td><td>かいだん</td><td>楼梯</td></tr><tr><td class=\"jp\">結婚式</td><td>けっこんしき</td><td>婚礼</td></tr></tbody></table></div></div></body></html>",
+      "format": "html",
+      "tags": [
+        "第34課",
+        "文法",
+        "初级2",
+        "N4"
+      ]
+    },
+    {
+      "title": "第35・45課｜条件表現",
+      "content": "<!DOCTYPE html><html lang=\"zh\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1.0\"><title>第35・45課｜条件表現</title><style>\n@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@300;400;500&display=swap');\n  :root{--ink:#1a1a2e;--paper:#faf7f2;--accent:#c0392b;--gold:#d4a017;--muted:#7a6a5a;--ll:#e8e0d5;--hl:#fff8e1;--tip-bg:#f0f8f0;--tip-b:#4caf50;--warn-bg:#fff0f0;--warn-b:#e74c3c;--blue-bg:#f0f4ff;--blue-b:#3b5bdb;}\n  *{box-sizing:border-box;margin:0;padding:0}\n  body{font-family:'Noto Sans SC',sans-serif;background:var(--paper);color:var(--ink);line-height:1.8;padding:40px 20px 80px}\n  .w{max-width:740px;margin:0 auto}\n  .hd{border-left:5px solid var(--accent);padding-left:16px;margin-bottom:32px}\n  .hd h1{font-family:'Noto Serif SC',serif;font-size:1.65rem;font-weight:700;line-height:1.4}\n  .tags{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px}\n  .tag{font-size:.72rem;background:var(--ll);color:var(--muted);padding:2px 8px;border-radius:20px}\n  h2{font-family:'Noto Serif SC',serif;font-size:1.05rem;font-weight:700;color:var(--accent);margin:28px 0 10px;padding-bottom:4px;border-bottom:1.5px solid var(--ll);display:flex;align-items:center;gap:8px}\n  h2::before{content:'';display:inline-block;width:7px;height:7px;background:var(--accent);border-radius:50%;flex-shrink:0}\n  p{margin-bottom:9px;font-size:.93rem}\n  .tw{overflow-x:auto;margin:10px 0;border-radius:8px;border:1px solid var(--ll)}\n  table{width:100%;border-collapse:collapse;font-size:.88rem}\n  thead{background:var(--ink);color:#fff}\n  thead th{padding:8px 12px;font-weight:500;text-align:left}\n  tbody tr:nth-child(even){background:#f3ede6}\n  tbody tr:nth-child(odd){background:#fff}\n  tbody td{padding:7px 12px;border-bottom:1px solid var(--ll);vertical-align:top}\n  tbody tr:last-child td{border-bottom:none}\n  .jp{font-size:1.01em;letter-spacing:.03em}\n  .warn{background:var(--warn-bg);border-left:4px solid var(--warn-b);padding:9px 13px;border-radius:0 6px 6px 0;margin:10px 0;font-size:.88rem}\n  .tip{background:var(--tip-bg);border-left:4px solid var(--tip-b);padding:9px 13px;border-radius:0 6px 6px 0;margin:10px 0;font-size:.88rem}\n  .nb{background:var(--blue-bg);border-left:4px solid var(--blue-b);padding:9px 13px;border-radius:0 6px 6px 0;margin:10px 0;font-size:.88rem}\n  .hl{background:var(--hl);border-left:4px solid var(--gold);padding:9px 13px;border-radius:0 6px 6px 0;margin:10px 0;font-size:.88rem}\n  .lbl{font-weight:700;margin-right:5px}\n  strong{color:var(--accent)}\n  hr{border:none;border-top:1px dashed var(--ll);margin:22px 0}\n</style></head><body><div class=\"w\"><div class=\"hd\"><h1>第35・45課｜条件表現<br><small style=\"font-size:.6em;font-weight:400;color:var(--muted)\">ば・なら・場合は</small></h1><div class=\"tags\"><span class=\"tag\">第35課</span><span class=\"tag\">第45課</span><span class=\"tag\">文法</span><span class=\"tag\">初级2</span><span class=\"tag\">N4</span></div></div><h2>1. L35: ～ば（如果…就）</h2><p>条件形：如果满足前件，后件就成立。<strong>中性条件，不带感情色彩。</strong></p><div class=\"tw\"><table><thead><tr><th>动词/形容词类</th><th>变形规则</th><th>例</th></tr></thead><tbody><tr><td class=\"jp\">Ⅰ类动词</td><td>え段＋ば</td><td>書く→書けば　飲む→飲めば</td></tr><tr><td class=\"jp\">Ⅱ类动词</td><td>る→れば</td><td>食べる→食べれば</td></tr><tr><td class=\"jp\">Ⅲ类</td><td>くる→くれば　する→すれば</td><td>—</td></tr><tr><td class=\"jp\">い形容词</td><td>い→ければ</td><td>安い→安ければ</td></tr><tr><td class=\"jp\">な形容词/名词</td><td>なら</td><td>静かなら　学生なら</td></tr></tbody></table></div><div class=\"tw\"><table><thead><tr><th>例句</th><th>中文</th></tr></thead><tbody><tr><td class=\"jp\">春に なれば、桜が 咲きます。</td><td>一到春天，樱花就开。</td></tr><tr><td class=\"jp\">ボタンを 押せば、開きますよ。</td><td>按下按钮就开了。</td></tr><tr><td class=\"jp\">なければ、これで 終わりましょう。</td><td>如果没有其他意见，就到此结束吧。</td></tr></tbody></table></div><h2>2. L35: ～なら（若说到…/若是…的话）</h2><p>对前文提到的话题作出回应，给出建议或信息。</p><div class=\"tw\"><table><thead><tr><th>例句</th><th>中文</th></tr></thead><tbody><tr><td class=\"jp\">北海道旅行なら、6月が いいです。</td><td>要去北海道旅行的话，6月最好。</td></tr><tr><td class=\"jp\">2、3日なら、箱根か 日光が いいと 思います。</td><td>如果是2、3天的话，我觉得箱根或日光不错。</td></tr><tr><td class=\"jp\">無理なら、金曜日までに 出して ください。</td><td>如果来不及的话，周五前交就行了。</td></tr></tbody></table></div><div class=\"nb\"><span class=\"lbl\">区别</span><strong>ば</strong>：纯粹的条件（押せば開く）<br><strong>なら</strong>：对前文话题的回应（北海道旅行なら…）</div><hr><h2>3. L45: ～場合は（在…的情况下）</h2><p>假设某种情形发生时，该怎么做。类似「とき」，但更正式，多用于说明书、规则。</p><div class=\"tw\"><table><thead><tr><th>例句</th><th>中文</th></tr></thead><tbody><tr><td class=\"jp\">カードを なくした 場合は、すぐ カード会社に 連絡して ください。</td><td>丢失卡的情况下，请立刻联系卡公司。</td></tr><tr><td class=\"jp\">調子が 悪い 場合は、この 番号に 連絡して ください。</td><td>如果状态不好，请联系这个号码。</td></tr><tr><td class=\"jp\">火事や 地震の 場合は、絶対に エレベーターを 使わないで ください。</td><td>火灾或地震时，绝对不要用电梯。</td></tr></tbody></table></div><div class=\"tip\"><span class=\"lbl\">💡</span>场合は用于预先假设，とき用于自然时间点。场合は语气更正式。</div><hr><h2>重点词汇</h2><div class=\"tw\"><table><thead><tr><th>日语</th><th>读音</th><th>词义</th></tr></thead><tbody><tr><td class=\"jp\">場合</td><td>ばあい</td><td>情况、场合</td></tr><tr><td class=\"jp\">連絡</td><td>れんらく</td><td>联系、通知</td></tr><tr><td class=\"jp\">保証書</td><td>ほしょうしょ</td><td>保证书、保修单</td></tr><tr><td class=\"jp\">物価</td><td>ぶっか</td><td>物价</td></tr></tbody></table></div></div></body></html>",
+      "format": "html",
+      "tags": [
+        "第35課",
+        "第45課",
+        "文法",
+        "初级2",
+        "N4"
+      ]
+    },
+    {
+      "title": "第39・45課｜理由・逆接",
+      "content": "<!DOCTYPE html><html lang=\"zh\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1.0\"><title>第39・45課｜理由・逆接</title><style>\n@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@300;400;500&display=swap');\n  :root{--ink:#1a1a2e;--paper:#faf7f2;--accent:#c0392b;--gold:#d4a017;--muted:#7a6a5a;--ll:#e8e0d5;--hl:#fff8e1;--tip-bg:#f0f8f0;--tip-b:#4caf50;--warn-bg:#fff0f0;--warn-b:#e74c3c;--blue-bg:#f0f4ff;--blue-b:#3b5bdb;}\n  *{box-sizing:border-box;margin:0;padding:0}\n  body{font-family:'Noto Sans SC',sans-serif;background:var(--paper);color:var(--ink);line-height:1.8;padding:40px 20px 80px}\n  .w{max-width:740px;margin:0 auto}\n  .hd{border-left:5px solid var(--accent);padding-left:16px;margin-bottom:32px}\n  .hd h1{font-family:'Noto Serif SC',serif;font-size:1.65rem;font-weight:700;line-height:1.4}\n  .tags{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px}\n  .tag{font-size:.72rem;background:var(--ll);color:var(--muted);padding:2px 8px;border-radius:20px}\n  h2{font-family:'Noto Serif SC',serif;font-size:1.05rem;font-weight:700;color:var(--accent);margin:28px 0 10px;padding-bottom:4px;border-bottom:1.5px solid var(--ll);display:flex;align-items:center;gap:8px}\n  h2::before{content:'';display:inline-block;width:7px;height:7px;background:var(--accent);border-radius:50%;flex-shrink:0}\n  p{margin-bottom:9px;font-size:.93rem}\n  .tw{overflow-x:auto;margin:10px 0;border-radius:8px;border:1px solid var(--ll)}\n  table{width:100%;border-collapse:collapse;font-size:.88rem}\n  thead{background:var(--ink);color:#fff}\n  thead th{padding:8px 12px;font-weight:500;text-align:left}\n  tbody tr:nth-child(even){background:#f3ede6}\n  tbody tr:nth-child(odd){background:#fff}\n  tbody td{padding:7px 12px;border-bottom:1px solid var(--ll);vertical-align:top}\n  tbody tr:last-child td{border-bottom:none}\n  .jp{font-size:1.01em;letter-spacing:.03em}\n  .warn{background:var(--warn-bg);border-left:4px solid var(--warn-b);padding:9px 13px;border-radius:0 6px 6px 0;margin:10px 0;font-size:.88rem}\n  .tip{background:var(--tip-bg);border-left:4px solid var(--tip-b);padding:9px 13px;border-radius:0 6px 6px 0;margin:10px 0;font-size:.88rem}\n  .nb{background:var(--blue-bg);border-left:4px solid var(--blue-b);padding:9px 13px;border-radius:0 6px 6px 0;margin:10px 0;font-size:.88rem}\n  .hl{background:var(--hl);border-left:4px solid var(--gold);padding:9px 13px;border-radius:0 6px 6px 0;margin:10px 0;font-size:.88rem}\n  .lbl{font-weight:700;margin-right:5px}\n  strong{color:var(--accent)}\n  hr{border:none;border-top:1px dashed var(--ll);margin:22px 0}\n</style></head><body><div class=\"w\"><div class=\"hd\"><h1>第39・45課｜理由・逆接<br><small style=\"font-size:.6em;font-weight:400;color:var(--muted)\">て・ので・のに</small></h1><div class=\"tags\"><span class=\"tag\">第39課</span><span class=\"tag\">第45課</span><span class=\"tag\">文法</span><span class=\"tag\">初级2</span><span class=\"tag\">N4</span></div></div><h2>1. L39: Vて形（理由・原因的接续）</h2><p>前句是原因，后句是结果。て形起到「所以」的作用。</p><div class=\"tw\"><table><thead><tr><th>例句</th><th>中文</th></tr></thead><tbody><tr><td class=\"jp\">ニュースを 聞いて、びっくりしました。</td><td>听到消息，吓了一跳。</td></tr><tr><td class=\"jp\">写真を 見た ときは、すてきな 人だと 思いましたが、会って、がっかりしました。</td><td>看照片时觉得是很棒的人，但见面后失望了。</td></tr><tr><td class=\"jp\">話が 複雑で、よく わかりませんでした。</td><td>（い形容词）话太复杂，没听懂。</td></tr><tr><td class=\"jp\">部屋が 狭くて、邪魔なので、友達に あげました。</td><td>（い形容词）房间太窄，碍事，所以给了朋友。</td></tr></tbody></table></div><h2>2. L39: 普通形＋ので（因为…所以，礼貌）</h2><p>比「から」更客气，在正式场合或礼貌场合优先用「ので」。</p><div class=\"tw\"><table><thead><tr><th>例句</th><th>中文</th></tr></thead><tbody><tr><td class=\"jp\">用事が あるので、お先に 失礼します。</td><td>因为有事，先告辞了。</td></tr><tr><td class=\"jp\">地震で バスが 遅れたんです。</td><td>因为地震，公交迟到了。</td></tr><tr><td class=\"jp\">体の 調子が 悪いので、病院へ 行きます。</td><td>因为身体不舒服，要去医院。</td></tr></tbody></table></div><div class=\"nb\"><span class=\"lbl\">から vs ので</span>から：直接说明原因，语气直接<br>ので：更婉转礼貌，正式场合优先（和のです一起常用）</div><hr><h2>3. L45: ～のに（明明…却/尽管…但）</h2><p>前句已经发生了某事，后句却出现了反预期的结果，带有<strong>遗憾、不满、意外</strong>的语气。</p><div class=\"tw\"><table><thead><tr><th>例句</th><th>中文</th></tr></thead><tbody><tr><td class=\"jp\">約束を したのに、彼女は 来ませんでした。</td><td>明明约好了，她却没来。（不满）</td></tr><tr><td class=\"jp\">一生懸命 練習して 覚えたのに、途中で 忘れて しまいました。</td><td>明明拼命练习背下来了，却中途忘了。（遗憾）</td></tr><tr><td class=\"jp\">冬なのに、桜が 咲いて いますね。</td><td>明明是冬天，樱花却开着呢。（意外）</td></tr></tbody></table></div><div class=\"warn\"><span class=\"lbl\">⚠️</span>のに（逆接）和 ために/ので（原因） 不要混淆：<br>体の 調子が 悪いので 休みます。（因为…所以，正常因果）<br>練習したのに 失敗した。（明明练了却失败，反预期）</div><hr><h2>重点词汇</h2><div class=\"tw\"><table><thead><tr><th>日语</th><th>读音</th><th>词义</th></tr></thead><tbody><tr><td class=\"jp\">用事</td><td>ようじ</td><td>事情（要做的事）</td></tr><tr><td class=\"jp\">複雑</td><td>ふくざつ</td><td>复杂</td></tr><tr><td class=\"jp\">都合</td><td>つごう</td><td>方便/情况</td></tr></tbody></table></div></div></body></html>",
+      "format": "html",
+      "tags": [
+        "第39課",
+        "第45課",
+        "文法",
+        "初级2",
+        "N4"
+      ]
+    },
+    {
+      "title": "第36課｜ようになる・ようにする",
+      "content": "<!DOCTYPE html><html lang=\"zh\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1.0\"><title>第36課｜ようになる・ようにする</title><style>\n@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@300;400;500&display=swap');\n  :root{--ink:#1a1a2e;--paper:#faf7f2;--accent:#c0392b;--gold:#d4a017;--muted:#7a6a5a;--ll:#e8e0d5;--hl:#fff8e1;--tip-bg:#f0f8f0;--tip-b:#4caf50;--warn-bg:#fff0f0;--warn-b:#e74c3c;--blue-bg:#f0f4ff;--blue-b:#3b5bdb;}\n  *{box-sizing:border-box;margin:0;padding:0}\n  body{font-family:'Noto Sans SC',sans-serif;background:var(--paper);color:var(--ink);line-height:1.8;padding:40px 20px 80px}\n  .w{max-width:740px;margin:0 auto}\n  .hd{border-left:5px solid var(--accent);padding-left:16px;margin-bottom:32px}\n  .hd h1{font-family:'Noto Serif SC',serif;font-size:1.65rem;font-weight:700;line-height:1.4}\n  .tags{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px}\n  .tag{font-size:.72rem;background:var(--ll);color:var(--muted);padding:2px 8px;border-radius:20px}\n  h2{font-family:'Noto Serif SC',serif;font-size:1.05rem;font-weight:700;color:var(--accent);margin:28px 0 10px;padding-bottom:4px;border-bottom:1.5px solid var(--ll);display:flex;align-items:center;gap:8px}\n  h2::before{content:'';display:inline-block;width:7px;height:7px;background:var(--accent);border-radius:50%;flex-shrink:0}\n  p{margin-bottom:9px;font-size:.93rem}\n  .tw{overflow-x:auto;margin:10px 0;border-radius:8px;border:1px solid var(--ll)}\n  table{width:100%;border-collapse:collapse;font-size:.88rem}\n  thead{background:var(--ink);color:#fff}\n  thead th{padding:8px 12px;font-weight:500;text-align:left}\n  tbody tr:nth-child(even){background:#f3ede6}\n  tbody tr:nth-child(odd){background:#fff}\n  tbody td{padding:7px 12px;border-bottom:1px solid var(--ll);vertical-align:top}\n  tbody tr:last-child td{border-bottom:none}\n  .jp{font-size:1.01em;letter-spacing:.03em}\n  .warn{background:var(--warn-bg);border-left:4px solid var(--warn-b);padding:9px 13px;border-radius:0 6px 6px 0;margin:10px 0;font-size:.88rem}\n  .tip{background:var(--tip-bg);border-left:4px solid var(--tip-b);padding:9px 13px;border-radius:0 6px 6px 0;margin:10px 0;font-size:.88rem}\n  .nb{background:var(--blue-bg);border-left:4px solid var(--blue-b);padding:9px 13px;border-radius:0 6px 6px 0;margin:10px 0;font-size:.88rem}\n  .hl{background:var(--hl);border-left:4px solid var(--gold);padding:9px 13px;border-radius:0 6px 6px 0;margin:10px 0;font-size:.88rem}\n  .lbl{font-weight:700;margin-right:5px}\n  strong{color:var(--accent)}\n  hr{border:none;border-top:1px dashed var(--ll);margin:22px 0}\n</style></head><body><div class=\"w\"><div class=\"hd\"><h1>第36課｜ようになる・ようにする<br><small style=\"font-size:.6em;font-weight:400;color:var(--muted)\">乗れるように なりました</small></h1><div class=\"tags\"><span class=\"tag\">第36課</span><span class=\"tag\">文法</span><span class=\"tag\">初级2</span><span class=\"tag\">N4</span></div></div><h2>1. Vるように（为了能够…/以便能…）</h2><p>前句是目标方向，后句是为达到目标而做的行为。与「ために」区别在于：<strong>ように</strong>多用于渐进的变化或潜力，<strong>ために</strong>多用于具体目的。</p><div class=\"tw\"><table><thead><tr><th>例句</th><th>中文</th></tr></thead><tbody><tr><td class=\"jp\">知らない ことばが あったら、すぐ 調べられるように、持って いるんです。</td><td>为了能立刻查不认识的词，带着（电子词典）。</td></tr><tr><td class=\"jp\">忘れないように、付けて あるんです。</td><td>为了不忘记，贴着（提示）。</td></tr><tr><td class=\"jp\">絶対に 遅れないように して ください。</td><td>请务必不要迟到。</td></tr></tbody></table></div><h2>2. Vるように なりました（变得能够…）</h2><p>表示达到某种新状态，强调<strong>变化的结果</strong>。</p><div class=\"tw\"><table><thead><tr><th>例句</th><th>中文</th></tr></thead><tbody><tr><td class=\"jp\">やっと 自転車に 乗れるように なりました。</td><td>终于会骑自行车了。</td></tr><tr><td class=\"jp\">初めは 食べられませんでしたが、今は 何でも 食べられるように なりました。</td><td>一开始不能吃，现在什么都能吃了。</td></tr><tr><td class=\"jp\">夫の 田舎まで 4時間で 帰れるように なりました。</td><td>变得能在4小时内回到丈夫的老家了。</td></tr></tbody></table></div><h2>3. Vるように して います（努力保持/努力做到）</h2><p>表示说话人<strong>有意识地努力做某件事</strong>，是一种持续的习惯性努力。</p><div class=\"tw\"><table><thead><tr><th>例句</th><th>中文</th></tr></thead><tbody><tr><td class=\"jp\">毎日 日記を 書くように して います。</td><td>努力坚持每天写日记。</td></tr><tr><td class=\"jp\">できるだけ 食べないように して いるんです。</td><td>努力尽量不吃（甜食）。</td></tr></tbody></table></div><div class=\"nb\"><span class=\"lbl\">三者对比</span>Vるように（目的/为了能…）→ 调べられるように持っている<br>Vるように なりました（结果/变得会了）→ 乗れるようになりました<br>Vるように しています（努力/坚持做）→ 書くようにしています</div><hr><h2>重点词汇</h2><div class=\"tw\"><table><thead><tr><th>日语</th><th>读音</th><th>词义</th></tr></thead><tbody><tr><td class=\"jp\">練習</td><td>れんしゅう</td><td>练习</td></tr><tr><td class=\"jp\">慣れます</td><td>なれます</td><td>习惯</td></tr><tr><td class=\"jp\">電子辞書</td><td>でんしじしょ</td><td>电子词典</td></tr></tbody></table></div></div></body></html>",
+      "format": "html",
+      "tags": [
+        "第36課",
+        "文法",
+        "初级2",
+        "N4"
+      ]
+    },
+    {
+      "title": "第37課｜受け身（被动形）",
+      "content": "<!DOCTYPE html><html lang=\"zh\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1.0\"><title>第37課｜受け身（被动形）</title><style>\n@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@300;400;500&display=swap');\n  :root{--ink:#1a1a2e;--paper:#faf7f2;--accent:#c0392b;--gold:#d4a017;--muted:#7a6a5a;--ll:#e8e0d5;--hl:#fff8e1;--tip-bg:#f0f8f0;--tip-b:#4caf50;--warn-bg:#fff0f0;--warn-b:#e74c3c;--blue-bg:#f0f4ff;--blue-b:#3b5bdb;}\n  *{box-sizing:border-box;margin:0;padding:0}\n  body{font-family:'Noto Sans SC',sans-serif;background:var(--paper);color:var(--ink);line-height:1.8;padding:40px 20px 80px}\n  .w{max-width:740px;margin:0 auto}\n  .hd{border-left:5px solid var(--accent);padding-left:16px;margin-bottom:32px}\n  .hd h1{font-family:'Noto Serif SC',serif;font-size:1.65rem;font-weight:700;line-height:1.4}\n  .tags{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px}\n  .tag{font-size:.72rem;background:var(--ll);color:var(--muted);padding:2px 8px;border-radius:20px}\n  h2{font-family:'Noto Serif SC',serif;font-size:1.05rem;font-weight:700;color:var(--accent);margin:28px 0 10px;padding-bottom:4px;border-bottom:1.5px solid var(--ll);display:flex;align-items:center;gap:8px}\n  h2::before{content:'';display:inline-block;width:7px;height:7px;background:var(--accent);border-radius:50%;flex-shrink:0}\n  p{margin-bottom:9px;font-size:.93rem}\n  .tw{overflow-x:auto;margin:10px 0;border-radius:8px;border:1px solid var(--ll)}\n  table{width:100%;border-collapse:collapse;font-size:.88rem}\n  thead{background:var(--ink);color:#fff}\n  thead th{padding:8px 12px;font-weight:500;text-align:left}\n  tbody tr:nth-child(even){background:#f3ede6}\n  tbody tr:nth-child(odd){background:#fff}\n  tbody td{padding:7px 12px;border-bottom:1px solid var(--ll);vertical-align:top}\n  tbody tr:last-child td{border-bottom:none}\n  .jp{font-size:1.01em;letter-spacing:.03em}\n  .warn{background:var(--warn-bg);border-left:4px solid var(--warn-b);padding:9px 13px;border-radius:0 6px 6px 0;margin:10px 0;font-size:.88rem}\n  .tip{background:var(--tip-bg);border-left:4px solid var(--tip-b);padding:9px 13px;border-radius:0 6px 6px 0;margin:10px 0;font-size:.88rem}\n  .nb{background:var(--blue-bg);border-left:4px solid var(--blue-b);padding:9px 13px;border-radius:0 6px 6px 0;margin:10px 0;font-size:.88rem}\n  .hl{background:var(--hl);border-left:4px solid var(--gold);padding:9px 13px;border-radius:0 6px 6px 0;margin:10px 0;font-size:.88rem}\n  .lbl{font-weight:700;margin-right:5px}\n  strong{color:var(--accent)}\n  hr{border:none;border-top:1px dashed var(--ll);margin:22px 0}\n</style></head><body><div class=\"w\"><div class=\"hd\"><h1>第37課｜受け身（被动形）<br><small style=\"font-size:.6em;font-weight:400;color:var(--muted)\">母に しかられました</small></h1><div class=\"tags\"><span class=\"tag\">第37課</span><span class=\"tag\">文法</span><span class=\"tag\">初级2</span><span class=\"tag\">N4</span></div></div><h2>1. 受け身形（被动形）的变化</h2><div class=\"tw\"><table><thead><tr><th>动词类</th><th>变化规则</th><th>例</th></tr></thead><tbody><tr><td class=\"jp\">Ⅰ类</td><td>あ段＋れる</td><td>書く→書かれる　飲む→飲まれる　作る→作られる</td></tr><tr><td class=\"jp\">Ⅱ类</td><td>る→られる</td><td>食べる→食べられる　見る→見られる</td></tr><tr><td class=\"jp\">Ⅲ类</td><td>します→されます　きます→こられます</td><td>—</td></tr></tbody></table></div><h2>2. 受け身句型（被动句）</h2><p><strong>直接受け身</strong>：主语直接受到某人动作的影响（类似中文被字句）。</p><div class=\"tw\"><table><thead><tr><th>例句</th><th>中文</th></tr></thead><tbody><tr><td class=\"jp\">子どもの とき、よく 母に しかられました。</td><td>小时候常被妈妈骂。</td></tr><tr><td class=\"jp\">部長に 呼ばれました。</td><td>被部长叫了。</td></tr><tr><td class=\"jp\">だれかに 傘を まちがえられたんです。</td><td>雨伞被什么人拿错了。</td></tr></tbody></table></div><div class=\"warn\"><span class=\"lbl\">⚠️</span>施动者用<strong>に</strong>：母に しかられた。（被妈妈骂）</div><p><strong>間接受け身（迷惑受け身）</strong>：主语受到影响（通常是不好的）。</p><div class=\"tw\"><table><thead><tr><th>例句</th><th>中文</th></tr></thead><tbody><tr><td class=\"jp\">ラッシュの 電車で 足を 踏まれました。</td><td>在拥挤的电车里被人踩了脚。</td></tr><tr><td class=\"jp\">雨に 降られました。</td><td>被雨淋了（下雨了，倒霉）。</td></tr></tbody></table></div><p><strong>非情受け身</strong>：物品/事件作主语，说明其来源。</p><div class=\"tw\"><table><thead><tr><th>例句</th><th>中文</th></tr></thead><tbody><tr><td class=\"jp\">法隆寺は 607年に 建てられました。</td><td>法隆寺建于607年。</td></tr><tr><td class=\"jp\">ビールは 麦から 造られます。</td><td>啤酒由大麦酿造。</td></tr><tr><td class=\"jp\">ブラジルでは ポルトガル語が 使われて います。</td><td>巴西使用葡萄牙语。</td></tr></tbody></table></div><div class=\"tip\"><span class=\"lbl\">💡</span>材料/手段时用<strong>で</strong>（麦<strong>で</strong>造られる）；来源用<strong>から</strong>（麦<strong>から</strong>造られる）</div><hr><h2>重点词汇</h2><div class=\"tw\"><table><thead><tr><th>日语</th><th>读音</th><th>词义</th></tr></thead><tbody><tr><td class=\"jp\">踏みます</td><td>ふみます</td><td>踩（脚）</td></tr><tr><td class=\"jp\">注意します</td><td>ちゅういします</td><td>提醒、批评</td></tr><tr><td class=\"jp\">発見</td><td>はっけん</td><td>发现</td></tr><tr><td class=\"jp\">建てます</td><td>たてます</td><td>建造</td></tr></tbody></table></div></div></body></html>",
+      "format": "html",
+      "tags": [
+        "第37課",
+        "文法",
+        "初级2",
+        "N4"
+      ]
+    },
+    {
+      "title": "第38・42課｜の名词化・ために",
+      "content": "<!DOCTYPE html><html lang=\"zh\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1.0\"><title>第38・42課｜の名词化・ために</title><style>\n@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@300;400;500&display=swap');\n  :root{--ink:#1a1a2e;--paper:#faf7f2;--accent:#c0392b;--gold:#d4a017;--muted:#7a6a5a;--ll:#e8e0d5;--hl:#fff8e1;--tip-bg:#f0f8f0;--tip-b:#4caf50;--warn-bg:#fff0f0;--warn-b:#e74c3c;--blue-bg:#f0f4ff;--blue-b:#3b5bdb;}\n  *{box-sizing:border-box;margin:0;padding:0}\n  body{font-family:'Noto Sans SC',sans-serif;background:var(--paper);color:var(--ink);line-height:1.8;padding:40px 20px 80px}\n  .w{max-width:740px;margin:0 auto}\n  .hd{border-left:5px solid var(--accent);padding-left:16px;margin-bottom:32px}\n  .hd h1{font-family:'Noto Serif SC',serif;font-size:1.65rem;font-weight:700;line-height:1.4}\n  .tags{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px}\n  .tag{font-size:.72rem;background:var(--ll);color:var(--muted);padding:2px 8px;border-radius:20px}\n  h2{font-family:'Noto Serif SC',serif;font-size:1.05rem;font-weight:700;color:var(--accent);margin:28px 0 10px;padding-bottom:4px;border-bottom:1.5px solid var(--ll);display:flex;align-items:center;gap:8px}\n  h2::before{content:'';display:inline-block;width:7px;height:7px;background:var(--accent);border-radius:50%;flex-shrink:0}\n  p{margin-bottom:9px;font-size:.93rem}\n  .tw{overflow-x:auto;margin:10px 0;border-radius:8px;border:1px solid var(--ll)}\n  table{width:100%;border-collapse:collapse;font-size:.88rem}\n  thead{background:var(--ink);color:#fff}\n  thead th{padding:8px 12px;font-weight:500;text-align:left}\n  tbody tr:nth-child(even){background:#f3ede6}\n  tbody tr:nth-child(odd){background:#fff}\n  tbody td{padding:7px 12px;border-bottom:1px solid var(--ll);vertical-align:top}\n  tbody tr:last-child td{border-bottom:none}\n  .jp{font-size:1.01em;letter-spacing:.03em}\n  .warn{background:var(--warn-bg);border-left:4px solid var(--warn-b);padding:9px 13px;border-radius:0 6px 6px 0;margin:10px 0;font-size:.88rem}\n  .tip{background:var(--tip-bg);border-left:4px solid var(--tip-b);padding:9px 13px;border-radius:0 6px 6px 0;margin:10px 0;font-size:.88rem}\n  .nb{background:var(--blue-bg);border-left:4px solid var(--blue-b);padding:9px 13px;border-radius:0 6px 6px 0;margin:10px 0;font-size:.88rem}\n  .hl{background:var(--hl);border-left:4px solid var(--gold);padding:9px 13px;border-radius:0 6px 6px 0;margin:10px 0;font-size:.88rem}\n  .lbl{font-weight:700;margin-right:5px}\n  strong{color:var(--accent)}\n  hr{border:none;border-top:1px dashed var(--ll);margin:22px 0}\n</style></head><body><div class=\"w\"><div class=\"hd\"><h1>第38・42課｜の名词化・ために<br><small style=\"font-size:.6em;font-weight:400;color:var(--muted)\">絵をかくのは楽しい・～ために貯金している</small></h1><div class=\"tags\"><span class=\"tag\">第38課</span><span class=\"tag\">第42課</span><span class=\"tag\">文法</span><span class=\"tag\">初级2</span><span class=\"tag\">N4</span></div></div><h2>L38: の（名词化）— 把动词变成名词</h2><p>在动词/形容词后加<strong>の</strong>，把整个动作变成名词（\"做…这件事\"）。</p><h2>1. ～のは＋形容词（做…是…）</h2><div class=\"tw\"><table><thead><tr><th>例句</th><th>中文</th></tr></thead><tbody><tr><td class=\"jp\">絵を かくのは 楽しいです。</td><td>画画这件事很有趣。</td></tr><tr><td class=\"jp\">始めるのは 簡単ですが、続けるのは 難しいですね。</td><td>开始容易，坚持难啊。</td></tr></tbody></table></div><h2>2. ～のが＋好き/嫌い/上手/下手（喜欢/擅长做…）</h2><div class=\"tw\"><table><thead><tr><th>例句</th><th>中文</th></tr></thead><tbody><tr><td class=\"jp\">わたしは 星を 見るのが 好きです。</td><td>我喜欢看星星。</td></tr><tr><td class=\"jp\">夫は 花を 育てるのが 上手なんです。</td><td>我丈夫擅长种花。</td></tr><tr><td class=\"jp\">みんな 歩くのが 速いですね。</td><td>大家走路都很快呢。</td></tr></tbody></table></div><h2>3. ～のを＋忘れました/知っています（忘记做/知道…）</h2><div class=\"tw\"><table><thead><tr><th>例句</th><th>中文</th></tr></thead><tbody><tr><td class=\"jp\">財布を 持って 来るのを 忘れました。</td><td>忘带钱包了。</td></tr><tr><td class=\"jp\">車の 窓を 閉めるのを 忘れました。</td><td>忘记关车窗了。</td></tr><tr><td class=\"jp\">宮崎さんに 赤ちゃんが 生まれたのを 知って いますか。</td><td>你知道宫崎先生生了孩子吗？</td></tr></tbody></table></div><h2>4. ～のは＋时间/人（时间/人+才是做…的）</h2><div class=\"tw\"><table><thead><tr><th>例句</th><th>中文</th></tr></thead><tbody><tr><td class=\"jp\">わたしが 日本へ 来たのは 去年の 3月です。</td><td>我来日本是去年3月的事。</td></tr><tr><td class=\"jp\">彼女に 初めて 会ったのは 小学校の 教室です。</td><td>第一次见到她是在小学教室。</td></tr></tbody></table></div><hr><h2>L42: ～ために（为了…目的）</h2><div class=\"tw\"><table><thead><tr><th>例句</th><th>中文</th></tr></thead><tbody><tr><td class=\"jp\">将来 自分の 店を 持つ ために、貯金して います。</td><td>为了将来开自己的店，在存钱。</td></tr><tr><td class=\"jp\">健康の ために、毎朝 走ろうと 思って います。</td><td>为了健康，打算每天早上跑步。</td></tr><tr><td class=\"jp\">ベートーベンが ある 女の 人の ために、作った 曲です。</td><td>贝多芬为一位女性创作的曲子。</td></tr></tbody></table></div><h2>L42: ～のに（用于…/需要…，表用途）</h2><div class=\"tw\"><table><thead><tr><th>例句</th><th>中文</th></tr></thead><tbody><tr><td class=\"jp\">この 靴は 山を 歩くのに いいです。</td><td>这双鞋子很适合爬山。</td></tr><tr><td class=\"jp\">この 橋を 造るのに 12年 かかりました。</td><td>建造这座桥用了12年。</td></tr><tr><td class=\"jp\">ワインを 開けるのに 使います。</td><td>用来开葡萄酒。</td></tr></tbody></table></div><div class=\"nb\"><span class=\"lbl\">区别</span>ために（目的）：为了…而做某事（前句是目标，后句是行为）<br>のに（用途）：用来…/用于…（后句是用途说明）</div><hr><h2>重点词汇</h2><div class=\"tw\"><table><thead><tr><th>日语</th><th>读音</th><th>词义</th></tr></thead><tbody><tr><td class=\"jp\">貯金</td><td>ちょきん</td><td>存钱</td></tr><tr><td class=\"jp\">健康</td><td>けんこう</td><td>健康</td></tr><tr><td class=\"jp\">原料</td><td>げんりょう</td><td>原料</td></tr></tbody></table></div></div></body></html>",
+      "format": "html",
+      "tags": [
+        "第38課",
+        "第42課",
+        "文法",
+        "初级2",
+        "N4"
+      ]
+    },
+    {
+      "title": "第40課｜間接疑問・てみます",
+      "content": "<!DOCTYPE html><html lang=\"zh\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1.0\"><title>第40課｜間接疑問・てみます</title><style>\n@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@300;400;500&display=swap');\n  :root{--ink:#1a1a2e;--paper:#faf7f2;--accent:#c0392b;--gold:#d4a017;--muted:#7a6a5a;--ll:#e8e0d5;--hl:#fff8e1;--tip-bg:#f0f8f0;--tip-b:#4caf50;--warn-bg:#fff0f0;--warn-b:#e74c3c;--blue-bg:#f0f4ff;--blue-b:#3b5bdb;}\n  *{box-sizing:border-box;margin:0;padding:0}\n  body{font-family:'Noto Sans SC',sans-serif;background:var(--paper);color:var(--ink);line-height:1.8;padding:40px 20px 80px}\n  .w{max-width:740px;margin:0 auto}\n  .hd{border-left:5px solid var(--accent);padding-left:16px;margin-bottom:32px}\n  .hd h1{font-family:'Noto Serif SC',serif;font-size:1.65rem;font-weight:700;line-height:1.4}\n  .tags{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px}\n  .tag{font-size:.72rem;background:var(--ll);color:var(--muted);padding:2px 8px;border-radius:20px}\n  h2{font-family:'Noto Serif SC',serif;font-size:1.05rem;font-weight:700;color:var(--accent);margin:28px 0 10px;padding-bottom:4px;border-bottom:1.5px solid var(--ll);display:flex;align-items:center;gap:8px}\n  h2::before{content:'';display:inline-block;width:7px;height:7px;background:var(--accent);border-radius:50%;flex-shrink:0}\n  p{margin-bottom:9px;font-size:.93rem}\n  .tw{overflow-x:auto;margin:10px 0;border-radius:8px;border:1px solid var(--ll)}\n  table{width:100%;border-collapse:collapse;font-size:.88rem}\n  thead{background:var(--ink);color:#fff}\n  thead th{padding:8px 12px;font-weight:500;text-align:left}\n  tbody tr:nth-child(even){background:#f3ede6}\n  tbody tr:nth-child(odd){background:#fff}\n  tbody td{padding:7px 12px;border-bottom:1px solid var(--ll);vertical-align:top}\n  tbody tr:last-child td{border-bottom:none}\n  .jp{font-size:1.01em;letter-spacing:.03em}\n  .warn{background:var(--warn-bg);border-left:4px solid var(--warn-b);padding:9px 13px;border-radius:0 6px 6px 0;margin:10px 0;font-size:.88rem}\n  .tip{background:var(--tip-bg);border-left:4px solid var(--tip-b);padding:9px 13px;border-radius:0 6px 6px 0;margin:10px 0;font-size:.88rem}\n  .nb{background:var(--blue-bg);border-left:4px solid var(--blue-b);padding:9px 13px;border-radius:0 6px 6px 0;margin:10px 0;font-size:.88rem}\n  .hl{background:var(--hl);border-left:4px solid var(--gold);padding:9px 13px;border-radius:0 6px 6px 0;margin:10px 0;font-size:.88rem}\n  .lbl{font-weight:700;margin-right:5px}\n  strong{color:var(--accent)}\n  hr{border:none;border-top:1px dashed var(--ll);margin:22px 0}\n</style></head><body><div class=\"w\"><div class=\"hd\"><h1>第40課｜間接疑問・てみます<br><small style=\"font-size:.6em;font-weight:400;color:var(--muted)\">何時に来るか・かどうか・試してみます</small></h1><div class=\"tags\"><span class=\"tag\">第40課</span><span class=\"tag\">文法</span><span class=\"tag\">初级2</span><span class=\"tag\">N4</span></div></div><h2>1. 疑問詞＋か（间接疑问：嵌入句中的疑问）</h2><p>把疑问句嵌入另一个句子中，疑问词后接<strong>か</strong>（不用？号）。</p><div class=\"tw\"><table><thead><tr><th>例句</th><th>中文</th></tr></thead><tbody><tr><td class=\"jp\">JL107便は 何時に 到着するか、調べて ください。</td><td>请查一下JL107航班几点到。</td></tr><tr><td class=\"jp\">山の 高さは どうやって 測るか、知って いますか。</td><td>你知道山的高度是怎么测量的吗？</td></tr><tr><td class=\"jp\">どこへ 行ったか、全然 覚えて いないんです。</td><td>完全不记得去了哪里。</td></tr></tbody></table></div><h2>2. ～かどうか（是否…）</h2><p>表示\"不确定某事是否成立\"。</p><div class=\"tw\"><table><thead><tr><th>例句</th><th>中文</th></tr></thead><tbody><tr><td class=\"jp\">台風9号は 東京へ 来るかどうか、まだ わかりません。</td><td>9号台风是否会来东京，还不知道。</td></tr><tr><td class=\"jp\">忘年会に 出席できるかどうか、メールで 返事を ください。</td><td>请邮件回复是否能出席忘年会。</td></tr><tr><td class=\"jp\">まちがいが ないかどうか、見て いただけませんか。</td><td>能帮我看看有没有错误吗？</td></tr></tbody></table></div><h2>3. Vて形＋みます（试着做看看）</h2><div class=\"tw\"><table><thead><tr><th>例句</th><th>中文</th></tr></thead><tbody><tr><td class=\"jp\">この 服を 着て みても いいですか。</td><td>可以试穿这件衣服吗？</td></tr><tr><td class=\"jp\">まだ ありません。ぜひ 一度 行って みたいです。</td><td>还没有去过。真想去试试看。</td></tr><tr><td class=\"jp\">考えて みます。</td><td>我考虑看看。</td></tr></tbody></table></div><div class=\"tip\"><span class=\"lbl\">💡</span>てみます＝试着做一次，看看结果如何。常用于第一次尝试某事。</div><hr><h2>重点词汇</h2><div class=\"tw\"><table><thead><tr><th>日语</th><th>读音</th><th>词义</th></tr></thead><tbody><tr><td class=\"jp\">出席</td><td>しゅっせき</td><td>出席</td></tr><tr><td class=\"jp\">間違い</td><td>まちがい</td><td>错误</td></tr><tr><td class=\"jp\">到着</td><td>とうちゃく</td><td>到达、抵达</td></tr></tbody></table></div></div></body></html>",
+      "format": "html",
+      "tags": [
+        "第40課",
+        "文法",
+        "初级2",
+        "N4"
+      ]
+    },
+    {
+      "title": "第41課｜授受の敬語",
+      "content": "<!DOCTYPE html><html lang=\"zh\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1.0\"><title>第41課｜授受の敬語</title><style>\n@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@300;400;500&display=swap');\n  :root{--ink:#1a1a2e;--paper:#faf7f2;--accent:#c0392b;--gold:#d4a017;--muted:#7a6a5a;--ll:#e8e0d5;--hl:#fff8e1;--tip-bg:#f0f8f0;--tip-b:#4caf50;--warn-bg:#fff0f0;--warn-b:#e74c3c;--blue-bg:#f0f4ff;--blue-b:#3b5bdb;}\n  *{box-sizing:border-box;margin:0;padding:0}\n  body{font-family:'Noto Sans SC',sans-serif;background:var(--paper);color:var(--ink);line-height:1.8;padding:40px 20px 80px}\n  .w{max-width:740px;margin:0 auto}\n  .hd{border-left:5px solid var(--accent);padding-left:16px;margin-bottom:32px}\n  .hd h1{font-family:'Noto Serif SC',serif;font-size:1.65rem;font-weight:700;line-height:1.4}\n  .tags{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px}\n  .tag{font-size:.72rem;background:var(--ll);color:var(--muted);padding:2px 8px;border-radius:20px}\n  h2{font-family:'Noto Serif SC',serif;font-size:1.05rem;font-weight:700;color:var(--accent);margin:28px 0 10px;padding-bottom:4px;border-bottom:1.5px solid var(--ll);display:flex;align-items:center;gap:8px}\n  h2::before{content:'';display:inline-block;width:7px;height:7px;background:var(--accent);border-radius:50%;flex-shrink:0}\n  p{margin-bottom:9px;font-size:.93rem}\n  .tw{overflow-x:auto;margin:10px 0;border-radius:8px;border:1px solid var(--ll)}\n  table{width:100%;border-collapse:collapse;font-size:.88rem}\n  thead{background:var(--ink);color:#fff}\n  thead th{padding:8px 12px;font-weight:500;text-align:left}\n  tbody tr:nth-child(even){background:#f3ede6}\n  tbody tr:nth-child(odd){background:#fff}\n  tbody td{padding:7px 12px;border-bottom:1px solid var(--ll);vertical-align:top}\n  tbody tr:last-child td{border-bottom:none}\n  .jp{font-size:1.01em;letter-spacing:.03em}\n  .warn{background:var(--warn-bg);border-left:4px solid var(--warn-b);padding:9px 13px;border-radius:0 6px 6px 0;margin:10px 0;font-size:.88rem}\n  .tip{background:var(--tip-bg);border-left:4px solid var(--tip-b);padding:9px 13px;border-radius:0 6px 6px 0;margin:10px 0;font-size:.88rem}\n  .nb{background:var(--blue-bg);border-left:4px solid var(--blue-b);padding:9px 13px;border-radius:0 6px 6px 0;margin:10px 0;font-size:.88rem}\n  .hl{background:var(--hl);border-left:4px solid var(--gold);padding:9px 13px;border-radius:0 6px 6px 0;margin:10px 0;font-size:.88rem}\n  .lbl{font-weight:700;margin-right:5px}\n  strong{color:var(--accent)}\n  hr{border:none;border-top:1px dashed var(--ll);margin:22px 0}\n</style></head><body><div class=\"w\"><div class=\"hd\"><h1>第41課｜授受の敬語<br><small style=\"font-size:.6em;font-weight:400;color:var(--muted)\">いただく・くださる・てやる</small></h1><div class=\"tags\"><span class=\"tag\">第41課</span><span class=\"tag\">文法</span><span class=\"tag\">初级2</span><span class=\"tag\">N4</span></div></div><h2>授受动词回顾（L7/L24）</h2><div class=\"tw\"><table><thead><tr><th>动词</th><th>谁做</th><th>方向</th></tr></thead><tbody><tr><td class=\"jp\">あげます</td><td>我/A 为 B 做</td><td>我→别人，别人→别人</td></tr><tr><td class=\"jp\">もらいます</td><td>我 受到 A 的好意</td><td>我←别人</td></tr><tr><td class=\"jp\">くれます</td><td>A 为 我 做</td><td>别人→我</td></tr></tbody></table></div><h2>1. Vて形＋いただきました（我受到了对方的好意）</h2><p>比 もらいました 更礼貌，表示受到上位者或值得尊敬的人的好意。</p><div class=\"tw\"><table><thead><tr><th>例句</th><th>中文</th></tr></thead><tbody><tr><td class=\"jp\">わたしは ワット先生に 本を いただきました。</td><td>我从华特老师那里收到了书。</td></tr><tr><td class=\"jp\">先生に 漢字の まちがいを 直して いただきました。</td><td>老师帮我改正了汉字的错误。</td></tr><tr><td class=\"jp\">部長に 連れて 行って いただきました。</td><td>部长带我去了（多谢部长）。</td></tr></tbody></table></div><h2>2. Vて形＋いただけませんか（请求，礼貌）</h2><p>非常礼貌的请求表达，比 てください 客气得多。</p><div class=\"tw\"><table><thead><tr><th>例句</th><th>中文</th></tr></thead><tbody><tr><td class=\"jp\">ちょっと 教えて いただけませんか。</td><td>可以请您教我一下吗？</td></tr><tr><td class=\"jp\">新しい コピー機の 使い方が よく わからないんですが、ちょっと 教えて いただけませんか。</td><td>新复印机的用法不太懂，能请您教一下吗？</td></tr></tbody></table></div><h2>3. Vて形＋くださいました（对方为我做了，礼貌）</h2><div class=\"tw\"><table><thead><tr><th>例句</th><th>中文</th></tr></thead><tbody><tr><td class=\"jp\">家族の 皆さんが とても 親切に して くださいました。</td><td>寄宿家庭的大家都对我非常亲切。</td></tr><tr><td class=\"jp\">田中さんが くださいました。</td><td>田中先生给了我（礼物）。</td></tr></tbody></table></div><h2>4. Vて形＋やります（为下级/动物做）</h2><div class=\"tw\"><table><thead><tr><th>例句</th><th>中文</th></tr></thead><tbody><tr><td class=\"jp\">子どもを ディズニーランドへ 連れて 行って やります。</td><td>带孩子去迪斯尼乐园。</td></tr><tr><td class=\"jp\">お母さん、猿に お菓子を やっても いい？</td><td>妈妈，可以给猴子饼干吗？</td></tr></tbody></table></div><div class=\"tip\"><span class=\"lbl\">💡 礼貌级别</span>いただきます ＞ もらいます（受恩）<br>いただけませんか ＞ てもらえませんか ＞ てください（请求）<br>くださいます ＞ くれます（对方给我）</div><hr><h2>重点词汇</h2><div class=\"tw\"><table><thead><tr><th>日语</th><th>读音</th><th>词义</th></tr></thead><tbody><tr><td class=\"jp\">親切</td><td>しんせつ</td><td>亲切</td></tr><tr><td class=\"jp\">連れます</td><td>つれます</td><td>带（人去某处）</td></tr><tr><td class=\"jp\">直します</td><td>なおします</td><td>修改、修理</td></tr></tbody></table></div></div></body></html>",
+      "format": "html",
+      "tags": [
+        "第41課",
+        "文法",
+        "初级2",
+        "N4"
+      ]
+    },
+    {
+      "title": "第43・47課｜様子・伝聞",
+      "content": "<!DOCTYPE html><html lang=\"zh\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1.0\"><title>第43・47課｜様子・伝聞</title><style>\n@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@300;400;500&display=swap');\n  :root{--ink:#1a1a2e;--paper:#faf7f2;--accent:#c0392b;--gold:#d4a017;--muted:#7a6a5a;--ll:#e8e0d5;--hl:#fff8e1;--tip-bg:#f0f8f0;--tip-b:#4caf50;--warn-bg:#fff0f0;--warn-b:#e74c3c;--blue-bg:#f0f4ff;--blue-b:#3b5bdb;}\n  *{box-sizing:border-box;margin:0;padding:0}\n  body{font-family:'Noto Sans SC',sans-serif;background:var(--paper);color:var(--ink);line-height:1.8;padding:40px 20px 80px}\n  .w{max-width:740px;margin:0 auto}\n  .hd{border-left:5px solid var(--accent);padding-left:16px;margin-bottom:32px}\n  .hd h1{font-family:'Noto Serif SC',serif;font-size:1.65rem;font-weight:700;line-height:1.4}\n  .tags{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px}\n  .tag{font-size:.72rem;background:var(--ll);color:var(--muted);padding:2px 8px;border-radius:20px}\n  h2{font-family:'Noto Serif SC',serif;font-size:1.05rem;font-weight:700;color:var(--accent);margin:28px 0 10px;padding-bottom:4px;border-bottom:1.5px solid var(--ll);display:flex;align-items:center;gap:8px}\n  h2::before{content:'';display:inline-block;width:7px;height:7px;background:var(--accent);border-radius:50%;flex-shrink:0}\n  p{margin-bottom:9px;font-size:.93rem}\n  .tw{overflow-x:auto;margin:10px 0;border-radius:8px;border:1px solid var(--ll)}\n  table{width:100%;border-collapse:collapse;font-size:.88rem}\n  thead{background:var(--ink);color:#fff}\n  thead th{padding:8px 12px;font-weight:500;text-align:left}\n  tbody tr:nth-child(even){background:#f3ede6}\n  tbody tr:nth-child(odd){background:#fff}\n  tbody td{padding:7px 12px;border-bottom:1px solid var(--ll);vertical-align:top}\n  tbody tr:last-child td{border-bottom:none}\n  .jp{font-size:1.01em;letter-spacing:.03em}\n  .warn{background:var(--warn-bg);border-left:4px solid var(--warn-b);padding:9px 13px;border-radius:0 6px 6px 0;margin:10px 0;font-size:.88rem}\n  .tip{background:var(--tip-bg);border-left:4px solid var(--tip-b);padding:9px 13px;border-radius:0 6px 6px 0;margin:10px 0;font-size:.88rem}\n  .nb{background:var(--blue-bg);border-left:4px solid var(--blue-b);padding:9px 13px;border-radius:0 6px 6px 0;margin:10px 0;font-size:.88rem}\n  .hl{background:var(--hl);border-left:4px solid var(--gold);padding:9px 13px;border-radius:0 6px 6px 0;margin:10px 0;font-size:.88rem}\n  .lbl{font-weight:700;margin-right:5px}\n  strong{color:var(--accent)}\n  hr{border:none;border-top:1px dashed var(--ll);margin:22px 0}\n</style></head><body><div class=\"w\"><div class=\"hd\"><h1>第43・47課｜様子・伝聞<br><small style=\"font-size:.6em;font-weight:400;color:var(--muted)\">～そうです（外観・伝聞）・ようです</small></h1><div class=\"tags\"><span class=\"tag\">第43課</span><span class=\"tag\">第47課</span><span class=\"tag\">文法</span><span class=\"tag\">初级2</span><span class=\"tag\">N4</span></div></div><h2>L43: Adj/Vます形＋そうです（外观/样子）</h2><p>根据<strong>眼睛看到的样子</strong>来推测，表示\"看起来/好像快要\"。</p><div class=\"tw\"><table><thead><tr><th>变形规则</th><th>例</th></tr></thead><tbody><tr><td class=\"jp\">い形容词：去い＋そう</td><td>おいしい → おいしそう　（看起来好吃）</td></tr><tr><td class=\"jp\">な形容词：去な＋そう</td><td>よさそう（看起来不错）　※よい→よさそう</td></tr><tr><td class=\"jp\">Vます形＋そう</td><td>降りそう（好像快下雨）　とれそう（好像要掉了）</td></tr><tr><td class=\"jp\">否定：なさそう</td><td>おいしくなさそう（看起来不好吃）</td></tr></tbody></table></div><div class=\"tw\"><table><thead><tr><th>例句</th><th>中文</th></tr></thead><tbody><tr><td class=\"jp\">今にも 雨が 降りそうです。</td><td>现在随时要下雨的样子。</td></tr><tr><td class=\"jp\">もうすぐ 桜が 咲きそうですね。</td><td>樱花好像快开了呢。</td></tr><tr><td class=\"jp\">上着の ボタンが とれそうですよ。</td><td>外套的纽扣好像要掉了哦。</td></tr><tr><td class=\"jp\">わあ、おいしそうですね。 いただきます。</td><td>哇，看起来好好吃。我开动了。</td></tr></tbody></table></div><div class=\"warn\"><span class=\"lbl\">⚠️</span>そうです（外観）和 そうです（伝聞）区别在于<strong>形式不同</strong>：<br>い形容词＋そう（外観）：おいし<strong>そう</strong>　←去い<br>普通形＋そうです（伝聞）：おいし<strong>い</strong>そうです　←保留い</div><h2>L43: Vて形＋きます（去做后回来）</h2><div class=\"tw\"><table><thead><tr><th>例句</th><th>中文</th></tr></thead><tbody><tr><td class=\"jp\">ちょっと 切符を 買って きます。</td><td>我去买一下票（就回来）。</td></tr><tr><td class=\"jp\">すぐ コピーして きます。</td><td>我马上去复印（就回来）。</td></tr></tbody></table></div><hr><h2>L47: 普通形＋そうです（传闻/听说）</h2><p>表示从别处得到的信息，\"听说…\"。<strong>普通形直接接そうです。</strong></p><div class=\"tw\"><table><thead><tr><th>例句</th><th>中文</th></tr></thead><tbody><tr><td class=\"jp\">天気予報に よると、あしたは 寒く なるそうです。</td><td>据天气预报，明天会变冷。</td></tr><tr><td class=\"jp\">ワット先生は 厳しい 先生だそうですね。</td><td>听说华特老师是个严格的老师呢。</td></tr><tr><td class=\"jp\">クララさんは 子どもの とき、フランスに 住んで いたそうです。</td><td>听说克拉拉小时候住在法国。</td></tr></tbody></table></div><h2>L47: 普通形＋ようです（好像/看来）</h2><p>根据某些迹象或信息推测，比そうです更委婉，有\"我觉得好像\"的语感。</p><div class=\"tw\"><table><thead><tr><th>例句</th><th>中文</th></tr></thead><tbody><tr><td class=\"jp\">隣の 部屋に だれか いるようです。</td><td>好像隔壁房间有人。</td></tr><tr><td class=\"jp\">事故の ようですね。パトカーと 救急車が 来ていますよ。</td><td>好像是事故呢，警车和救护车来了。</td></tr><tr><td class=\"jp\">パーティーでも して いるようですね。</td><td>好像在开派对呢。</td></tr></tbody></table></div><div class=\"nb\"><span class=\"lbl\">三者对比</span>Vますそう（外観）：ボタンがとれそう（眼睛看到，快要掉了）<br>普通形そうです（伝聞）：厳しい先生だそうです（听说）<br>ようです（推測）：事故のようです（根据迹象推测）</div><hr><h2>重点词汇</h2><div class=\"tw\"><table><thead><tr><th>日语</th><th>读音</th><th>词义</th></tr></thead><tbody><tr><td class=\"jp\">天気予報</td><td>てんきよほう</td><td>天气预报</td></tr><tr><td class=\"jp\">救急車</td><td>きゅうきゅうしゃ</td><td>救护车</td></tr><tr><td class=\"jp\">パトカー</td><td>—</td><td>警车</td></tr><tr><td class=\"jp\">婚約</td><td>こんやく</td><td>婚约、订婚</td></tr></tbody></table></div></div></body></html>",
+      "format": "html",
+      "tags": [
+        "第43課",
+        "第47課",
+        "文法",
+        "初级2",
+        "N4"
+      ]
+    },
+    {
+      "title": "第44課｜すぎる・やすい/にくい・にする",
+      "content": "<!DOCTYPE html><html lang=\"zh\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1.0\"><title>第44課｜すぎる・やすい/にくい・にする</title><style>\n@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@300;400;500&display=swap');\n  :root{--ink:#1a1a2e;--paper:#faf7f2;--accent:#c0392b;--gold:#d4a017;--muted:#7a6a5a;--ll:#e8e0d5;--hl:#fff8e1;--tip-bg:#f0f8f0;--tip-b:#4caf50;--warn-bg:#fff0f0;--warn-b:#e74c3c;--blue-bg:#f0f4ff;--blue-b:#3b5bdb;}\n  *{box-sizing:border-box;margin:0;padding:0}\n  body{font-family:'Noto Sans SC',sans-serif;background:var(--paper);color:var(--ink);line-height:1.8;padding:40px 20px 80px}\n  .w{max-width:740px;margin:0 auto}\n  .hd{border-left:5px solid var(--accent);padding-left:16px;margin-bottom:32px}\n  .hd h1{font-family:'Noto Serif SC',serif;font-size:1.65rem;font-weight:700;line-height:1.4}\n  .tags{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px}\n  .tag{font-size:.72rem;background:var(--ll);color:var(--muted);padding:2px 8px;border-radius:20px}\n  h2{font-family:'Noto Serif SC',serif;font-size:1.05rem;font-weight:700;color:var(--accent);margin:28px 0 10px;padding-bottom:4px;border-bottom:1.5px solid var(--ll);display:flex;align-items:center;gap:8px}\n  h2::before{content:'';display:inline-block;width:7px;height:7px;background:var(--accent);border-radius:50%;flex-shrink:0}\n  p{margin-bottom:9px;font-size:.93rem}\n  .tw{overflow-x:auto;margin:10px 0;border-radius:8px;border:1px solid var(--ll)}\n  table{width:100%;border-collapse:collapse;font-size:.88rem}\n  thead{background:var(--ink);color:#fff}\n  thead th{padding:8px 12px;font-weight:500;text-align:left}\n  tbody tr:nth-child(even){background:#f3ede6}\n  tbody tr:nth-child(odd){background:#fff}\n  tbody td{padding:7px 12px;border-bottom:1px solid var(--ll);vertical-align:top}\n  tbody tr:last-child td{border-bottom:none}\n  .jp{font-size:1.01em;letter-spacing:.03em}\n  .warn{background:var(--warn-bg);border-left:4px solid var(--warn-b);padding:9px 13px;border-radius:0 6px 6px 0;margin:10px 0;font-size:.88rem}\n  .tip{background:var(--tip-bg);border-left:4px solid var(--tip-b);padding:9px 13px;border-radius:0 6px 6px 0;margin:10px 0;font-size:.88rem}\n  .nb{background:var(--blue-bg);border-left:4px solid var(--blue-b);padding:9px 13px;border-radius:0 6px 6px 0;margin:10px 0;font-size:.88rem}\n  .hl{background:var(--hl);border-left:4px solid var(--gold);padding:9px 13px;border-radius:0 6px 6px 0;margin:10px 0;font-size:.88rem}\n  .lbl{font-weight:700;margin-right:5px}\n  strong{color:var(--accent)}\n  hr{border:none;border-top:1px dashed var(--ll);margin:22px 0}\n</style></head><body><div class=\"w\"><div class=\"hd\"><h1>第44課｜すぎる・やすい/にくい・にする<br><small style=\"font-size:.6em;font-weight:400;color:var(--muted)\">飲みすぎ・使いやすい・ビールにします</small></h1><div class=\"tags\"><span class=\"tag\">第44課</span><span class=\"tag\">文法</span><span class=\"tag\">初级2</span><span class=\"tag\">N4</span></div></div><h2>1. Vます形/Adj＋すぎます（过于/太…）</h2><div class=\"tw\"><table><thead><tr><th>变形</th><th>例</th></tr></thead><tbody><tr><td class=\"jp\">Vます形＋すぎる</td><td>飲みすぎました（喝多了）　食べすぎ（吃太多）</td></tr><tr><td class=\"jp\">い形容词：去い＋すぎる</td><td>多すぎる（太多）　難しすぎる（太难）</td></tr><tr><td class=\"jp\">な形容词：な→すぎる</td><td>静かすぎる（太安静）</td></tr></tbody></table></div><div class=\"tw\"><table><thead><tr><th>例句</th><th>中文</th></tr></thead><tbody><tr><td class=\"jp\">ゆうべ お酒を 飲みすぎました。</td><td>昨晚酒喝多了。</td></tr><tr><td class=\"jp\">笑いすぎて、涙が 出たんです。</td><td>笑太多，眼泪都出来了。</td></tr><tr><td class=\"jp\">簡単すぎて、運転が おもしろくないです。</td><td>太简单了，开车一点都不有趣。</td></tr></tbody></table></div><h2>2. Vます形＋やすい ／ にくい（容易/难以做…）</h2><div class=\"tw\"><table><thead><tr><th>例句</th><th>中文</th></tr></thead><tbody><tr><td class=\"jp\">このパソコンは 使いやすいです。</td><td>这台电脑很好用。</td></tr><tr><td class=\"jp\">このコップは 丈夫で 割れにくいですよ。</td><td>这个杯子很结实，不容易碎。</td></tr><tr><td class=\"jp\">田舎の ほうが 住みやすいと 思います。</td><td>我觉得乡下比较好住。</td></tr></tbody></table></div><h2>3. ～にします（决定/把…变成…）</h2><div class=\"tw\"><table><thead><tr><th>例句</th><th>中文</th></tr></thead><tbody><tr><td class=\"jp\">飲み物は 何に しますか。……ビールに します。</td><td>饮料要什么？……就啤酒吧。（点单/决定）</td></tr><tr><td class=\"jp\">ズボンを 短く して ください。</td><td>请把裤子改短一点。（使变成某状态）</td></tr></tbody></table></div><div class=\"tip\"><span class=\"lbl\">💡</span>にします ＝ 决定选择某样东西（点菜时常用）<br>～くする（い形）/ ～にする（な形）＝ 把某物变成某状态</div><hr><h2>重点词汇</h2><div class=\"tw\"><table><thead><tr><th>日语</th><th>读音</th><th>词义</th></tr></thead><tbody><tr><td class=\"jp\">操作</td><td>そうさ</td><td>操作</td></tr><tr><td class=\"jp\">安全</td><td>あんぜん</td><td>安全</td></tr><tr><td class=\"jp\">丈夫</td><td>じょうぶ</td><td>结实、耐用</td></tr></tbody></table></div></div></body></html>",
+      "format": "html",
+      "tags": [
+        "第44課",
+        "文法",
+        "初级2",
+        "N4"
+      ]
+    },
+    {
+      "title": "第46課｜ところ・ばかり・はず",
+      "content": "<!DOCTYPE html><html lang=\"zh\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1.0\"><title>第46課｜ところ・ばかり・はず</title><style>\n@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@300;400;500&display=swap');\n  :root{--ink:#1a1a2e;--paper:#faf7f2;--accent:#c0392b;--gold:#d4a017;--muted:#7a6a5a;--ll:#e8e0d5;--hl:#fff8e1;--tip-bg:#f0f8f0;--tip-b:#4caf50;--warn-bg:#fff0f0;--warn-b:#e74c3c;--blue-bg:#f0f4ff;--blue-b:#3b5bdb;}\n  *{box-sizing:border-box;margin:0;padding:0}\n  body{font-family:'Noto Sans SC',sans-serif;background:var(--paper);color:var(--ink);line-height:1.8;padding:40px 20px 80px}\n  .w{max-width:740px;margin:0 auto}\n  .hd{border-left:5px solid var(--accent);padding-left:16px;margin-bottom:32px}\n  .hd h1{font-family:'Noto Serif SC',serif;font-size:1.65rem;font-weight:700;line-height:1.4}\n  .tags{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px}\n  .tag{font-size:.72rem;background:var(--ll);color:var(--muted);padding:2px 8px;border-radius:20px}\n  h2{font-family:'Noto Serif SC',serif;font-size:1.05rem;font-weight:700;color:var(--accent);margin:28px 0 10px;padding-bottom:4px;border-bottom:1.5px solid var(--ll);display:flex;align-items:center;gap:8px}\n  h2::before{content:'';display:inline-block;width:7px;height:7px;background:var(--accent);border-radius:50%;flex-shrink:0}\n  p{margin-bottom:9px;font-size:.93rem}\n  .tw{overflow-x:auto;margin:10px 0;border-radius:8px;border:1px solid var(--ll)}\n  table{width:100%;border-collapse:collapse;font-size:.88rem}\n  thead{background:var(--ink);color:#fff}\n  thead th{padding:8px 12px;font-weight:500;text-align:left}\n  tbody tr:nth-child(even){background:#f3ede6}\n  tbody tr:nth-child(odd){background:#fff}\n  tbody td{padding:7px 12px;border-bottom:1px solid var(--ll);vertical-align:top}\n  tbody tr:last-child td{border-bottom:none}\n  .jp{font-size:1.01em;letter-spacing:.03em}\n  .warn{background:var(--warn-bg);border-left:4px solid var(--warn-b);padding:9px 13px;border-radius:0 6px 6px 0;margin:10px 0;font-size:.88rem}\n  .tip{background:var(--tip-bg);border-left:4px solid var(--tip-b);padding:9px 13px;border-radius:0 6px 6px 0;margin:10px 0;font-size:.88rem}\n  .nb{background:var(--blue-bg);border-left:4px solid var(--blue-b);padding:9px 13px;border-radius:0 6px 6px 0;margin:10px 0;font-size:.88rem}\n  .hl{background:var(--hl);border-left:4px solid var(--gold);padding:9px 13px;border-radius:0 6px 6px 0;margin:10px 0;font-size:.88rem}\n  .lbl{font-weight:700;margin-right:5px}\n  strong{color:var(--accent)}\n  hr{border:none;border-top:1px dashed var(--ll);margin:22px 0}\n</style></head><body><div class=\"w\"><div class=\"hd\"><h1>第46課｜ところ・ばかり・はず<br><small style=\"font-size:.6em;font-weight:400;color:var(--muted)\">刚要/正在/刚完成・はずです</small></h1><div class=\"tags\"><span class=\"tag\">第46課</span><span class=\"tag\">文法</span><span class=\"tag\">初级2</span><span class=\"tag\">N4</span></div></div><h2>1. ～ているところです ／ ～たところです ／ ～るところです</h2><p>表示动作所处的<strong>时间节点</strong>。</p><div class=\"tw\"><table><thead><tr><th>形式</th><th>时间点</th><th>例句</th><th>中文</th></tr></thead><tbody><tr><td class=\"jp\">Vる＋ところ</td><td>正要开始（马上）</td><td>電車に 乗る ところなんです。</td><td>正要上电车。</td></tr><tr><td class=\"jp\">Vている＋ところ</td><td>正在进行中</td><td>今 調べて いる ところです。</td><td>正在查呢。</td></tr><tr><td class=\"jp\">Vた＋ところ</td><td>刚刚完成</td><td>たった今 帰った ところです。</td><td>刚刚刚回来。</td></tr></tbody></table></div><h2>2. Vた形＋ばかりです（刚做了…不久）</h2><p>强调做完某事后<strong>时间还很短</strong>，带有\"才/刚\"的语感。</p><div class=\"tw\"><table><thead><tr><th>例句</th><th>中文</th></tr></thead><tbody><tr><td class=\"jp\">彼は 3月に 大学を 卒業した ばかりです。</td><td>他3月刚从大学毕业不久。</td></tr><tr><td class=\"jp\">先月 会社に 入った ばかりなので、まだ よく わかりません。</td><td>上个月才进公司不久，还不太了解。</td></tr><tr><td class=\"jp\">先週 買った ばかりなのに、動かないんです。</td><td>才买了没多久，就不动了。</td></tr></tbody></table></div><div class=\"nb\"><span class=\"lbl\">たところ vs ばかり</span>たところ：刚刚完成（强调刚结束这一时刻）<br>ばかり：刚做了不久（强调时间短，还保持某种状态）</div><h2>3. 普通形＋はずです（应该/理应如此）</h2><p>说话人根据某种根据或信息，<strong>认为理应如此</strong>。</p><div class=\"tw\"><table><thead><tr><th>例句</th><th>中文</th></tr></thead><tbody><tr><td class=\"jp\">ミラーさんは 会議室に いる はずです。</td><td>米勒先生应该在会议室（有根据的推测）。</td></tr><tr><td class=\"jp\">さっき 駅から 電話が ありましたから、もうすぐ 来る はずです。</td><td>刚才从车站来了电话，应该快来了。</td></tr><tr><td class=\"jp\">先週 直して もらった ばかりなのに……。</td><td>明明上周才刚修好的……（はず被辜负了）</td></tr></tbody></table></div><div class=\"tip\"><span class=\"lbl\">💡はず vs でしょう vs かもしれません</span>はず：根据已知信息，理应如此（确信）<br>でしょう：推测（不完全确定）<br>かもしれません：可能（不确定）</div><hr><h2>重点词汇</h2><div class=\"tw\"><table><thead><tr><th>日语</th><th>读音</th><th>词义</th></tr></thead><tbody><tr><td class=\"jp\">卒業</td><td>そつぎょう</td><td>毕业</td></tr><tr><td class=\"jp\">故障</td><td>こしょう</td><td>故障</td></tr><tr><td class=\"jp\">原因</td><td>げんいん</td><td>原因</td></tr></tbody></table></div></div></body></html>",
+      "format": "html",
+      "tags": [
+        "第46課",
+        "文法",
+        "初级2",
+        "N4"
+      ]
+    },
+    {
+      "title": "第48課｜使役（させます）",
+      "content": "<!DOCTYPE html><html lang=\"zh\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1.0\"><title>第48課｜使役（させます）</title><style>\n@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@300;400;500&display=swap');\n  :root{--ink:#1a1a2e;--paper:#faf7f2;--accent:#c0392b;--gold:#d4a017;--muted:#7a6a5a;--ll:#e8e0d5;--hl:#fff8e1;--tip-bg:#f0f8f0;--tip-b:#4caf50;--warn-bg:#fff0f0;--warn-b:#e74c3c;--blue-bg:#f0f4ff;--blue-b:#3b5bdb;}\n  *{box-sizing:border-box;margin:0;padding:0}\n  body{font-family:'Noto Sans SC',sans-serif;background:var(--paper);color:var(--ink);line-height:1.8;padding:40px 20px 80px}\n  .w{max-width:740px;margin:0 auto}\n  .hd{border-left:5px solid var(--accent);padding-left:16px;margin-bottom:32px}\n  .hd h1{font-family:'Noto Serif SC',serif;font-size:1.65rem;font-weight:700;line-height:1.4}\n  .tags{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px}\n  .tag{font-size:.72rem;background:var(--ll);color:var(--muted);padding:2px 8px;border-radius:20px}\n  h2{font-family:'Noto Serif SC',serif;font-size:1.05rem;font-weight:700;color:var(--accent);margin:28px 0 10px;padding-bottom:4px;border-bottom:1.5px solid var(--ll);display:flex;align-items:center;gap:8px}\n  h2::before{content:'';display:inline-block;width:7px;height:7px;background:var(--accent);border-radius:50%;flex-shrink:0}\n  p{margin-bottom:9px;font-size:.93rem}\n  .tw{overflow-x:auto;margin:10px 0;border-radius:8px;border:1px solid var(--ll)}\n  table{width:100%;border-collapse:collapse;font-size:.88rem}\n  thead{background:var(--ink);color:#fff}\n  thead th{padding:8px 12px;font-weight:500;text-align:left}\n  tbody tr:nth-child(even){background:#f3ede6}\n  tbody tr:nth-child(odd){background:#fff}\n  tbody td{padding:7px 12px;border-bottom:1px solid var(--ll);vertical-align:top}\n  tbody tr:last-child td{border-bottom:none}\n  .jp{font-size:1.01em;letter-spacing:.03em}\n  .warn{background:var(--warn-bg);border-left:4px solid var(--warn-b);padding:9px 13px;border-radius:0 6px 6px 0;margin:10px 0;font-size:.88rem}\n  .tip{background:var(--tip-bg);border-left:4px solid var(--tip-b);padding:9px 13px;border-radius:0 6px 6px 0;margin:10px 0;font-size:.88rem}\n  .nb{background:var(--blue-bg);border-left:4px solid var(--blue-b);padding:9px 13px;border-radius:0 6px 6px 0;margin:10px 0;font-size:.88rem}\n  .hl{background:var(--hl);border-left:4px solid var(--gold);padding:9px 13px;border-radius:0 6px 6px 0;margin:10px 0;font-size:.88rem}\n  .lbl{font-weight:700;margin-right:5px}\n  strong{color:var(--accent)}\n  hr{border:none;border-top:1px dashed var(--ll);margin:22px 0}\n</style></head><body><div class=\"w\"><div class=\"hd\"><h1>第48課｜使役（させます）<br><small style=\"font-size:.6em;font-weight:400;color:var(--muted)\">息子をイギリスへ留学させます</small></h1><div class=\"tags\"><span class=\"tag\">第48課</span><span class=\"tag\">文法</span><span class=\"tag\">初级2</span><span class=\"tag\">N4</span></div></div><h2>1. 使役形（させます）的变化</h2><div class=\"tw\"><table><thead><tr><th>动词类</th><th>变化规则</th><th>例</th></tr></thead><tbody><tr><td class=\"jp\">Ⅰ类</td><td>あ段＋せる</td><td>書く→書かせる　飲む→飲ませる</td></tr><tr><td class=\"jp\">Ⅱ类</td><td>る→させる</td><td>食べる→食べさせる　見る→見させる</td></tr><tr><td class=\"jp\">Ⅲ类</td><td>します→させます　きます→こさせます</td><td>—</td></tr></tbody></table></div><h2>2. 使役句型</h2><p>使役表示\"让/叫/派某人做某事\"。</p><div class=\"tw\"><table><thead><tr><th>句型</th><th>用法</th><th>例句</th><th>中文</th></tr></thead><tbody><tr><td class=\"jp\">名词（人）を＋自動詞</td><td>让（人）去做（自动词）</td><td>部長は ミラーさんを アメリカへ 出張させます。</td><td>部长派米勒去美国出差。</td></tr><tr><td class=\"jp\">名词（人）に＋他動詞</td><td>让（人）来做（他动词）</td><td>朝は 忙しいですから、娘に 準備を 手伝わせます。</td><td>早上很忙，让女儿帮忙准备。</td></tr></tbody></table></div><div class=\"tw\"><table><thead><tr><th>例句</th><th>中文</th></tr></thead><tbody><tr><td class=\"jp\">毎日 子どもたちを 1キロ 走らせて います。</td><td>每天让孩子们跑1公里。</td></tr><tr><td class=\"jp\">息子に 駅まで 送らせますから、ちょっと 待って ください。</td><td>让儿子送到车站，请稍等。</td></tr><tr><td class=\"jp\">先生は 生徒に 好きな 本を 読ませて、自由に 意見を 言わせるんです。</td><td>老师让学生读喜欢的书，然后自由发表意见。</td></tr></tbody></table></div><h2>3. させてください ／ させていただけませんか</h2><div class=\"tw\"><table><thead><tr><th>例句</th><th>中文</th></tr></thead><tbody><tr><td class=\"jp\">しばらく ここに 車を 止めさせて いただけませんか。</td><td>可以让我在这里停一会儿车吗？</td></tr><tr><td class=\"jp\">今日は これで 失礼させて いただきます。</td><td>今天就允许我先告辞了。</td></tr></tbody></table></div><div class=\"tip\"><span class=\"lbl\">💡</span>させていただきます ＝ 请允许我…（自己要做某事，礼貌地征求许可）</div><hr><h2>重点词汇</h2><div class=\"tw\"><table><thead><tr><th>日语</th><th>读音</th><th>词义</th></tr></thead><tbody><tr><td class=\"jp\">出張</td><td>しゅっちょう</td><td>出差</td></tr><tr><td class=\"jp\">自由</td><td>じゆう</td><td>自由</td></tr><tr><td class=\"jp\">柔道</td><td>じゅうどう</td><td>柔道</td></tr></tbody></table></div></div></body></html>",
+      "format": "html",
+      "tags": [
+        "第48課",
+        "文法",
+        "初级2",
+        "N4"
+      ]
+    },
+    {
+      "title": "第49・50課｜敬語まとめ",
+      "content": "<!DOCTYPE html><html lang=\"zh\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1.0\"><title>第49・50課｜敬語まとめ</title><style>\n@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@300;400;500&display=swap');\n  :root{--ink:#1a1a2e;--paper:#faf7f2;--accent:#c0392b;--gold:#d4a017;--muted:#7a6a5a;--ll:#e8e0d5;--hl:#fff8e1;--tip-bg:#f0f8f0;--tip-b:#4caf50;--warn-bg:#fff0f0;--warn-b:#e74c3c;--blue-bg:#f0f4ff;--blue-b:#3b5bdb;}\n  *{box-sizing:border-box;margin:0;padding:0}\n  body{font-family:'Noto Sans SC',sans-serif;background:var(--paper);color:var(--ink);line-height:1.8;padding:40px 20px 80px}\n  .w{max-width:740px;margin:0 auto}\n  .hd{border-left:5px solid var(--accent);padding-left:16px;margin-bottom:32px}\n  .hd h1{font-family:'Noto Serif SC',serif;font-size:1.65rem;font-weight:700;line-height:1.4}\n  .tags{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px}\n  .tag{font-size:.72rem;background:var(--ll);color:var(--muted);padding:2px 8px;border-radius:20px}\n  h2{font-family:'Noto Serif SC',serif;font-size:1.05rem;font-weight:700;color:var(--accent);margin:28px 0 10px;padding-bottom:4px;border-bottom:1.5px solid var(--ll);display:flex;align-items:center;gap:8px}\n  h2::before{content:'';display:inline-block;width:7px;height:7px;background:var(--accent);border-radius:50%;flex-shrink:0}\n  p{margin-bottom:9px;font-size:.93rem}\n  .tw{overflow-x:auto;margin:10px 0;border-radius:8px;border:1px solid var(--ll)}\n  table{width:100%;border-collapse:collapse;font-size:.88rem}\n  thead{background:var(--ink);color:#fff}\n  thead th{padding:8px 12px;font-weight:500;text-align:left}\n  tbody tr:nth-child(even){background:#f3ede6}\n  tbody tr:nth-child(odd){background:#fff}\n  tbody td{padding:7px 12px;border-bottom:1px solid var(--ll);vertical-align:top}\n  tbody tr:last-child td{border-bottom:none}\n  .jp{font-size:1.01em;letter-spacing:.03em}\n  .warn{background:var(--warn-bg);border-left:4px solid var(--warn-b);padding:9px 13px;border-radius:0 6px 6px 0;margin:10px 0;font-size:.88rem}\n  .tip{background:var(--tip-bg);border-left:4px solid var(--tip-b);padding:9px 13px;border-radius:0 6px 6px 0;margin:10px 0;font-size:.88rem}\n  .nb{background:var(--blue-bg);border-left:4px solid var(--blue-b);padding:9px 13px;border-radius:0 6px 6px 0;margin:10px 0;font-size:.88rem}\n  .hl{background:var(--hl);border-left:4px solid var(--gold);padding:9px 13px;border-radius:0 6px 6px 0;margin:10px 0;font-size:.88rem}\n  .lbl{font-weight:700;margin-right:5px}\n  strong{color:var(--accent)}\n  hr{border:none;border-top:1px dashed var(--ll);margin:22px 0}\n</style></head><body><div class=\"w\"><div class=\"hd\"><h1>第49・50課｜敬語まとめ<br><small style=\"font-size:.6em;font-weight:400;color:var(--muted)\">尊敬語・謙譲語・丁寧語</small></h1><div class=\"tags\"><span class=\"tag\">第49課</span><span class=\"tag\">第50課</span><span class=\"tag\">文法</span><span class=\"tag\">初级2</span><span class=\"tag\">N4</span><span class=\"tag\">敬語</span></div></div><h2>概念：敬語の三本柱</h2><div class=\"tw\"><table><thead><tr><th>类型</th><th>对谁</th><th>功能</th></tr></thead><tbody><tr><td class=\"jp\">尊敬語（L49）</td><td>对方/话题中的人</td><td>抬高对方的行为</td></tr><tr><td class=\"jp\">謙譲語（L50）</td><td>自己/己方</td><td>降低自己的行为</td></tr><tr><td class=\"jp\">丁寧語</td><td>任何人</td><td>礼貌表达（ます/です/ございます）</td></tr></tbody></table></div><hr><h2>尊敬語Ⅰ：〜れます / 〜られます</h2><p>被动形转用为尊敬形（比普通形礼貌，比お〜になる稍低）。</p><div class=\"tw\"><table><thead><tr><th>普通</th><th>尊敬Ⅰ</th><th>中文</th></tr></thead><tbody><tr><td class=\"jp\">帰りました</td><td>帰られました</td><td>（他/她）回去了</td></tr><tr><td class=\"jp\">読みますか</td><td>読まれますか</td><td>您读吗？</td></tr></tbody></table></div><h2>尊敬語Ⅱ：特殊尊敬动词</h2><div class=\"tw\"><table><thead><tr><th>普通</th><th>尊敬</th><th>中文</th></tr></thead><tbody><tr><td class=\"jp\">います・行きます・来ます</td><td>いらっしゃいます</td><td>在/去/来</td></tr><tr><td class=\"jp\">言います</td><td>おっしゃいます</td><td>说</td></tr><tr><td class=\"jp\">します</td><td>なさいます</td><td>做</td></tr><tr><td class=\"jp\">食べます・飲みます</td><td>召し上がります</td><td>吃/喝</td></tr><tr><td class=\"jp\">見ます</td><td>ご覧になります</td><td>看</td></tr><tr><td class=\"jp\">知っています</td><td>ご存知です</td><td>知道</td></tr><tr><td class=\"jp\">あげます</td><td>くださいます</td><td>给（对方给我）</td></tr></tbody></table></div><h2>尊敬語Ⅲ：お/ご＋Vます形＋になります</h2><div class=\"tw\"><table><thead><tr><th>例句</th><th>中文</th></tr></thead><tbody><tr><td class=\"jp\">部長は お帰りに なりました。</td><td>部长回去了。</td></tr><tr><td class=\"jp\">社長は お出かけに なりました。</td><td>社长出门了。</td></tr></tbody></table></div><hr><h2>謙譲語Ⅰ：お/ご＋Vます形＋します</h2><div class=\"tw\"><table><thead><tr><th>例句</th><th>中文</th></tr></thead><tbody><tr><td class=\"jp\">今月の スケジュールを お送りします。</td><td>（我）把本月日程发送给您。</td></tr><tr><td class=\"jp\">江戸東京博物館へ ご案内します。</td><td>（我）带您参观江户东京博物馆。</td></tr><tr><td class=\"jp\">お持ちしましょうか。</td><td>（我）来帮您拿吧？</td></tr></tbody></table></div><h2>謙譲語Ⅱ：特殊謙譲动词</h2><div class=\"tw\"><table><thead><tr><th>普通</th><th>謙譲</th><th>中文</th></tr></thead><tbody><tr><td class=\"jp\">います</td><td>おります</td><td>在</td></tr><tr><td class=\"jp\">行きます・来ます</td><td>参ります</td><td>去/来</td></tr><tr><td class=\"jp\">言います</td><td>申します</td><td>说</td></tr><tr><td class=\"jp\">します</td><td>いたします</td><td>做</td></tr><tr><td class=\"jp\">見ます</td><td>拝見します</td><td>看</td></tr><tr><td class=\"jp\">もらいます・食べます・飲みます</td><td>いただきます</td><td>得到/吃/喝</td></tr></tbody></table></div><div class=\"tip\"><span class=\"lbl\">💡使用场合</span>对上司、顾客、陌生长者使用敬语。<br>谦语用于自己的行为；尊语用于对方/话题中的人的行为。<br>名词・形容词にも敬意：お国、ご家族、お元気、ご親切。</div><h2>その他 敬語表現</h2><div class=\"tw\"><table><thead><tr><th>表達</th><th>中文</th><th>用法</th></tr></thead><tbody><tr><td class=\"jp\">～まして</td><td>于…（更礼貌的て形）</td><td>ハンスが 熱を 出しまして…</td></tr><tr><td class=\"jp\">～ますので</td><td>由于…（礼貌ので）</td><td>学校を 休ませますので…</td></tr></tbody></table></div><hr><h2>重点词汇（敬語）</h2><div class=\"tw\"><table><thead><tr><th>日语</th><th>读音</th><th>词义</th></tr></thead><tbody><tr><td class=\"jp\">失礼いたします</td><td>しつれいいたします</td><td>告辞（谦语）</td></tr><tr><td class=\"jp\">よろしくお伝えください</td><td>—</td><td>请代我问好</td></tr><tr><td class=\"jp\">ご存知</td><td>ごぞんじ</td><td>您知道（尊语）</td></tr><tr><td class=\"jp\">拝見します</td><td>はいけんします</td><td>拜读/拜见（谦语）</td></tr></tbody></table></div></div></body></html>",
+      "format": "html",
+      "tags": [
+        "第49課",
+        "第50課",
+        "文法",
+        "初级2",
+        "N4",
+        "敬語"
+      ]
+    }
+  ],
+  "flashcards": [
+    {
+      "front": "Vて形＋います（状态用法）\n例：窓が 閉まって います。",
+      "back": "结果状态持续到现在 →「窗户关着」\n适用：あく・しまる・つく・きえる・こわれる・われる 等\n※ 不是正在做，而是处于…的状态",
+      "tags": [
+        "第29課"
+      ]
+    },
+    {
+      "front": "Vて形＋しまいました（两种语感）",
+      "back": "① 完成：宿題をやってしまいました（做完了✅）\n② 遗憾：傘を忘れてしまいました（忘了😔）\n口语缩写：～ちゃいました",
+      "tags": [
+        "第29課"
+      ]
+    },
+    {
+      "front": "それは / その＋名词 / そう します",
+      "back": "指代对方刚说过的话（不是眼前物品）\nそれは 大変ですね → 那可糟了\nその 場合は → 那种情况下\nそう します → 就照你说的做",
+      "tags": [
+        "第29課"
+      ]
+    },
+    {
+      "front": "忘れ物",
+      "back": "わすれもの　遗失物品",
+      "tags": [
+        "第29課"
+      ]
+    },
+    {
+      "front": "網棚",
+      "back": "あみだな　（车厢）行李架",
+      "tags": [
+        "第29課"
+      ]
+    },
+    {
+      "front": "交番",
+      "back": "こうばん　派出所",
+      "tags": [
+        "第29課"
+      ]
+    },
+    {
+      "front": "駅員",
+      "back": "えきいん　站务员",
+      "tags": [
+        "第29課"
+      ]
+    },
+    {
+      "front": "確か",
+      "back": "たしか　似乎是、好像是（副词，不确定）",
+      "tags": [
+        "第29課"
+      ]
+    },
+    {
+      "front": "壊れます・割れます・破れます・折れます・外れます",
+      "back": "壊れます（坏了）机器/家具\n割れます（碎了）玻璃/杯子\n破れます（破了）纸/布/袋子\n折れます（折断）树枝/骨头\n外れます（掉落）纽扣\n全部接 て います 表示结果状态",
+      "tags": [
+        "第29課"
+      ]
+    },
+    {
+      "front": "Vて形＋あります",
+      "back": "有人为某目的做了某事，结果仍然存在（用他动词）\n例：メモが 置いて あります（放着留言条）\n对比：置いて います（只是描述状态，不强调行为）",
+      "tags": [
+        "第30課"
+      ]
+    },
+    {
+      "front": "Vて形＋おきます（3种用法）",
+      "back": "① 提前准备：旅行前に切符を買っておきます\n② 临时措施/用后复原：はさみを戻しておいてください\n③ 保持现状：そのままにしておいてください\n口语：～ておく → ～とく",
+      "tags": [
+        "第30課"
+      ]
+    },
+    {
+      "front": "予約",
+      "back": "よやく　预约",
+      "tags": [
+        "第30課"
+      ]
+    },
+    {
+      "front": "資料",
+      "back": "しりょう　资料、材料",
+      "tags": [
+        "第30課"
+      ]
+    },
+    {
+      "front": "準備",
+      "back": "じゅんび　准备",
+      "tags": [
+        "第30課"
+      ]
+    },
+    {
+      "front": "地図",
+      "back": "ちず　地图",
+      "tags": [
+        "第30課"
+      ]
+    },
+    {
+      "front": "意向形の作り方",
+      "back": "Ⅰ类：い段→お段＋う（書きます→書こう）\nⅡ类：ます→よう（食べます→食べよう）\nⅢ类：します→しよう、きます→こよう",
+      "tags": [
+        "第31課",
+        "第32課"
+      ]
+    },
+    {
+      "front": "意向形＋と思っています vs つもりです",
+      "back": "と思っています：持续的打算（可用于第三者）\nつもりです：意图坚定（只用于自己）\n例：彼は学校を作ろうと思っています（✅）/ 彼は作るつもりです（✅）",
+      "tags": [
+        "第31課",
+        "第32課"
+      ]
+    },
+    {
+      "front": "ほうがいい vs かもしれません vs でしょう",
+      "back": "ほうがいい：建议（Vた形 / Vない形）\nでしょう：推测，较确定（明天应该下雪）\nかもしれません：可能，不确定（或许来不及）",
+      "tags": [
+        "第31課",
+        "第32課"
+      ]
+    },
+    {
+      "front": "予定",
+      "back": "よてい　预定、计划",
+      "tags": [
+        "第31課",
+        "第32課"
+      ]
+    },
+    {
+      "front": "将来",
+      "back": "しょうらい　将来",
+      "tags": [
+        "第31課",
+        "第32課"
+      ]
+    },
+    {
+      "front": "経験",
+      "back": "けいけん　经验",
+      "tags": [
+        "第31課",
+        "第32課"
+      ]
+    },
+    {
+      "front": "命令形の作り方",
+      "back": "Ⅰ类：い段→え段（書く→書け）\nⅡ类：ます→ろ（食べる→食べろ）\nⅢ类：しろ・こい\n禁止形：辞書形＋な（行くな！）",
+      "tags": [
+        "第33課"
+      ]
+    },
+    {
+      "front": "普通形＋という＋名词",
+      "back": "叫做…的…/表示…意思的…\n例：立入禁止は「入るな」という意味です\n例：「きんえん」という意味です",
+      "tags": [
+        "第33課"
+      ]
+    },
+    {
+      "front": "普通形＋と言いました（间接引用）",
+      "back": "引用别人说的话（用普通形）\n例：明日来ると言いました（他说明天来）\n例：おいしいと言いました（说好吃）",
+      "tags": [
+        "第33課"
+      ]
+    },
+    {
+      "front": "意味",
+      "back": "いみ　意思、含义",
+      "tags": [
+        "第33課"
+      ]
+    },
+    {
+      "front": "禁煙",
+      "back": "きんえん　禁烟",
+      "tags": [
+        "第33課"
+      ]
+    },
+    {
+      "front": "伝えます",
+      "back": "つたえます　转告、传达",
+      "tags": [
+        "第33課"
+      ]
+    },
+    {
+      "front": "普通形＋とおりに",
+      "back": "按照…做\n例：説明書のとおりに組み立てる\n例：先生が言ったとおりに書く\n名词：名词のとおりに",
+      "tags": [
+        "第34課"
+      ]
+    },
+    {
+      "front": "Vた形＋あとで",
+      "back": "在…之后\n例：ごはんを食べたあとで、歯を磨きます\n名词：仕事のあとで",
+      "tags": [
+        "第34課"
+      ]
+    },
+    {
+      "front": "Vない形＋ないで",
+      "back": "不做A，而做B\n例：砂糖を入れないで飲みます（不放糖喝）\n対比：なくて（原因用）",
+      "tags": [
+        "第34課"
+      ]
+    },
+    {
+      "front": "説明書",
+      "back": "せつめいしょ　说明书",
+      "tags": [
+        "第34課"
+      ]
+    },
+    {
+      "front": "砂糖",
+      "back": "さとう　糖",
+      "tags": [
+        "第34課"
+      ]
+    },
+    {
+      "front": "階段",
+      "back": "かいだん　楼梯",
+      "tags": [
+        "第34課"
+      ]
+    },
+    {
+      "front": "結婚式",
+      "back": "けっこんしき　婚礼",
+      "tags": [
+        "第34課"
+      ]
+    },
+    {
+      "front": "ば条件形の作り方",
+      "back": "Ⅰ类：え段＋ば（書く→書けば）\nⅡ类：る→れば（食べれば）\nⅢ类：くれば・すれば\nい形：い→ければ（安ければ）\nな形/名词：なら",
+      "tags": [
+        "第35課",
+        "第45課"
+      ]
+    },
+    {
+      "front": "ば vs なら vs 場合は",
+      "back": "ば：纯条件（押せば開く）\nなら：对前文话题回应（北海道旅行なら6月が…）\n場合は：假设情形，多用于规则/说明（丢卡的情况下…）",
+      "tags": [
+        "第35課",
+        "第45課"
+      ]
+    },
+    {
+      "front": "場合",
+      "back": "ばあい　情况、场合",
+      "tags": [
+        "第35課",
+        "第45課"
+      ]
+    },
+    {
+      "front": "連絡",
+      "back": "れんらく　联系、通知",
+      "tags": [
+        "第35課",
+        "第45課"
+      ]
+    },
+    {
+      "front": "保証書",
+      "back": "ほしょうしょ　保证书",
+      "tags": [
+        "第35課",
+        "第45課"
+      ]
+    },
+    {
+      "front": "Vて形（理由接续）",
+      "back": "前句原因→后句结果\n例：ニュースを聞いて、びっくりしました\n形容词：て形（い形：くて，な形：で）",
+      "tags": [
+        "第39課",
+        "第45課"
+      ]
+    },
+    {
+      "front": "ので vs から",
+      "back": "ので：礼貌，正式场合优先（用事があるので、失礼します）\nから：直接，口语常用（忙しいから行けない）",
+      "tags": [
+        "第39課",
+        "第45課"
+      ]
+    },
+    {
+      "front": "～のに（逆接/遗憾）",
+      "back": "明明…却/尽管…但（反预期，带遗憾/不满）\n例：約束したのに来なかった（明明约了却没来）\n对比：ので（因为，正常因果）",
+      "tags": [
+        "第39課",
+        "第45課"
+      ]
+    },
+    {
+      "front": "用事",
+      "back": "ようじ　事情（要做的事）",
+      "tags": [
+        "第39課",
+        "第45課"
+      ]
+    },
+    {
+      "front": "複雑",
+      "back": "ふくざつ　复杂",
+      "tags": [
+        "第39課",
+        "第45課"
+      ]
+    },
+    {
+      "front": "Vるように（目的）vs ために",
+      "back": "ように：为了能…（渐进变化/潜力）\n調べられるように持っている\nために：为了…目的（具体目标）\n旅行のために貯金している",
+      "tags": [
+        "第36課"
+      ]
+    },
+    {
+      "front": "Vるように なりました（变化结果）",
+      "back": "变得能够…/达到某新状态\n例：自転車に乗れるようになりました（会骑了）\n例：何でも食べられるようになりました",
+      "tags": [
+        "第36課"
+      ]
+    },
+    {
+      "front": "Vるように して います（努力）",
+      "back": "有意识地努力保持某习惯\n例：毎日日記を書くようにしています\n例：食べないようにしています",
+      "tags": [
+        "第36課"
+      ]
+    },
+    {
+      "front": "練習",
+      "back": "れんしゅう　练习",
+      "tags": [
+        "第36課"
+      ]
+    },
+    {
+      "front": "電子辞書",
+      "back": "でんしじしょ　电子词典",
+      "tags": [
+        "第36課"
+      ]
+    },
+    {
+      "front": "受け身形の作り方",
+      "back": "Ⅰ类：あ段＋れる（書く→書かれる）\nⅡ类：る→られる（食べ→食べられる）\nⅢ类：される・こられる\n礼貌形：～れます / ～られます",
+      "tags": [
+        "第37課"
+      ]
+    },
+    {
+      "front": "直接受け身 vs 間接受け身",
+      "back": "直接：Aは Bに ～られました（A被B做了）\n  母に しかられました（被妈妈骂）\n間接/迷惑：Aは（Bに）～られました（倒霉遭遇）\n  足を 踏まれました（脚被踩了）",
+      "tags": [
+        "第37課"
+      ]
+    },
+    {
+      "front": "非情受け身（物/事件作主语）",
+      "back": "用于介绍历史、说明来源等\n例：法隆寺は607年に建てられました\n例：ビールは麦から造られます\n材料で：麦で造られる / 来源から：麦から造られる",
+      "tags": [
+        "第37課"
+      ]
+    },
+    {
+      "front": "発見",
+      "back": "はっけん　发现",
+      "tags": [
+        "第37課"
+      ]
+    },
+    {
+      "front": "建てます",
+      "back": "たてます　建造",
+      "tags": [
+        "第37課"
+      ]
+    },
+    {
+      "front": "のは / のが / のを / のは（名词化）",
+      "back": "のは：做…这件事是…（絵をかくのは楽しい）\nのが：喜欢/擅长做…（見るのが好き）\nのを：忘记做/知道…（忘れるのを忘れた）\nのは～時/人：做了的是（来たのは3月）",
+      "tags": [
+        "第38課",
+        "第42課"
+      ]
+    },
+    {
+      "front": "ために vs のに（用途）",
+      "back": "ために：为了某目的（貯金するために働く）\nのに：用于/需要（山を歩くのにいい靴）\n区别：ために前句是目标，のに后句是用途评价",
+      "tags": [
+        "第38課",
+        "第42課"
+      ]
+    },
+    {
+      "front": "貯金",
+      "back": "ちょきん　存钱",
+      "tags": [
+        "第38課",
+        "第42課"
+      ]
+    },
+    {
+      "front": "健康",
+      "back": "けんこう　健康",
+      "tags": [
+        "第38課",
+        "第42課"
+      ]
+    },
+    {
+      "front": "疑問詞＋か（间接疑问）",
+      "back": "把疑问嵌入句中（无？号）\n例：何時に来るか、調べてください\n例：どこへ行ったか、覚えていない",
+      "tags": [
+        "第40課"
+      ]
+    },
+    {
+      "front": "～かどうか（是否…）",
+      "back": "表示不确定某事是否成立\n例：台風が来るかどうか、まだわかりません\n例：出席できるかどうか、返事ください",
+      "tags": [
+        "第40課"
+      ]
+    },
+    {
+      "front": "Vて形＋みます（试试看）",
+      "back": "试着做一次，看看结果\n例：着てみてもいいですか（可以试穿吗？）\n例：考えてみます（我考虑看看）",
+      "tags": [
+        "第40課"
+      ]
+    },
+    {
+      "front": "出席",
+      "back": "しゅっせき　出席",
+      "tags": [
+        "第40課"
+      ]
+    },
+    {
+      "front": "間違い",
+      "back": "まちがい　错误",
+      "tags": [
+        "第40課"
+      ]
+    },
+    {
+      "front": "到着",
+      "back": "とうちゃく　到达",
+      "tags": [
+        "第40課"
+      ]
+    },
+    {
+      "front": "Vて形＋いただきました（受恩礼貌）",
+      "back": "我受到了对方（上位者）的好意\n例：先生に直していただきました（老师帮我改了）\nもらいました的礼貌版",
+      "tags": [
+        "第41課"
+      ]
+    },
+    {
+      "front": "Vて形＋いただけませんか（请求礼貌）",
+      "back": "可以请您…吗？（非常礼貌的请求）\n例：教えていただけませんか\n礼貌度：いただけませんか ＞ もらえませんか ＞ てください",
+      "tags": [
+        "第41課"
+      ]
+    },
+    {
+      "front": "あげる・もらう・くれる（授受三兄弟）",
+      "back": "あげます：我/A 给 B（我→别人）\nもらいます：我 从 A 那里得到（别人→我）\nくれます：A 给 我（别人→我，视角不同）",
+      "tags": [
+        "第41課"
+      ]
+    },
+    {
+      "front": "親切",
+      "back": "しんせつ　亲切",
+      "tags": [
+        "第41課"
+      ]
+    },
+    {
+      "front": "連れます",
+      "back": "つれます　带（人）去",
+      "tags": [
+        "第41課"
+      ]
+    },
+    {
+      "front": "直します",
+      "back": "なおします　修改、修理",
+      "tags": [
+        "第41課"
+      ]
+    },
+    {
+      "front": "Adj/Vます＋そうです（外観）",
+      "back": "眼睛看到的样子\nい形：去い＋そう（おいしそう）\nVます形＋そう（降りそう）\n否定：なさそう（おいしくなさそう）",
+      "tags": [
+        "第43課",
+        "第47課"
+      ]
+    },
+    {
+      "front": "普通形＋そうです（伝聞）",
+      "back": "听说…（从别处获得的信息）\n例：厳しい先生だそうです\n例：来るそうです\n※ 普通形直接接，不变形",
+      "tags": [
+        "第43課",
+        "第47課"
+      ]
+    },
+    {
+      "front": "ようです（推測）",
+      "back": "根据迹象推测「好像…」\n例：事故のようです（好像是事故）\n例：パーティーをしているようです",
+      "tags": [
+        "第43課",
+        "第47課"
+      ]
+    },
+    {
+      "front": "外観そう vs 伝聞そう（区别）",
+      "back": "外観：おいし<そう> ← 去掉い\n伝聞：おいし<い>そうです ← 保留い\n形式不同！不要混淆",
+      "tags": [
+        "第43課",
+        "第47課"
+      ]
+    },
+    {
+      "front": "天気予報",
+      "back": "てんきよほう　天气预报",
+      "tags": [
+        "第43課",
+        "第47課"
+      ]
+    },
+    {
+      "front": "救急車",
+      "back": "きゅうきゅうしゃ　救护车",
+      "tags": [
+        "第43課",
+        "第47課"
+      ]
+    },
+    {
+      "front": "婚約",
+      "back": "こんやく　婚约、订婚",
+      "tags": [
+        "第43課",
+        "第47課"
+      ]
+    },
+    {
+      "front": "Vます/Adj＋すぎます",
+      "back": "过于/太…\nVます：飲みすぎました\nい形：去い＋すぎ（難しすぎ）\nな形：なを去掉＋すぎ（静かすぎ）",
+      "tags": [
+        "第44課"
+      ]
+    },
+    {
+      "front": "やすい / にくい",
+      "back": "Vます形＋やすい：容易做（使いやすい）\nVます形＋にくい：难以做（割れにくい）\n可接名词修饰：使いやすいパソコン",
+      "tags": [
+        "第44課"
+      ]
+    },
+    {
+      "front": "～にします",
+      "back": "决定/选择：ビールにします（就啤酒）\n使变成：ズボンを短くしてください\nい形：Vく＋する（短くする）\nな形：Vに＋する（きれいにする）",
+      "tags": [
+        "第44課"
+      ]
+    },
+    {
+      "front": "操作",
+      "back": "そうさ　操作",
+      "tags": [
+        "第44課"
+      ]
+    },
+    {
+      "front": "安全",
+      "back": "あんぜん　安全",
+      "tags": [
+        "第44課"
+      ]
+    },
+    {
+      "front": "丈夫",
+      "back": "じょうぶ　结实、耐用",
+      "tags": [
+        "第44課"
+      ]
+    },
+    {
+      "front": "ところ（时间节点）",
+      "back": "るところ：正要做（马上开始）\nているところ：正在做中\nたところ：刚刚完成\n例：今帰ったところです（刚回来）",
+      "tags": [
+        "第46課"
+      ]
+    },
+    {
+      "front": "Vたばかりです",
+      "back": "刚做了…不久（时间短）\n例：先月入社したばかりです（才进公司不久）\n对比：たところ（强调刚结束时刻）",
+      "tags": [
+        "第46課"
+      ]
+    },
+    {
+      "front": "はずです（应该/理应）",
+      "back": "根据已知信息，理应如此（确信推测）\n例：会議室にいるはずです\n对比：でしょう（推测）< はず（根据更强）",
+      "tags": [
+        "第46課"
+      ]
+    },
+    {
+      "front": "卒業",
+      "back": "そつぎょう　毕业",
+      "tags": [
+        "第46課"
+      ]
+    },
+    {
+      "front": "故障",
+      "back": "こしょう　故障",
+      "tags": [
+        "第46課"
+      ]
+    },
+    {
+      "front": "原因",
+      "back": "げんいん　原因",
+      "tags": [
+        "第46課"
+      ]
+    },
+    {
+      "front": "使役形の作り方",
+      "back": "Ⅰ类：あ段＋せる（書く→書かせる）\nⅡ类：る→させる（食べ→食べさせる）\nⅢ类：させます・こさせます",
+      "tags": [
+        "第48課"
+      ]
+    },
+    {
+      "front": "使役の助词：を vs に",
+      "back": "自動詞：名词（人）を＋させる（自己去做）\n  部長はミラーをアメリカへ出張させた\n他動詞：名词（人）に＋させる（帮忙做某事）\n  娘に準備を手伝わせた",
+      "tags": [
+        "第48課"
+      ]
+    },
+    {
+      "front": "させていただきます",
+      "back": "请允许我…（自己要做，礼貌征求许可）\n例：車を止めさせていただけませんか\n例：失礼させていただきます",
+      "tags": [
+        "第48課"
+      ]
+    },
+    {
+      "front": "出張",
+      "back": "しゅっちょう　出差",
+      "tags": [
+        "第48課"
+      ]
+    },
+    {
+      "front": "自由",
+      "back": "じゆう　自由",
+      "tags": [
+        "第48課"
+      ]
+    },
+    {
+      "front": "尊敬語の三レベル",
+      "back": "Ⅰ：～れます/られます（帰られました）\nⅡ：特殊動詞（いらっしゃる・おっしゃる等）\nⅢ：お～になります（お帰りになりました）\n礼貌度：Ⅲ＞Ⅱ＞Ⅰ",
+      "tags": [
+        "第49課",
+        "第50課",
+        "敬語"
+      ]
+    },
+    {
+      "front": "特殊尊敬動詞まとめ",
+      "back": "います/行く/来る → いらっしゃいます\n言います → おっしゃいます\nします → なさいます\n食べる/飲む → 召し上がります\n知っている → ご存知です",
+      "tags": [
+        "第49課",
+        "第50課",
+        "敬語"
+      ]
+    },
+    {
+      "front": "謙譲語：お/ご＋Vます形＋します",
+      "back": "自己的行为礼貌地表示\n例：お送りします（发送给您）\n例：ご案内します（带您参观）\n例：お持ちしましょうか（帮您拿吧）",
+      "tags": [
+        "第49課",
+        "第50課",
+        "敬語"
+      ]
+    },
+    {
+      "front": "特殊謙譲動詞まとめ",
+      "back": "います → おります\n行く/来る → 参ります\n言います → 申します\nします → いたします\n見ます → 拝見します\nもらう/食べる/飲む → いただきます",
+      "tags": [
+        "第49課",
+        "第50課",
+        "敬語"
+      ]
+    },
+    {
+      "front": "失礼いたします",
+      "back": "しつれいいたします　告辞（谦语）",
+      "tags": [
+        "第49課",
+        "第50課",
+        "敬語"
+      ]
+    },
+    {
+      "front": "拝見します",
+      "back": "はいけんします　拜读/拜见（谦语）",
+      "tags": [
+        "第49課",
+        "第50課",
+        "敬語"
+      ]
+    },
+    {
+      "front": "ご存知",
+      "back": "ごぞんじ　您知道（对方知道，尊语）",
+      "tags": [
+        "第49課",
+        "第50課",
+        "敬語"
+      ]
+    }
+  ]
+}

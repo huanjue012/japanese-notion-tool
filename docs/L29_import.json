@@ -1,0 +1,107 @@
+{
+  "notes": [
+    {
+      "title": "第29課｜Vて状態・てしまう・それ/その/そう",
+      "content": "<!DOCTYPE html>\n<html lang=\"zh\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1.0\"><title>第29課</title><style>\n@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@300;400;500&display=swap');\n  :root{--ink:#1a1a2e;--paper:#faf7f2;--accent:#c0392b;--gold:#d4a017;--muted:#7a6a5a;--ll:#e8e0d5;--hl:#fff8e1;--tip-bg:#f0f8f0;--tip-b:#4caf50;--warn-bg:#fff0f0;--warn-b:#e74c3c;--blue-bg:#f0f4ff;--blue-b:#3b5bdb;}\n  *{box-sizing:border-box;margin:0;padding:0}\n  body{font-family:'Noto Sans SC',sans-serif;background:var(--paper);color:var(--ink);line-height:1.8;padding:40px 20px 80px}\n  .w{max-width:740px;margin:0 auto}\n  .hd{border-left:5px solid var(--accent);padding-left:16px;margin-bottom:36px}\n  .hd h1{font-family:'Noto Serif SC',serif;font-size:1.7rem;font-weight:700;line-height:1.4}\n  .tags{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px}\n  .tag{font-size:.72rem;background:var(--ll);color:var(--muted);padding:2px 8px;border-radius:20px}\n  h2{font-family:'Noto Serif SC',serif;font-size:1.1rem;font-weight:700;color:var(--accent);margin:32px 0 12px;padding-bottom:5px;border-bottom:1.5px solid var(--ll);display:flex;align-items:center;gap:8px}\n  h2::before{content:'';display:inline-block;width:8px;height:8px;background:var(--accent);border-radius:50%;flex-shrink:0}\n  p{margin-bottom:10px;font-size:.95rem}\n  .tw{overflow-x:auto;margin:12px 0;border-radius:8px;border:1px solid var(--ll)}\n  table{width:100%;border-collapse:collapse;font-size:.9rem}\n  thead{background:var(--ink);color:#fff}\n  thead th{padding:9px 14px;font-weight:500;text-align:left}\n  tbody tr:nth-child(even){background:#f3ede6}\n  tbody tr:nth-child(odd){background:#fff}\n  tbody td{padding:8px 14px;border-bottom:1px solid var(--ll);vertical-align:top}\n  tbody tr:last-child td{border-bottom:none}\n  .jp{font-size:1.02em;letter-spacing:.03em}\n  .warn{background:var(--warn-bg);border-left:4px solid var(--warn-b);padding:10px 14px;border-radius:0 6px 6px 0;margin:12px 0;font-size:.9rem}\n  .tip{background:var(--tip-bg);border-left:4px solid var(--tip-b);padding:10px 14px;border-radius:0 6px 6px 0;margin:12px 0;font-size:.9rem}\n  .nb{background:var(--blue-bg);border-left:4px solid var(--blue-b);padding:10px 14px;border-radius:0 6px 6px 0;margin:12px 0;font-size:.9rem}\n  .hl{background:var(--hl);border-left:4px solid var(--gold);padding:10px 14px;border-radius:0 6px 6px 0;margin:12px 0;font-size:.9rem}\n  .lbl{font-weight:700;margin-right:6px}\n  strong{color:var(--accent)}\n  hr{border:none;border-top:1px dashed var(--ll);margin:24px 0}\n</style></head>\n<body><div class=\"w\"><div class=\"hd\"><h1>第29課 文法笔记<br><small style=\"font-size:.62em;font-weight:400;color:var(--muted)\">忘れ物をしてしまったんです</small></h1><div class=\"tags\"><span class=\"tag\">第29課</span><span class=\"tag\">文法</span><span class=\"tag\">てしまう</span><span class=\"tag\">結果状態</span><span class=\"tag\">N4</span></div></div><h2>1. Vて形＋います（结果状态持续）</h2><p>某动作发生后，<strong>其结果状态一直维持到现在</strong>。不是\"正在做\"，而是\"现在处于…的状态\"。</p><div class=\"tw\"><table><thead><tr><th>原形</th><th>状态说法</th><th>意思</th></tr></thead><tbody><tr><td class=\"jp\">ドアが あきます</td><td class=\"jp\">開いて います</td><td>门开着</td></tr><tr><td class=\"jp\">ドアが しまります</td><td class=\"jp\">閉まって います</td><td>门关着</td></tr><tr><td class=\"jp\">電気が つきます</td><td class=\"jp\">ついて います</td><td>灯亮着</td></tr><tr><td class=\"jp\">電気が きえます</td><td class=\"jp\">消えて います</td><td>灯灭着</td></tr><tr><td class=\"jp\">ガラスが われます</td><td class=\"jp\">割れて います</td><td>玻璃碎了</td></tr><tr><td class=\"jp\">いすが こわれます</td><td class=\"jp\">壊れて います</td><td>椅子坏了</td></tr></tbody></table></div><div class=\"tip\"><span class=\"lbl\">💡</span>主体用<strong>が</strong>；把主体当话题时换<strong>は</strong>：この いすは 壊れて います。</div><div class=\"nb\"><span class=\"lbl\">对比L30</span>窓が 閉まって <strong>います</strong>（状态）vs 窓を 閉めて <strong>あります</strong>（有人关上了）</div><h2>2. Vて形＋しまいました ／ しまいます</h2><p>① <strong>动作完成</strong>；② <strong>后悔/遗憾</strong>（不想发生的事）</p><div class=\"tw\"><table><thead><tr><th>例句</th><th>中文</th><th>语感</th></tr></thead><tbody><tr><td class=\"jp\">漢字の宿題はやってしまいました。</td><td>作业做完了。</td><td>完成 ✅</td></tr><tr><td class=\"jp\">午前中にレポートを書いてしまいます。</td><td>上午把报告写完。</td><td>将来完成</td></tr><tr><td class=\"jp\">電車に傘を忘れてしまいました。</td><td>把伞忘在电车上了。</td><td>遗憾 😔</td></tr><tr><td class=\"jp\">パスポートをなくしてしまいました。</td><td>护照弄丢了。</td><td>遗憾 😔</td></tr></tbody></table></div><div class=\"tip\"><span class=\"lbl\">口语缩写</span>～てしまいました → <strong>～ちゃいました</strong>　／　～てしまいます → <strong>～ちゃいます</strong></div><h2>3. 场所＋に＋移动动词（に ＝ へ）</h2><p>行きます・来ます・帰ります 的目的地，<strong>に</strong>和<strong>へ</strong>可互换，日常口语无差别。</p><div class=\"nb\"><span class=\"lbl\">例</span><span class=\"jp\">すぐ 交番<strong>に</strong> 行かないと。</span>→ 得赶快去派出所。</div><h2>4. それ ／ その ／ そう（指代前文内容）</h2><p>指代<strong>对方刚说过的话</strong>，不是指眼前物品。</p><div class=\"tw\"><table><thead><tr><th>用法</th><th>例句</th><th>中文</th></tr></thead><tbody><tr><td><strong>それは</strong></td><td class=\"jp\">財布を落としてしまったんです。……それは 大変ですね。</td><td>……那可糟了。</td></tr><tr><td><strong>その＋名词</strong></td><td class=\"jp\">途中でやめたい場合は？……その場合は…</td><td>……那种情况下……</td></tr><tr><td><strong>そう します</strong></td><td class=\"jp\">休んだほうがいいですよ。……ええ、そうします。</td><td>……好的，就这样做。</td></tr></tbody></table></div><h2>5. ありました（发现！找到了！）</h2><p>说话人<strong>此刻发现某物存在</strong>，不是\"以前有\"。</p><div class=\"nb\"><span class=\"lbl\">例</span><span class=\"jp\">[かばんが] <strong>ありましたよ</strong>。</span>→ 包找到了！</div><h2>6. どこかで ／ どこかに（で・に 不可省）</h2><div class=\"tw\"><table><thead><tr><th>助词</th><th>可省？</th><th>例</th></tr></thead><tbody><tr><td class=\"jp\">どこか<strong>へ</strong>，何か<strong>を</strong></td><td>✅ 可省</td><td class=\"jp\">どこか（へ）行きますか。</td></tr><tr><td class=\"jp\">どこか<strong>で</strong>，どこか<strong>に</strong></td><td>❌ 不可省</td><td class=\"jp\">どこかで 財布を なくしました。</td></tr></tbody></table></div><hr><h2>重点词汇</h2><div class=\"tw\"><table><thead><tr><th>日语</th><th>读音</th><th>词义</th></tr></thead><tbody><tr><td class=\"jp\">忘れ物</td><td class=\"jp\">わすれもの</td><td>遗失物品</td></tr><tr><td class=\"jp\">網棚</td><td class=\"jp\">あみだな</td><td>（车厢）行李架</td></tr><tr><td class=\"jp\">交番</td><td class=\"jp\">こうばん</td><td>派出所（街头警察亭）</td></tr><tr><td class=\"jp\">駅員</td><td class=\"jp\">えきいん</td><td>站务员</td></tr><tr><td class=\"jp\">確か</td><td class=\"jp\">たしか</td><td>似乎、好像（副词，不确定）</td></tr><tr><td class=\"jp\">落とします</td><td class=\"jp\">おとします</td><td>弄丢、落下</td></tr><tr><td class=\"jp\">片付けます</td><td class=\"jp\">かたづけます</td><td>收拾、整理</td></tr></tbody></table></div></div></body></html>",
+      "format": "html",
+      "tags": [
+        "第29課",
+        "文法",
+        "初级2",
+        "N4"
+      ]
+    }
+  ],
+  "flashcards": [
+    {
+      "front": "Vて形＋います（状态用法）\n例：窓が 閉まって います。",
+      "back": "结果状态持续到现在 →「窗户关着」\n适用：あく・しまる・つく・きえる・こわれる・われる 等\n※ 不是正在关门，而是现在处于关着的状态",
+      "tags": [
+        "第29課",
+        "文法",
+        "てform",
+        "状態"
+      ]
+    },
+    {
+      "front": "Vて形＋しまいました（两种语感）",
+      "back": "① 完成：漢字の宿題はやってしまいました。（做完了✅）\n② 遗憾：傘を忘れてしまいました。（忘了😔）\n口语：～ちゃいました",
+      "tags": [
+        "第29課",
+        "文法",
+        "てform",
+        "しまう"
+      ]
+    },
+    {
+      "front": "それは / その＋名词 / そう します\n（对话中指代前文内容）",
+      "back": "指代对方刚说过的话（不是眼前物品）\nそれは 大変ですね → 那可糟了\nその 場合は → 那种情况下\nそう します → 就照你说的做",
+      "tags": [
+        "第29課",
+        "文法",
+        "指示词"
+      ]
+    },
+    {
+      "front": "ありました（找到了！）",
+      "back": "说话人发现「有」这一事实\n→ かばんが ありましたよ（包找到了！）\n※ 非「以前有」，而是「刚发现有」",
+      "tags": [
+        "第29課",
+        "文法"
+      ]
+    },
+    {
+      "front": "どこかで / どこかに（助词能否省？）",
+      "back": "で・に 不能省略！\n✅ どこか（へ）行きますか ← へ可省\n❌ どこかで → で必须保留\n例：どこかで 財布を なくしてしまいました",
+      "tags": [
+        "第29課",
+        "文法",
+        "助词"
+      ]
+    },
+    {
+      "front": "忘れ物をします",
+      "back": "遗失东西、忘带东西\n→ 電車に 忘れ物をしてしまったんですが……\n（把东西忘在电车上了……）",
+      "tags": [
+        "第29課",
+        "词汇",
+        "惯用表达"
+      ]
+    },
+    {
+      "front": "閉まります vs 閉めます（自他动词）",
+      "back": "閉まります（自动关）→ 閉まっています＝关着\n閉めます（人关）→ 閉めてあります（第30課）\n同样：開く vs 開ける / つく vs つける",
+      "tags": [
+        "第29課",
+        "词汇",
+        "自他动词"
+      ]
+    },
+    {
+      "front": "5个状态变化动词：壊・割・破・折・外",
+      "back": "壊れます（坏了）机器/家具\n割れます（碎了）玻璃/杯子\n破れます（破了）纸/布/袋子\n折れます（折断）树枝/骨头\n外れます（掉落）纽扣/零件\n→ 全部接 て います 表示结果状态",
+      "tags": [
+        "第29課",
+        "词汇",
+        "状態変化動詞"
+      ]
+    },
+    {
+      "front": "交番（こうばん）",
+      "back": "派出所——日本街道上的小型警察亭\n→ すぐ 交番に 行かないと（得赶快去派出所）",
+      "tags": [
+        "第29課",
+        "词汇"
+      ]
+    },
+    {
+      "front": "確か（たしか）",
+      "back": "副词：似乎是、好像是、大概是（说话人不完全确定）\n→ えーと、確か、本と 傘が 入っています\n（嗯，好像里面有书和伞）",
+      "tags": [
+        "第29課",
+        "词汇",
+        "副词"
+      ]
+    }
+  ]
+}

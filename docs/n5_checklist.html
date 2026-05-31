@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>N5 日语学习清单</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600&family=Noto+Sans+JP:wght@400;500&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f5f3ee;
+    --surface: #ffffff;
+    --surface2: #f0ede6;
+    --border: #e0dbd0;
+    --text: #1a1814;
+    --text2: #6b6558;
+    --text3: #9e978a;
+    --green: #2d7a5f;
+    --green-light: #e8f5f0;
+    --green-mid: #b8ddd1;
+    --amber: #b5700a;
+    --amber-light: #fef3e2;
+    --blue: #2a5fa5;
+    --blue-light: #e8f0fb;
+    --radius: 10px;
+    --radius-sm: 6px;
+  }
+
+  body {
+    font-family: 'Noto Sans SC', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 2rem 1rem;
+    line-height: 1.6;
+  }
+
+  .container {
+    max-width: 680px;
+    margin: 0 auto;
+  }
+
+  header {
+    margin-bottom: 2rem;
+  }
+
+  .header-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+  }
+
+  h1 {
+    font-size: 26px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+    color: var(--text);
+  }
+
+  .subtitle {
+    font-size: 13px;
+    color: var(--text2);
+    line-height: 1.7;
+  }
+
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin: 1.25rem 0;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    text-align: center;
+  }
+
+  .stat-num {
+    font-size: 26px;
+    font-weight: 600;
+    color: var(--text);
+    display: block;
+    line-height: 1.2;
+  }
+
+  .stat-num.green { color: var(--green); }
+
+  .stat-label {
+    font-size: 11px;
+    color: var(--text3);
+    margin-top: 2px;
+    display: block;
+  }
+
+  .progress-track {
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 1rem;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--green);
+    border-radius: 3px;
+    transition: width 0.4s ease;
+    width: 0%;
+  }
+
+  .actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 1.25rem;
+  }
+
+  .reset-btn {
+    font-family: inherit;
+    font-size: 12px;
+    color: var(--text3);
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 5px 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .reset-btn:hover {
+    background: var(--surface);
+    color: var(--text2);
+    border-color: var(--text3);
+  }
+
+  .section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 10px;
+    overflow: hidden;
+  }
+
+  .sec-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 13px 16px;
+    cursor: pointer;
+    user-select: none;
+    background: var(--surface);
+    transition: background 0.1s;
+  }
+
+  .sec-header:hover { background: var(--surface2); }
+
+  .sec-icon {
+    font-size: 16px;
+    width: 28px;
+    height: 28px;
+    background: var(--bg);
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .sec-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    flex: 1;
+  }
+
+  .sec-progress {
+    font-size: 11px;
+    color: var(--text3);
+    background: var(--bg);
+    padding: 2px 8px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+  }
+
+  .sec-progress.done {
+    background: var(--green-light);
+    color: var(--green);
+    border-color: var(--green-mid);
+  }
+
+  .chevron {
+    font-size: 13px;
+    color: var(--text3);
+    transition: transform 0.2s;
+    flex-shrink: 0;
+  }
+
+  .chevron.open { transform: rotate(180deg); }
+
+  .items {
+    border-top: 1px solid var(--border);
+    display: none;
+  }
+
+  .items.open { display: block; }
+
+  .item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 16px;
+    cursor: pointer;
+    transition: background 0.1s;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .item:last-child { border-bottom: none; }
+  .item:hover { background: var(--surface2); }
+
+  .item.checked .item-text {
+    color: var(--text3);
+    text-decoration: line-through;
+    text-decoration-color: var(--text3);
+  }
+
+  .checkbox {
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    border: 1.5px solid var(--border);
+    flex-shrink: 0;
+    margin-top: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    background: var(--bg);
+  }
+
+  .item.checked .checkbox {
+    background: var(--green);
+    border-color: var(--green);
+  }
+
+  .checkmark {
+    display: none;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .item.checked .checkmark { display: block; }
+
+  .item-body { flex: 1; min-width: 0; }
+
+  .item-text {
+    font-size: 13.5px;
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  .item-note {
+    font-size: 12px;
+    color: var(--text3);
+    margin-top: 2px;
+    font-family: 'Noto Sans JP', sans-serif;
+  }
+
+  .tag {
+    display: inline-block;
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 8px;
+    margin-left: 6px;
+    font-weight: 500;
+    vertical-align: middle;
+  }
+
+  .tag-new { background: var(--blue-light); color: var(--blue); }
+  .tag-warn { background: var(--amber-light); color: var(--amber); }
+
+  footer {
+    margin-top: 2rem;
+    text-align: center;
+    font-size: 12px;
+    color: var(--text3);
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div class="header-top">
+      <h1>N5 日语学习清单</h1>
+    </div>
+    <p class="subtitle">每一项问自己「能不能马上反应过来」，不行就回去复习。<br>N5 范围全在大家的日语 I 里，重点是查漏补缺。</p>
+  </header>
+
+  <div class="stats-row">
+    <div class="stat-card">
+      <span class="stat-num green" id="done-count">0</span>
+      <span class="stat-label">已掌握</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-num" id="left-count">0</span>
+      <span class="stat-label">待复习</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-num" id="pct">0%</span>
+      <span class="stat-label">完成进度</span>
+    </div>
+  </div>
+
+  <div class="progress-track">
+    <div class="progress-fill" id="prog"></div>
+  </div>
+
+  <div class="actions">
+    <button class="reset-btn" onclick="resetAll()">↺ 重置全部</button>
+  </div>
+
+  <div id="sections"></div>
+
+  <footer>勾选状态自动保存在本地浏览器中</footer>
+</div>
+
+<script>
+const data = [
+  {
+    id: "s1", title: "一、动词变形", icon: "🔄",
+    items: [
+      { id: "v1", text: "ます形 ←→ 辞书形 互转", note: "食べます／食べる" },
+      { id: "v2", text: "て形（三类动词都要会）", note: "I类音便：いて/いで/って/んで/して" },
+      { id: "v3", text: "ない形", note: "書く→書かない、食べる→食べない" },
+      { id: "v4", text: "た形", note: "变法跟て形一样，把て换成た" },
+      { id: "v5", text: "普通形（四格）", note: "现在/过去 × 肯定/否定 全部掌握" },
+      { id: "v6", text: "可能形", note: "食べられます、書けます", tag: "new" },
+      { id: "v7", text: "たら形、ても形", note: "第25课内容" },
+    ]
+  },
+  {
+    id: "s2", title: "二、核心句型", icon: "💬",
+    items: [
+      { id: "p1", text: "～ています", note: "正在进行／持续状态" },
+      { id: "p2", text: "～てください／～てもいいです／～てはいけません", note: "请求、许可、禁止" },
+      { id: "p3", text: "～なければなりません／～なくてもいいです", note: "必须／不用" },
+      { id: "p4", text: "～たことがあります", note: "曾经～过" },
+      { id: "p5", text: "～たり～たりします", note: "又～又～" },
+      { id: "p6", text: "～と思います／～と言いました", note: "引用" },
+      { id: "p7", text: "～たほうがいいです", note: "最好～" },
+      { id: "p8", text: "～たら（如果）／～ても（即使）", note: "第25课" },
+      { id: "p9", text: "授受动词：あげます／もらいます／くれます", note: "注意くれます的方向" },
+      { id: "p10", text: "～てあげます／てもらいます／てくれます", note: "结合て形使用，才是真正的考点", tag: "new" },
+      { id: "p11", text: "～ながら", note: "边～边～（同时进行两个动作）", tag: "new" },
+      { id: "p12", text: "～前に／後で", note: "时间关系句型", tag: "new" },
+      { id: "p13", text: "疑問詞＋か", note: "どこかに、何か等（不确定表达）", tag: "new" },
+    ]
+  },
+  {
+    id: "s3", title: "三、助词", icon: "🔖",
+    items: [
+      { id: "a1", text: "は vs が 的区别", note: "主题标记 vs 主语标记" },
+      { id: "a2", text: "に vs で 的区别", note: "に：存在场所、到达地点、时间／で：动作场所、手段", tag: "warn" },
+      { id: "a3", text: "を／へ／と／から／まで／の", note: "各自功能都要清楚" },
+      { id: "a4", text: "も／や／しか／だけ", note: "也、和（列举）、只有…才、只" },
+      { id: "a5", text: "从属句主语用が", note: "たら/ても/とき/まえに 里都用が" },
+    ]
+  },
+  {
+    id: "s4", title: "四、汉字读音", icon: "✏️",
+    items: [
+      { id: "k1", text: "看到汉字能读出正确假名", note: "不是只懂意思" },
+      { id: "k2", text: "音读 vs 训读", note: "人：ひと／じん／にん" },
+      { id: "k3", text: "数字＋量词特殊读法", note: "一日ついたち、二十歳はたち、一人ひとり" },
+      { id: "k4", text: "日期、星期、时间的读法", note: "いちがつ、にちようび、ごぜん…" },
+    ]
+  },
+  {
+    id: "s5", title: "五、听力", icon: "🎧",
+    items: [
+      { id: "l1", text: "听得懂慢速、清晰的简单对话" },
+      { id: "l2", text: "数字、时间、价格能听准" },
+      { id: "l3", text: "方向／位置词听力", note: "みぎ・ひだり・うえ・した 等" },
+      { id: "l4", text: "考前至少完整做2套N5听力模拟", note: "光看书最容易在听力翻车" },
+    ]
+  },
+  {
+    id: "s6", title: "六、词汇（约800词）", icon: "📖",
+    items: [
+      { id: "w1", text: "时间・日期・星期" },
+      { id: "w2", text: "家庭称谓", note: "自家 vs 别人家：父／お父さん" },
+      { id: "w3", text: "形容词 い vs な，及其变形" },
+      { id: "w4", text: "常见动词、副词、疑问词" },
+    ]
+  },
+  {
+    id: "s7", title: "七、自测方法", icon: "✅",
+    items: [
+      { id: "t1", text: "做1套N5真题或官方样题", note: "JLPT官网有免费样题" },
+      { id: "t2", text: "文字词汇＋语法读解错得少 → 直接报名" },
+      { id: "t3", text: "听力或汉字读音翻车 → 针对性补，别整本重学" },
+    ]
+  }
+];
+
+const STORAGE_KEY = 'n5_checklist_v1';
+let state = {};
+
+try {
+  state = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+} catch(e) { state = {}; }
+
+const total = data.reduce((s, sec) => s + sec.items.length, 0);
+
+function saveState() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
+}
+
+function updateStats() {
+  const done = Object.values(state).filter(Boolean).length;
+  document.getElementById('done-count').textContent = done;
+  document.getElementById('left-count').textContent = total - done;
+  const pct = Math.round(done / total * 100);
+  document.getElementById('pct').textContent = pct + '%';
+  document.getElementById('prog').style.width = pct + '%';
+}
+
+function updateSecProgress(secId, items) {
+  const done = items.filter(i => state[i.id]).length;
+  const el = document.getElementById('sp-' + secId);
+  if (el) {
+    el.textContent = done + '/' + items.length;
+    el.className = 'sec-progress' + (done === items.length ? ' done' : '');
+  }
+}
+
+function toggle(id, secId, items) {
+  state[id] = !state[id];
+  const el = document.getElementById('item-' + id);
+  if (el) el.classList.toggle('checked', !!state[id]);
+  updateStats();
+  updateSecProgress(secId, items);
+  saveState();
+}
+
+function resetAll() {
+  if (!confirm('确定要重置全部进度吗？')) return;
+  Object.keys(state).forEach(k => delete state[k]);
+  document.querySelectorAll('.item').forEach(el => el.classList.remove('checked'));
+  data.forEach(sec => updateSecProgress(sec.id, sec.items));
+  updateStats();
+  saveState();
+}
+
+function toggleSection(secId) {
+  const items = document.getElementById('items-' + secId);
+  const chevron = document.getElementById('chev-' + secId);
+  const open = items.classList.toggle('open');
+  if (chevron) chevron.className = 'chevron' + (open ? ' open' : '');
+}
+
+function buildSections() {
+  const container = document.getElementById('sections');
+  data.forEach(sec => {
+    const div = document.createElement('div');
+    div.className = 'section';
+    const doneSec = sec.items.filter(i => state[i.id]).length;
+    const tagMap = { new: '<span class="tag tag-new">补充</span>', warn: '<span class="tag tag-warn">重点</span>' };
+
+    div.innerHTML = `
+      <div class="sec-header" onclick="toggleSection('${sec.id}')">
+        <span class="sec-icon" aria-hidden="true">${sec.icon}</span>
+        <span class="sec-title">${sec.title}</span>
+        <span class="sec-progress${doneSec === sec.items.length ? ' done' : ''}" id="sp-${sec.id}">${doneSec}/${sec.items.length}</span>
+        <span class="chevron open" id="chev-${sec.id}">▾</span>
+      </div>
+      <div class="items open" id="items-${sec.id}">
+        ${sec.items.map(item => `
+          <div class="item${state[item.id] ? ' checked' : ''}" id="item-${item.id}" onclick="toggle('${item.id}','${sec.id}',data.find(s=>s.id==='${sec.id}').items)">
+            <div class="checkbox"><span class="checkmark">✓</span></div>
+            <div class="item-body">
+              <div class="item-text">${item.text}${item.tag ? tagMap[item.tag] || '' : ''}</div>
+              ${item.note ? `<div class="item-note">${item.note}</div>` : ''}
+            </div>
+          </div>
+        `).join('')}
+      </div>`;
+    container.appendChild(div);
+  });
+}
+
+buildSections();
+updateStats();
+</script>
+</body>
+</html>
