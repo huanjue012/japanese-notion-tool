@@ -18,6 +18,7 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteId
   const [imagePreview, setImagePreview] = useState(null); // { url, name }
   const [pdfPreview, setPdfPreview] = useState(null); // { url, name }
   const [bookmarkFilter, setBookmarkFilter] = useState(false);
+  const [studiedFilter, setStudiedFilter] = useState(null); // null=全部 false=未学 true=已学
   const [notesVisible, setNotesVisible] = useState(100);
   const notesSentinel = useRef(null);
   // PDF 导出
@@ -38,19 +39,22 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteId
     return c;
   }, [notes]);
 
+  const studiedCount = useMemo(() => notes.filter(n => !!n.studied).length, [notes]);
+
   const filtered = useMemo(() => {
     let result = notes.filter(n => {
       const q = search.toLowerCase();
       const ms = !q || n.title.toLowerCase().includes(q) || n.content.toLowerCase().includes(q);
       const mt = !activeTag || n.tags?.includes(activeTag);
       const mb = !bookmarkFilter || !!n.bookmarked;
-      return ms && mt && mb;
+      const mst = studiedFilter === null || !!n.studied === studiedFilter;
+      return ms && mt && mb && mst;
     });
     if (importedNoteIds?.length > 0) {
       result = result.filter(n => importedNoteIds.includes(n.id));
     }
     return result.sort((a,b) => new Date(b.updatedAt||b.createdAt||0) - new Date(a.updatedAt||a.createdAt||0));
-  }, [notes, search, activeTag, importedNoteIds, bookmarkFilter]);
+  }, [notes, search, activeTag, importedNoteIds, bookmarkFilter, studiedFilter]);
 
   useEffect(() => { setNotesVisible(100); }, [filtered]);
   useEffect(() => {
@@ -61,6 +65,7 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteId
   }, [notesVisible]);
 
   const toggleBookmark = id => setNotes(p => p.map(n => n.id === id ? { ...n, bookmarked: !n.bookmarked, updatedAt: new Date().toISOString() } : n));
+  const toggleStudied = id => setNotes(p => p.map(n => n.id === id ? { ...n, studied: !n.studied, updatedAt: new Date().toISOString() } : n));
   const openNew = () => { setForm({ title: '', content: '', tags: activeTag ? [activeTag] : [], images: [], format: 'markdown' }); setContentExpanded(false); setModal('new'); };
   const openEdit = n => { setForm({ ...n, images: n.images || [] }); setContentExpanded(false); setModal(n.id); };
 
@@ -283,7 +288,7 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteId
 
       {activeView === 'notes' && <CollapsibleTagFilter tagCounts={tagCounts} total={notes.length} activeTag={activeTag} setActiveTag={setActiveTag} />}
 
-      {activeView === 'notes' && <div className="flex gap-2 mb-3">
+      {activeView === 'notes' && <div className="flex items-center gap-2 mb-3 flex-wrap">
         <button onClick={() => setBookmarkFilter(false)}
           className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${!bookmarkFilter ? 'bg-indigo-100 text-indigo-700' : 'text-gray-400 hover:text-gray-600'}`}>
           全部
@@ -292,6 +297,16 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteId
           className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${bookmarkFilter ? 'bg-yellow-100 text-yellow-700' : 'text-gray-400 hover:text-gray-600'}`}>
           ★ 收藏
         </button>
+        <div className="w-px h-4 bg-gray-200 mx-1" />
+        <button onClick={() => setStudiedFilter(v => v === false ? null : false)}
+          className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${studiedFilter === false ? 'bg-orange-100 text-orange-700' : 'text-gray-400 hover:text-gray-600'}`}>
+          ○ 未学
+        </button>
+        <button onClick={() => setStudiedFilter(v => v === true ? null : true)}
+          className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${studiedFilter === true ? 'bg-green-100 text-green-700' : 'text-gray-400 hover:text-gray-600'}`}>
+          ✓ 已学
+        </button>
+        {notes.length > 0 && <span className="ml-auto text-xs text-gray-400">{studiedCount} / {notes.length} 已学</span>}
       </div>}
       {activeView === 'notes' && (filtered.length === 0 ? (
         <Card className="text-center py-16">
@@ -308,6 +323,11 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteId
                 <div className="flex items-start justify-between mb-1">
                   <h3 className="font-semibold text-gray-800 text-sm leading-snug flex-1 pr-2">{n.title}</h3>
                   <div className="flex items-center gap-1 shrink-0">
+                    <button onClick={e => { e.stopPropagation(); toggleStudied(n.id); }}
+                      title={n.studied ? '标为未学' : '标为已学'}
+                      className={`text-sm leading-none font-bold transition-colors ${n.studied ? 'text-green-500' : 'text-gray-200 hover:text-green-400'}`}>
+                      {n.studied ? '✓' : '○'}
+                    </button>
                     <button onClick={e => { e.stopPropagation(); toggleBookmark(n.id); }}
                       className={`text-base leading-none transition-colors ${n.bookmarked ? 'text-yellow-400' : 'text-gray-200 hover:text-yellow-300'}`}>
                       {n.bookmarked ? '★' : '☆'}
