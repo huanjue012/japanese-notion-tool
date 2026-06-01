@@ -300,6 +300,7 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteId
           <Btn onClick={openNew}>创建第一篇笔记</Btn>
         </Card>
       ) : (
+        <>
         <div className="grid md:grid-cols-2 gap-3">
           {filtered.slice(0, notesVisible).map((n, i) => (
             <React.Fragment key={n.id}>
@@ -338,11 +339,19 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteId
                 <p className="text-xs text-gray-300 mt-2">{fmt(n.updatedAt || n.createdAt)}</p>
               </Card>
               {i === Math.floor(notesVisible * 0.7) - 1 && (
-                <div ref={notesSentinel} style={{gridColumn:'1/-1',height:0}} />
+                <div ref={notesSentinel} style={{gridColumn:'1/-1',height:'1px'}} />
               )}
             </React.Fragment>
           ))}
         </div>
+        {filtered.length > notesVisible && (
+          <div className="text-center mt-4">
+            <Btn variant="secondary" onClick={() => setNotesVisible(v => v + 100)}>
+              加载更多（还有 {filtered.length - notesVisible} 篇）
+            </Btn>
+          </div>
+        )}
+        </>
       ))}
 
       {activeView === 'translate' && (
