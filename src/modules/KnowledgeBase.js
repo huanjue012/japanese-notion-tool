@@ -53,7 +53,10 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteId
     if (importedNoteIds?.length > 0) {
       result = result.filter(n => importedNoteIds.includes(n.id));
     }
-    return result.sort((a,b) => new Date(b.updatedAt||b.createdAt||0) - new Date(a.updatedAt||a.createdAt||0));
+    return result.sort((a,b) => {
+      if (!!a.studied !== !!b.studied) return a.studied ? 1 : -1; // 已学沉底
+      return new Date(b.updatedAt||b.createdAt||0) - new Date(a.updatedAt||a.createdAt||0);
+    });
   }, [notes, search, activeTag, importedNoteIds, bookmarkFilter, studiedFilter]);
 
   useEffect(() => { setNotesVisible(100); }, [filtered]);
@@ -65,7 +68,7 @@ const KnowledgeBase = ({ notes, setNotes, allTags, uid, isOnline, importedNoteId
   }, [notesVisible]);
 
   const toggleBookmark = id => setNotes(p => p.map(n => n.id === id ? { ...n, bookmarked: !n.bookmarked, updatedAt: new Date().toISOString() } : n));
-  const toggleStudied = id => setNotes(p => p.map(n => n.id === id ? { ...n, studied: !n.studied, updatedAt: new Date().toISOString() } : n));
+  const toggleStudied = id => setNotes(p => p.map(n => n.id === id ? { ...n, studied: !n.studied } : n));
   const openNew = () => { setForm({ title: '', content: '', tags: activeTag ? [activeTag] : [], images: [], format: 'markdown' }); setContentExpanded(false); setModal('new'); };
   const openEdit = n => { setForm({ ...n, images: n.images || [] }); setContentExpanded(false); setModal(n.id); };
 
