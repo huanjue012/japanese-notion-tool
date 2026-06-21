@@ -62,25 +62,20 @@ const useFirestoreCollection = (collectionName, uid) => {
   useEffect(() => {
     if (!uid) return;
     const colRef = fbDb.collection('users').doc(uid).collection(collectionName);
-    let unsub;
-    const subscribe = () => {
-      if (unsub) unsub();
-      unsub = colRef.onSnapshot(snap => {
-        const items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        setDataLocal(items);
-        try { localStorage.setItem(lsKey, JSON.stringify(items)); } catch {}
-      }, err => {
-        if (err.code === 'permission-denied') {
-          console.warn(`[Firestore] permission-denied on ${collectionName} — check security rules`);
-        } else {
-          console.error(`[Firestore] snapshot error on ${collectionName}:`, err);
-        }
-      });
-    };
-    subscribe();
-    const handleVisibility = () => { if (document.visibilityState === 'visible') subscribe(); };
-    document.addEventListener('visibilitychange', handleVisibility);
-    return () => { if (unsub) unsub(); document.removeEventListener('visibilitychange', handleVisibility); };
+    // onSnapshot 保持实时监听，后台时连接仍在、自动重连，无需在标签页切回时重订阅
+    // （重订阅会把整个集合从服务器重读一遍，是 Firestore 读取配额暴涨的元凶）
+    const unsub = colRef.onSnapshot(snap => {
+      const items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      setDataLocal(items);
+      try { localStorage.setItem(lsKey, JSON.stringify(items)); } catch {}
+    }, err => {
+      if (err.code === 'permission-denied') {
+        console.warn(`[Firestore] permission-denied on ${collectionName} — check security rules`);
+      } else {
+        console.error(`[Firestore] snapshot error on ${collectionName}:`, err);
+      }
+    });
+    return () => unsub();
   }, [uid, collectionName]);
 
   const setData = useCallback((updater) => {
