@@ -1,7 +1,19 @@
 {
   "hosting": {
     "public": ".",
-    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**",
+      "docs/**",
+      "feedback/**",
+      "*.md",
+      "*.json",
+      "*.py",
+      "japanese-learning-hub.html",
+      "notion_uploader.html",
+      "cors.json"
+    ],
     "rewrites": [
       { "source": "**", "destination": "/index.html" }
     ]
